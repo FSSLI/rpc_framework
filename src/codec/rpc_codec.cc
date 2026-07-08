@@ -173,7 +173,9 @@ bool Codec::readString(const char* data, size_t& pos, size_t totalLen, std::stri
 
 std::string Codec::encodeRequest(const rpc::RpcRequest& req, uint64_t req_id) {
     std::string payload;
-    req.SerializeToString(&payload);
+    if (!req.SerializeToString(&payload)) {
+        return "";  // 序列化失败，返回空
+    }
     
     std::string variablePart;
     appendString(variablePart, req.service_name());
@@ -206,7 +208,9 @@ std::string Codec::encodeResponse(const rpc::RpcResponse& resp,
                                  uint64_t req_id,
                                  Status status) {
     std::string payload;
-    resp.SerializeToString(&payload);
+    if (!resp.SerializeToString(&payload)) {
+        return "";
+    }
     
     ResponseHeader header;
     header.magic = encodeU32(kMagic);
@@ -284,7 +288,7 @@ bool Codec::decode(Buffer& buf, DecodedPacket& packet) {
     uint8_t msgType = buf.peek()[5];
     
     if (version != kVersion) {
-        buf.retrieve(6);
+        // buf.retrieve(6);
         return false;
     }
     

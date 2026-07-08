@@ -14,7 +14,7 @@
 | version | 1B | 协议版本，当前1 |
 | msg_type | 1B | 0:请求 1:响应 2:心跳 |
 | serialize | 1B | 0:protobuf 1:json |
-| compress | 1B | 0:none 1:zlib |
+| compress | 1B | 0:none 1:zlib |  压缩
 | req_id | 8B | 请求唯一ID（用于异步回调） |
 | service_len | 2B | 服务名长度 |
 | service | N B | 服务名（如"EchoService"） |
