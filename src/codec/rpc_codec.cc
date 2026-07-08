@@ -171,15 +171,17 @@ bool Codec::readString(const char* data, size_t& pos, size_t totalLen, std::stri
 
 // ==================== 编码 ====================
 
-std::string Codec::encodeRequest(const rpc::RpcRequest& req, uint64_t req_id) {
+std::string Codec::encodeRequest(const rpc::RpcRequest& req, uint64_t req_id,
+                               const std::string& service_name,
+                               const std::string& method_name) {
     std::string payload;
     if (!req.SerializeToString(&payload)) {
-        return "";  // 序列化失败，返回空
+        return "";
     }
     
     std::string variablePart;
-    appendString(variablePart, req.service_name());
-    appendString(variablePart, req.method_name());
+    appendString(variablePart, service_name);   // 从参数传进来
+    appendString(variablePart, method_name);      // 从参数传进来
     
     uint32_t payloadLen = encodeU32(static_cast<uint32_t>(payload.size()));
     variablePart.append(reinterpret_cast<const char*>(&payloadLen), sizeof(payloadLen));
@@ -274,10 +276,13 @@ std::string Codec::encodeHeartbeat(const rpc::Heartbeat& hb) {
 
 // ==================== 解码 ====================
 
-bool Codec::decode(Buffer& buf, DecodedPacket& packet) {
+bool Codec::decode(Buffer& buf, DecodedPacket& packet,
+                   std::string* service_name,
+                   std::string* method_name) {
     if (buf.readableBytes() < sizeof(uint32_t)) return false;
     
-    uint32_t magic = decodeU32(*reinterpret_cast<const uint32_t*>(buf.peek()));
+    //  reinterpret_cast 不移动数据，不复制数据，不改变数据，只改变编译器对数据的解释方式。
+    uint32_t magic = decodeU32(*reinterpret_cast<const uint32_t*>(buf.peek()));  // * 解引用，读取 4 字节，得到 uint32_t
     if (!checkMagic(magic)) {
         buf.retrieve(1);
         return false;
@@ -294,7 +299,7 @@ bool Codec::decode(Buffer& buf, DecodedPacket& packet) {
     
     switch (static_cast<MsgType>(msgType)) {
         case MsgType::REQUEST:
-            return decodeRequest(buf, packet);
+            return decodeRequest(buf, packet, service_name, method_name);
         case MsgType::RESPONSE:
             return decodeResponse(buf, packet);
         case MsgType::HEARTBEAT:
@@ -305,7 +310,9 @@ bool Codec::decode(Buffer& buf, DecodedPacket& packet) {
     }
 }
 
-bool Codec::decodeRequest(Buffer& buf, DecodedPacket& packet) {
+bool Codec::decodeRequest(Buffer& buf, DecodedPacket& packet,
+                          std::string* service_name,
+                          std::string* method_name) {
     if (buf.readableBytes() < kRequestHeaderSize + sizeof(uint16_t)) return false;
     
     const char* data = buf.peek();
@@ -345,9 +352,12 @@ bool Codec::decodeRequest(Buffer& buf, DecodedPacket& packet) {
         return false;
     }
     
+    // 不需要再从 req 里取 service/method，直接从协议头返回
     packet.msg_type = MsgType::REQUEST;
     packet.req_id = header.req_id;
     packet.rpc_request = req;
+    if (service_name) *service_name = serviceName;
+    if (method_name) *method_name = methodName;
     
     buf.retrieve(pos);
     return true;

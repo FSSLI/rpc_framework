@@ -265,12 +265,10 @@ class RpcRequest PROTOBUF_FINAL :
   // accessors -------------------------------------------------------
 
   enum : int {
-    kMetadataFieldNumber = 4,
-    kServiceNameFieldNumber = 1,
-    kMethodNameFieldNumber = 2,
-    kPayloadFieldNumber = 3,
+    kMetadataFieldNumber = 2,
+    kPayloadFieldNumber = 1,
   };
-  // map<string, string> metadata = 4;
+  // map<string, string> metadata = 2;
   int metadata_size() const;
   private:
   int _internal_metadata_size() const;
@@ -287,57 +285,7 @@ class RpcRequest PROTOBUF_FINAL :
   ::PROTOBUF_NAMESPACE_ID::Map< std::string, std::string >*
       mutable_metadata();
 
-  // string service_name = 1;
-  void clear_service_name();
-  const std::string& service_name() const;
-  void set_service_name(const std::string& value);
-  void set_service_name(std::string&& value);
-  void set_service_name(const char* value);
-  void set_service_name(const char* value, size_t size);
-  std::string* mutable_service_name();
-  std::string* release_service_name();
-  void set_allocated_service_name(std::string* service_name);
-  GOOGLE_PROTOBUF_RUNTIME_DEPRECATED("The unsafe_arena_ accessors for"
-  "    string fields are deprecated and will be removed in a"
-  "    future release.")
-  std::string* unsafe_arena_release_service_name();
-  GOOGLE_PROTOBUF_RUNTIME_DEPRECATED("The unsafe_arena_ accessors for"
-  "    string fields are deprecated and will be removed in a"
-  "    future release.")
-  void unsafe_arena_set_allocated_service_name(
-      std::string* service_name);
-  private:
-  const std::string& _internal_service_name() const;
-  void _internal_set_service_name(const std::string& value);
-  std::string* _internal_mutable_service_name();
-  public:
-
-  // string method_name = 2;
-  void clear_method_name();
-  const std::string& method_name() const;
-  void set_method_name(const std::string& value);
-  void set_method_name(std::string&& value);
-  void set_method_name(const char* value);
-  void set_method_name(const char* value, size_t size);
-  std::string* mutable_method_name();
-  std::string* release_method_name();
-  void set_allocated_method_name(std::string* method_name);
-  GOOGLE_PROTOBUF_RUNTIME_DEPRECATED("The unsafe_arena_ accessors for"
-  "    string fields are deprecated and will be removed in a"
-  "    future release.")
-  std::string* unsafe_arena_release_method_name();
-  GOOGLE_PROTOBUF_RUNTIME_DEPRECATED("The unsafe_arena_ accessors for"
-  "    string fields are deprecated and will be removed in a"
-  "    future release.")
-  void unsafe_arena_set_allocated_method_name(
-      std::string* method_name);
-  private:
-  const std::string& _internal_method_name() const;
-  void _internal_set_method_name(const std::string& value);
-  std::string* _internal_mutable_method_name();
-  public:
-
-  // bytes payload = 3;
+  // bytes payload = 1;
   void clear_payload();
   const std::string& payload() const;
   void set_payload(const std::string& value);
@@ -375,8 +323,6 @@ class RpcRequest PROTOBUF_FINAL :
       ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::TYPE_STRING,
       ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::TYPE_STRING,
       0 > metadata_;
-  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr service_name_;
-  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr method_name_;
   ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr payload_;
   mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   friend struct ::TableStruct_rpc_5fservice_2eproto;
@@ -1967,169 +1913,7 @@ class EchoResponse PROTOBUF_FINAL :
 
 // RpcRequest
 
-// string service_name = 1;
-inline void RpcRequest::clear_service_name() {
-  service_name_.ClearToEmpty(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
-}
-inline const std::string& RpcRequest::service_name() const {
-  // @@protoc_insertion_point(field_get:rpc.RpcRequest.service_name)
-  return _internal_service_name();
-}
-inline void RpcRequest::set_service_name(const std::string& value) {
-  _internal_set_service_name(value);
-  // @@protoc_insertion_point(field_set:rpc.RpcRequest.service_name)
-}
-inline std::string* RpcRequest::mutable_service_name() {
-  // @@protoc_insertion_point(field_mutable:rpc.RpcRequest.service_name)
-  return _internal_mutable_service_name();
-}
-inline const std::string& RpcRequest::_internal_service_name() const {
-  return service_name_.Get();
-}
-inline void RpcRequest::_internal_set_service_name(const std::string& value) {
-  
-  service_name_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), value, GetArena());
-}
-inline void RpcRequest::set_service_name(std::string&& value) {
-  
-  service_name_.Set(
-    &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::move(value), GetArena());
-  // @@protoc_insertion_point(field_set_rvalue:rpc.RpcRequest.service_name)
-}
-inline void RpcRequest::set_service_name(const char* value) {
-  GOOGLE_DCHECK(value != nullptr);
-  
-  service_name_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::string(value),
-              GetArena());
-  // @@protoc_insertion_point(field_set_char:rpc.RpcRequest.service_name)
-}
-inline void RpcRequest::set_service_name(const char* value,
-    size_t size) {
-  
-  service_name_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::string(
-      reinterpret_cast<const char*>(value), size), GetArena());
-  // @@protoc_insertion_point(field_set_pointer:rpc.RpcRequest.service_name)
-}
-inline std::string* RpcRequest::_internal_mutable_service_name() {
-  
-  return service_name_.Mutable(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
-}
-inline std::string* RpcRequest::release_service_name() {
-  // @@protoc_insertion_point(field_release:rpc.RpcRequest.service_name)
-  return service_name_.Release(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
-}
-inline void RpcRequest::set_allocated_service_name(std::string* service_name) {
-  if (service_name != nullptr) {
-    
-  } else {
-    
-  }
-  service_name_.SetAllocated(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), service_name,
-      GetArena());
-  // @@protoc_insertion_point(field_set_allocated:rpc.RpcRequest.service_name)
-}
-inline std::string* RpcRequest::unsafe_arena_release_service_name() {
-  // @@protoc_insertion_point(field_unsafe_arena_release:rpc.RpcRequest.service_name)
-  GOOGLE_DCHECK(GetArena() != nullptr);
-  
-  return service_name_.UnsafeArenaRelease(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(),
-      GetArena());
-}
-inline void RpcRequest::unsafe_arena_set_allocated_service_name(
-    std::string* service_name) {
-  GOOGLE_DCHECK(GetArena() != nullptr);
-  if (service_name != nullptr) {
-    
-  } else {
-    
-  }
-  service_name_.UnsafeArenaSetAllocated(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(),
-      service_name, GetArena());
-  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:rpc.RpcRequest.service_name)
-}
-
-// string method_name = 2;
-inline void RpcRequest::clear_method_name() {
-  method_name_.ClearToEmpty(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
-}
-inline const std::string& RpcRequest::method_name() const {
-  // @@protoc_insertion_point(field_get:rpc.RpcRequest.method_name)
-  return _internal_method_name();
-}
-inline void RpcRequest::set_method_name(const std::string& value) {
-  _internal_set_method_name(value);
-  // @@protoc_insertion_point(field_set:rpc.RpcRequest.method_name)
-}
-inline std::string* RpcRequest::mutable_method_name() {
-  // @@protoc_insertion_point(field_mutable:rpc.RpcRequest.method_name)
-  return _internal_mutable_method_name();
-}
-inline const std::string& RpcRequest::_internal_method_name() const {
-  return method_name_.Get();
-}
-inline void RpcRequest::_internal_set_method_name(const std::string& value) {
-  
-  method_name_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), value, GetArena());
-}
-inline void RpcRequest::set_method_name(std::string&& value) {
-  
-  method_name_.Set(
-    &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::move(value), GetArena());
-  // @@protoc_insertion_point(field_set_rvalue:rpc.RpcRequest.method_name)
-}
-inline void RpcRequest::set_method_name(const char* value) {
-  GOOGLE_DCHECK(value != nullptr);
-  
-  method_name_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::string(value),
-              GetArena());
-  // @@protoc_insertion_point(field_set_char:rpc.RpcRequest.method_name)
-}
-inline void RpcRequest::set_method_name(const char* value,
-    size_t size) {
-  
-  method_name_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::string(
-      reinterpret_cast<const char*>(value), size), GetArena());
-  // @@protoc_insertion_point(field_set_pointer:rpc.RpcRequest.method_name)
-}
-inline std::string* RpcRequest::_internal_mutable_method_name() {
-  
-  return method_name_.Mutable(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
-}
-inline std::string* RpcRequest::release_method_name() {
-  // @@protoc_insertion_point(field_release:rpc.RpcRequest.method_name)
-  return method_name_.Release(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
-}
-inline void RpcRequest::set_allocated_method_name(std::string* method_name) {
-  if (method_name != nullptr) {
-    
-  } else {
-    
-  }
-  method_name_.SetAllocated(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), method_name,
-      GetArena());
-  // @@protoc_insertion_point(field_set_allocated:rpc.RpcRequest.method_name)
-}
-inline std::string* RpcRequest::unsafe_arena_release_method_name() {
-  // @@protoc_insertion_point(field_unsafe_arena_release:rpc.RpcRequest.method_name)
-  GOOGLE_DCHECK(GetArena() != nullptr);
-  
-  return method_name_.UnsafeArenaRelease(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(),
-      GetArena());
-}
-inline void RpcRequest::unsafe_arena_set_allocated_method_name(
-    std::string* method_name) {
-  GOOGLE_DCHECK(GetArena() != nullptr);
-  if (method_name != nullptr) {
-    
-  } else {
-    
-  }
-  method_name_.UnsafeArenaSetAllocated(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(),
-      method_name, GetArena());
-  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:rpc.RpcRequest.method_name)
-}
-
-// bytes payload = 3;
+// bytes payload = 1;
 inline void RpcRequest::clear_payload() {
   payload_.ClearToEmpty(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
 }
@@ -2210,7 +1994,7 @@ inline void RpcRequest::unsafe_arena_set_allocated_payload(
   // @@protoc_insertion_point(field_unsafe_arena_set_allocated:rpc.RpcRequest.payload)
 }
 
-// map<string, string> metadata = 4;
+// map<string, string> metadata = 2;
 inline int RpcRequest::_internal_metadata_size() const {
   return metadata_.size();
 }

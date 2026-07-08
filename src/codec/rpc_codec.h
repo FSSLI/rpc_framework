@@ -115,13 +115,17 @@ struct DecodedPacket {
 
 class Codec {
 public:
-    static std::string encodeRequest(const rpc::RpcRequest& req, uint64_t req_id);
+    static std::string encodeRequest(const rpc::RpcRequest& req, uint64_t req_id,
+                               const std::string& service_name,
+                               const std::string& method_name);
     static std::string encodeResponse(const rpc::RpcResponse& resp, 
                                        uint64_t req_id,
                                        Status status = Status::SUCCESS);
     static std::string encodeHeartbeat(const rpc::Heartbeat& hb);
 
-    static bool decode(Buffer& buf, DecodedPacket& packet);
+    static bool decode(Buffer& buf, DecodedPacket& packet,
+                  std::string* service_name = nullptr,
+                  std::string* method_name = nullptr);
 
     static uint32_t crc32(const char* data, size_t len);
     
@@ -137,7 +141,9 @@ private:
     static void appendString(std::string& out, const std::string& str);
     static bool readString(const char* data, size_t& pos, size_t totalLen, std::string& out);
     
-    static bool decodeRequest(Buffer& buf, DecodedPacket& packet);
+    static bool decodeRequest(Buffer& buf, DecodedPacket& packet,
+                           std::string* service_name = nullptr,
+                           std::string* method_name = nullptr);
     static bool decodeResponse(Buffer& buf, DecodedPacket& packet);
     static bool decodeHeartbeat(Buffer& buf, DecodedPacket& packet);
 };

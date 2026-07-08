@@ -18,14 +18,12 @@ void testEncodeDecodeRequest() {
     echoReq.SerializeToString(&payload);
     
     rpc::RpcRequest req;
-    req.set_service_name("EchoService");
-    req.set_method_name("Echo");
-    req.set_payload(payload);
+    req.set_payload(payload);                          // ← 修改：只设 payload
     (*req.mutable_metadata())["trace_id"] = "abc123";
     
-    // 3. 编码
+    // 3. 编码（传 service/method 参数）
     uint64_t reqId = 42;
-    std::string packet = Codec::encodeRequest(req, reqId);
+    std::string packet = Codec::encodeRequest(req, reqId, "EchoService", "Echo");
     
     std::cout << "Encoded packet size: " << packet.size() << " bytes" << std::endl;
     
@@ -34,24 +32,25 @@ void testEncodeDecodeRequest() {
     buf.append(packet);
     
     DecodedPacket decoded;
-    bool success = Codec::decode(buf, decoded);
+    std::string serviceName, methodName;               // ← 新增：接收 service/method
+    bool success = Codec::decode(buf, decoded, &serviceName, &methodName);
     
     assert(success);
     assert(decoded.msg_type == MsgType::REQUEST);
     assert(decoded.req_id == reqId);
+    assert(serviceName == "EchoService");               // ← 从返回值验证
+    assert(methodName == "Echo");                        // ← 从返回值验证
     
     // 5. 验证业务数据
     const rpc::RpcRequest& decodedReq = decoded.rpc_request;
-    assert(decodedReq.service_name() == "EchoService");
-    assert(decodedReq.method_name() == "Echo");
     
     // 6. 解析 payload 里的 EchoRequest
     rpc::EchoRequest decodedEcho;
     decodedEcho.ParseFromString(decodedReq.payload());
     assert(decodedEcho.message() == "Hello, RPC!");
     
-    std::cout << "Service: " << decodedReq.service_name() << std::endl;
-    std::cout << "Method: " << decodedReq.method_name() << std::endl;
+    std::cout << "Service: " << serviceName << std::endl;    // ← 从返回值打印
+    std::cout << "Method: " << methodName << std::endl;      // ← 从返回值打印
     std::cout << "Echo message: " << decodedEcho.message() << std::endl;
     std::cout << "✓ Request test passed" << std::endl << std::endl;
 }
@@ -142,17 +141,13 @@ void testPartialPacket() {
     
     // 1. 编码两个请求
     rpc::RpcRequest req1;
-    req1.set_service_name("Service1");
-    req1.set_method_name("Method1");
-    req1.set_payload("payload1");
+    req1.set_payload("payload1");                          // ← 修改：只设 payload
     
     rpc::RpcRequest req2;
-    req2.set_service_name("Service2");
-    req2.set_method_name("Method2");
-    req2.set_payload("payload2");
+    req2.set_payload("payload2");                          // ← 修改：只设 payload
     
-    std::string packet1 = Codec::encodeRequest(req1, 1);
-    std::string packet2 = Codec::encodeRequest(req2, 2);
+    std::string packet1 = Codec::encodeRequest(req1, 1, "Service1", "Method1");
+    std::string packet2 = Codec::encodeRequest(req2, 2, "Service2", "Method2");
     
     // 2. 模拟粘包：两个包连在一起
     std::string combined = packet1 + packet2;
@@ -162,16 +157,22 @@ void testPartialPacket() {
     
     // 3. 应该能解析出第一个包
     DecodedPacket decoded1;
-    bool success1 = Codec::decode(buf, decoded1);
+    std::string service1, method1;
+    bool success1 = Codec::decode(buf, decoded1, &service1, &method1);
     assert(success1);
     assert(decoded1.req_id == 1);
+    assert(service1 == "Service1");
+    assert(method1 == "Method1");
     std::cout << "First packet decoded, req_id=" << decoded1.req_id << std::endl;
     
     // 4. 应该能解析出第二个包
     DecodedPacket decoded2;
-    bool success2 = Codec::decode(buf, decoded2);
+    std::string service2, method2;
+    bool success2 = Codec::decode(buf, decoded2, &service2, &method2);
     assert(success2);
     assert(decoded2.req_id == 2);
+    assert(service2 == "Service2");
+    assert(method2 == "Method2");
     std::cout << "Second packet decoded, req_id=" << decoded2.req_id << std::endl;
     
     // 5. 没有更多数据
@@ -187,11 +188,9 @@ void testCorruptedPacket() {
     std::cout << "=== Test: Corrupted Packet (CRC check) ===" << std::endl;
     
     rpc::RpcRequest req;
-    req.set_service_name("EchoService");
-    req.set_method_name("Echo");
-    req.set_payload("test");
+    req.set_payload("test");                               // ← 修改：只设 payload
     
-    std::string packet = Codec::encodeRequest(req, 99);
+    std::string packet = Codec::encodeRequest(req, 99, "EchoService", "Echo");
     
     // 篡改最后一个字节
     packet.back() ^= 0xFF;

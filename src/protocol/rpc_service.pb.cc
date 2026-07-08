@@ -275,8 +275,6 @@ const ::PROTOBUF_NAMESPACE_ID::uint32 TableStruct_rpc_5fservice_2eproto::offsets
   ~0u,  // no _extensions_
   ~0u,  // no _oneof_case_
   ~0u,  // no _weak_field_map_
-  PROTOBUF_FIELD_OFFSET(::rpc::RpcRequest, service_name_),
-  PROTOBUF_FIELD_OFFSET(::rpc::RpcRequest, method_name_),
   PROTOBUF_FIELD_OFFSET(::rpc::RpcRequest, payload_),
   PROTOBUF_FIELD_OFFSET(::rpc::RpcRequest, metadata_),
   ~0u,  // no _has_bits_
@@ -370,17 +368,17 @@ const ::PROTOBUF_NAMESPACE_ID::uint32 TableStruct_rpc_5fservice_2eproto::offsets
 static const ::PROTOBUF_NAMESPACE_ID::internal::MigrationSchema schemas[] PROTOBUF_SECTION_VARIABLE(protodesc_cold) = {
   { 0, 7, sizeof(::rpc::RpcRequest_MetadataEntry_DoNotUse)},
   { 9, -1, sizeof(::rpc::RpcRequest)},
-  { 18, -1, sizeof(::rpc::RpcResponse)},
-  { 26, 33, sizeof(::rpc::Heartbeat_ExtraEntry_DoNotUse)},
-  { 35, -1, sizeof(::rpc::Heartbeat)},
-  { 44, 51, sizeof(::rpc::ServiceRegister_TagsEntry_DoNotUse)},
-  { 53, -1, sizeof(::rpc::ServiceRegister)},
-  { 63, -1, sizeof(::rpc::ServiceDiscover)},
-  { 69, 76, sizeof(::rpc::ServiceNode_TagsEntry_DoNotUse)},
-  { 78, -1, sizeof(::rpc::ServiceNode)},
-  { 87, -1, sizeof(::rpc::ServiceDiscoverResult)},
-  { 93, -1, sizeof(::rpc::EchoRequest)},
-  { 99, -1, sizeof(::rpc::EchoResponse)},
+  { 16, -1, sizeof(::rpc::RpcResponse)},
+  { 24, 31, sizeof(::rpc::Heartbeat_ExtraEntry_DoNotUse)},
+  { 33, -1, sizeof(::rpc::Heartbeat)},
+  { 42, 49, sizeof(::rpc::ServiceRegister_TagsEntry_DoNotUse)},
+  { 51, -1, sizeof(::rpc::ServiceRegister)},
+  { 61, -1, sizeof(::rpc::ServiceDiscover)},
+  { 67, 74, sizeof(::rpc::ServiceNode_TagsEntry_DoNotUse)},
+  { 76, -1, sizeof(::rpc::ServiceNode)},
+  { 85, -1, sizeof(::rpc::ServiceDiscoverResult)},
+  { 91, -1, sizeof(::rpc::EchoRequest)},
+  { 97, -1, sizeof(::rpc::EchoResponse)},
 };
 
 static ::PROTOBUF_NAMESPACE_ID::Message const * const file_default_instances[] = {
@@ -400,30 +398,28 @@ static ::PROTOBUF_NAMESPACE_ID::Message const * const file_default_instances[] =
 };
 
 const char descriptor_table_protodef_rpc_5fservice_2eproto[] PROTOBUF_SECTION_VARIABLE(protodesc_cold) =
-  "\n\021rpc_service.proto\022\003rpc\"\252\001\n\nRpcRequest\022"
-  "\024\n\014service_name\030\001 \001(\t\022\023\n\013method_name\030\002 \001"
-  "(\t\022\017\n\007payload\030\003 \001(\014\022/\n\010metadata\030\004 \003(\0132\035."
-  "rpc.RpcRequest.MetadataEntry\032/\n\rMetadata"
-  "Entry\022\013\n\003key\030\001 \001(\t\022\r\n\005value\030\002 \001(\t:\0028\001\"B\n"
-  "\013RpcResponse\022\017\n\007success\030\001 \001(\010\022\017\n\007payload"
-  "\030\002 \001(\014\022\021\n\terror_msg\030\003 \001(\t\"\235\001\n\tHeartbeat\022"
-  "\024\n\014service_name\030\001 \001(\t\022\017\n\007node_id\030\002 \001(\t\022\021"
-  "\n\ttimestamp\030\003 \001(\003\022(\n\005extra\030\004 \003(\0132\031.rpc.H"
-  "eartbeat.ExtraEntry\032,\n\nExtraEntry\022\013\n\003key"
-  "\030\001 \001(\t\022\r\n\005value\030\002 \001(\t:\0028\001\"\257\001\n\017ServiceReg"
-  "ister\022\024\n\014service_name\030\001 \001(\t\022\017\n\007node_id\030\002"
-  " \001(\t\022\014\n\004host\030\003 \001(\t\022\014\n\004port\030\004 \001(\005\022,\n\004tags"
-  "\030\005 \003(\0132\036.rpc.ServiceRegister.TagsEntry\032+"
-  "\n\tTagsEntry\022\013\n\003key\030\001 \001(\t\022\r\n\005value\030\002 \001(\t:"
-  "\0028\001\"\'\n\017ServiceDiscover\022\024\n\014service_name\030\001"
-  " \001(\t\"\221\001\n\013ServiceNode\022\017\n\007node_id\030\001 \001(\t\022\014\n"
-  "\004host\030\002 \001(\t\022\014\n\004port\030\003 \001(\005\022(\n\004tags\030\004 \003(\0132"
-  "\032.rpc.ServiceNode.TagsEntry\032+\n\tTagsEntry"
-  "\022\013\n\003key\030\001 \001(\t\022\r\n\005value\030\002 \001(\t:\0028\001\"8\n\025Serv"
-  "iceDiscoverResult\022\037\n\005nodes\030\001 \003(\0132\020.rpc.S"
-  "erviceNode\"\036\n\013EchoRequest\022\017\n\007message\030\001 \001"
-  "(\t\"\037\n\014EchoResponse\022\017\n\007message\030\001 \001(\tb\006pro"
-  "to3"
+  "\n\021rpc_service.proto\022\003rpc\"\177\n\nRpcRequest\022\017"
+  "\n\007payload\030\001 \001(\014\022/\n\010metadata\030\002 \003(\0132\035.rpc."
+  "RpcRequest.MetadataEntry\032/\n\rMetadataEntr"
+  "y\022\013\n\003key\030\001 \001(\t\022\r\n\005value\030\002 \001(\t:\0028\001\"B\n\013Rpc"
+  "Response\022\017\n\007success\030\001 \001(\010\022\017\n\007payload\030\002 \001"
+  "(\014\022\021\n\terror_msg\030\003 \001(\t\"\235\001\n\tHeartbeat\022\024\n\014s"
+  "ervice_name\030\001 \001(\t\022\017\n\007node_id\030\002 \001(\t\022\021\n\tti"
+  "mestamp\030\003 \001(\003\022(\n\005extra\030\004 \003(\0132\031.rpc.Heart"
+  "beat.ExtraEntry\032,\n\nExtraEntry\022\013\n\003key\030\001 \001"
+  "(\t\022\r\n\005value\030\002 \001(\t:\0028\001\"\257\001\n\017ServiceRegiste"
+  "r\022\024\n\014service_name\030\001 \001(\t\022\017\n\007node_id\030\002 \001(\t"
+  "\022\014\n\004host\030\003 \001(\t\022\014\n\004port\030\004 \001(\005\022,\n\004tags\030\005 \003"
+  "(\0132\036.rpc.ServiceRegister.TagsEntry\032+\n\tTa"
+  "gsEntry\022\013\n\003key\030\001 \001(\t\022\r\n\005value\030\002 \001(\t:\0028\001\""
+  "\'\n\017ServiceDiscover\022\024\n\014service_name\030\001 \001(\t"
+  "\"\221\001\n\013ServiceNode\022\017\n\007node_id\030\001 \001(\t\022\014\n\004hos"
+  "t\030\002 \001(\t\022\014\n\004port\030\003 \001(\005\022(\n\004tags\030\004 \003(\0132\032.rp"
+  "c.ServiceNode.TagsEntry\032+\n\tTagsEntry\022\013\n\003"
+  "key\030\001 \001(\t\022\r\n\005value\030\002 \001(\t:\0028\001\"8\n\025ServiceD"
+  "iscoverResult\022\037\n\005nodes\030\001 \003(\0132\020.rpc.Servi"
+  "ceNode\"\036\n\013EchoRequest\022\017\n\007message\030\001 \001(\t\"\037"
+  "\n\014EchoResponse\022\017\n\007message\030\001 \001(\tb\006proto3"
   ;
 static const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable*const descriptor_table_rpc_5fservice_2eproto_deps[1] = {
 };
@@ -444,7 +440,7 @@ static ::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase*const descriptor_table_rpc
 };
 static ::PROTOBUF_NAMESPACE_ID::internal::once_flag descriptor_table_rpc_5fservice_2eproto_once;
 const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable descriptor_table_rpc_5fservice_2eproto = {
-  false, false, descriptor_table_protodef_rpc_5fservice_2eproto, "rpc_service.proto", 923,
+  false, false, descriptor_table_protodef_rpc_5fservice_2eproto, "rpc_service.proto", 879,
   &descriptor_table_rpc_5fservice_2eproto_once, descriptor_table_rpc_5fservice_2eproto_sccs, descriptor_table_rpc_5fservice_2eproto_deps, 13, 0,
   schemas, file_default_instances, TableStruct_rpc_5fservice_2eproto::offsets,
   file_level_metadata_rpc_5fservice_2eproto, 13, file_level_enum_descriptors_rpc_5fservice_2eproto, file_level_service_descriptors_rpc_5fservice_2eproto,
@@ -490,16 +486,6 @@ RpcRequest::RpcRequest(const RpcRequest& from)
   : ::PROTOBUF_NAMESPACE_ID::Message() {
   _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
   metadata_.MergeFrom(from.metadata_);
-  service_name_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
-  if (!from._internal_service_name().empty()) {
-    service_name_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), from._internal_service_name(),
-      GetArena());
-  }
-  method_name_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
-  if (!from._internal_method_name().empty()) {
-    method_name_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), from._internal_method_name(),
-      GetArena());
-  }
   payload_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
   if (!from._internal_payload().empty()) {
     payload_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), from._internal_payload(),
@@ -510,8 +496,6 @@ RpcRequest::RpcRequest(const RpcRequest& from)
 
 void RpcRequest::SharedCtor() {
   ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&scc_info_RpcRequest_rpc_5fservice_2eproto.base);
-  service_name_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
-  method_name_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
   payload_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
 }
 
@@ -523,8 +507,6 @@ RpcRequest::~RpcRequest() {
 
 void RpcRequest::SharedDtor() {
   GOOGLE_DCHECK(GetArena() == nullptr);
-  service_name_.DestroyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
-  method_name_.DestroyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
   payload_.DestroyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
 }
 
@@ -550,8 +532,6 @@ void RpcRequest::Clear() {
   (void) cached_has_bits;
 
   metadata_.Clear();
-  service_name_.ClearToEmpty(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
-  method_name_.ClearToEmpty(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
   payload_.ClearToEmpty(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
   _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
@@ -564,42 +544,24 @@ const char* RpcRequest::_InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID:
     ptr = ::PROTOBUF_NAMESPACE_ID::internal::ReadTag(ptr, &tag);
     CHK_(ptr);
     switch (tag >> 3) {
-      // string service_name = 1;
+      // bytes payload = 1;
       case 1:
         if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 10)) {
-          auto str = _internal_mutable_service_name();
-          ptr = ::PROTOBUF_NAMESPACE_ID::internal::InlineGreedyStringParser(str, ptr, ctx);
-          CHK_(::PROTOBUF_NAMESPACE_ID::internal::VerifyUTF8(str, "rpc.RpcRequest.service_name"));
-          CHK_(ptr);
-        } else goto handle_unusual;
-        continue;
-      // string method_name = 2;
-      case 2:
-        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 18)) {
-          auto str = _internal_mutable_method_name();
-          ptr = ::PROTOBUF_NAMESPACE_ID::internal::InlineGreedyStringParser(str, ptr, ctx);
-          CHK_(::PROTOBUF_NAMESPACE_ID::internal::VerifyUTF8(str, "rpc.RpcRequest.method_name"));
-          CHK_(ptr);
-        } else goto handle_unusual;
-        continue;
-      // bytes payload = 3;
-      case 3:
-        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 26)) {
           auto str = _internal_mutable_payload();
           ptr = ::PROTOBUF_NAMESPACE_ID::internal::InlineGreedyStringParser(str, ptr, ctx);
           CHK_(ptr);
         } else goto handle_unusual;
         continue;
-      // map<string, string> metadata = 4;
-      case 4:
-        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 34)) {
+      // map<string, string> metadata = 2;
+      case 2:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 18)) {
           ptr -= 1;
           do {
             ptr += 1;
             ptr = ctx->ParseMessage(&metadata_, ptr);
             CHK_(ptr);
             if (!ctx->DataAvailable(ptr)) break;
-          } while (::PROTOBUF_NAMESPACE_ID::internal::ExpectTag<34>(ptr));
+          } while (::PROTOBUF_NAMESPACE_ID::internal::ExpectTag<18>(ptr));
         } else goto handle_unusual;
         continue;
       default: {
@@ -630,33 +592,13 @@ failure:
   ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
-  // string service_name = 1;
-  if (this->service_name().size() > 0) {
-    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
-      this->_internal_service_name().data(), static_cast<int>(this->_internal_service_name().length()),
-      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE,
-      "rpc.RpcRequest.service_name");
-    target = stream->WriteStringMaybeAliased(
-        1, this->_internal_service_name(), target);
-  }
-
-  // string method_name = 2;
-  if (this->method_name().size() > 0) {
-    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
-      this->_internal_method_name().data(), static_cast<int>(this->_internal_method_name().length()),
-      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE,
-      "rpc.RpcRequest.method_name");
-    target = stream->WriteStringMaybeAliased(
-        2, this->_internal_method_name(), target);
-  }
-
-  // bytes payload = 3;
+  // bytes payload = 1;
   if (this->payload().size() > 0) {
     target = stream->WriteBytesMaybeAliased(
-        3, this->_internal_payload(), target);
+        1, this->_internal_payload(), target);
   }
 
-  // map<string, string> metadata = 4;
+  // map<string, string> metadata = 2;
   if (!this->_internal_metadata().empty()) {
     typedef ::PROTOBUF_NAMESPACE_ID::Map< std::string, std::string >::const_pointer
         ConstPtr;
@@ -688,14 +630,14 @@ failure:
       }
       ::std::sort(&items[0], &items[static_cast<ptrdiff_t>(n)], Less());
       for (size_type i = 0; i < n; i++) {
-        target = RpcRequest_MetadataEntry_DoNotUse::Funcs::InternalSerialize(4, items[static_cast<ptrdiff_t>(i)]->first, items[static_cast<ptrdiff_t>(i)]->second, target, stream);
+        target = RpcRequest_MetadataEntry_DoNotUse::Funcs::InternalSerialize(2, items[static_cast<ptrdiff_t>(i)]->first, items[static_cast<ptrdiff_t>(i)]->second, target, stream);
         Utf8Check::Check(&(*items[static_cast<ptrdiff_t>(i)]));
       }
     } else {
       for (::PROTOBUF_NAMESPACE_ID::Map< std::string, std::string >::const_iterator
           it = this->_internal_metadata().begin();
           it != this->_internal_metadata().end(); ++it) {
-        target = RpcRequest_MetadataEntry_DoNotUse::Funcs::InternalSerialize(4, it->first, it->second, target, stream);
+        target = RpcRequest_MetadataEntry_DoNotUse::Funcs::InternalSerialize(2, it->first, it->second, target, stream);
         Utf8Check::Check(&(*it));
       }
     }
@@ -717,7 +659,7 @@ size_t RpcRequest::ByteSizeLong() const {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  // map<string, string> metadata = 4;
+  // map<string, string> metadata = 2;
   total_size += 1 *
       ::PROTOBUF_NAMESPACE_ID::internal::FromIntSize(this->_internal_metadata_size());
   for (::PROTOBUF_NAMESPACE_ID::Map< std::string, std::string >::const_iterator
@@ -726,21 +668,7 @@ size_t RpcRequest::ByteSizeLong() const {
     total_size += RpcRequest_MetadataEntry_DoNotUse::Funcs::ByteSizeLong(it->first, it->second);
   }
 
-  // string service_name = 1;
-  if (this->service_name().size() > 0) {
-    total_size += 1 +
-      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
-        this->_internal_service_name());
-  }
-
-  // string method_name = 2;
-  if (this->method_name().size() > 0) {
-    total_size += 1 +
-      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
-        this->_internal_method_name());
-  }
-
-  // bytes payload = 3;
+  // bytes payload = 1;
   if (this->payload().size() > 0) {
     total_size += 1 +
       ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::BytesSize(
@@ -779,12 +707,6 @@ void RpcRequest::MergeFrom(const RpcRequest& from) {
   (void) cached_has_bits;
 
   metadata_.MergeFrom(from.metadata_);
-  if (from.service_name().size() > 0) {
-    _internal_set_service_name(from._internal_service_name());
-  }
-  if (from.method_name().size() > 0) {
-    _internal_set_method_name(from._internal_method_name());
-  }
   if (from.payload().size() > 0) {
     _internal_set_payload(from._internal_payload());
   }
@@ -812,8 +734,6 @@ void RpcRequest::InternalSwap(RpcRequest* other) {
   using std::swap;
   _internal_metadata_.Swap<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(&other->_internal_metadata_);
   metadata_.Swap(&other->metadata_);
-  service_name_.Swap(&other->service_name_, &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
-  method_name_.Swap(&other->method_name_, &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
   payload_.Swap(&other->payload_, &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
 }
 
