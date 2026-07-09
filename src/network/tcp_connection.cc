@@ -24,7 +24,9 @@ TcpConnection::TcpConnection(EventLoop* loop,
       channel_(new Channel(loop, sockfd)),
       localAddr_(localAddr),
       peerAddr_(peerAddr),
-      context_(nullptr) {
+      context_(nullptr), 
+      idleTimeoutSeconds_(0),
+      lastActiveTime_(std::chrono::steady_clock::now()) {
     
     channel_->setReadCallback(std::bind(&TcpConnection::handleRead, this));
     channel_->setWriteCallback(std::bind(&TcpConnection::handleWrite, this));
@@ -36,6 +38,38 @@ TcpConnection::TcpConnection(EventLoop* loop,
 
 TcpConnection::~TcpConnection() {
     // LOG_DEBUG
+}
+
+// ... 新增方法 ...
+void TcpConnection::setIdleTimeout(int seconds) {
+    idleTimeoutSeconds_ = seconds;
+    updateActiveTime();
+}
+
+void TcpConnection::updateActiveTime() {
+    lastActiveTime_ = std::chrono::steady_clock::now();
+}
+
+bool TcpConnection::checkIdleTimeout() {
+    if (idleTimeoutSeconds_ <= 0) return false;
+    
+    auto now = std::chrono::steady_clock::now();
+    auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(now - lastActiveTime_).count();
+
+    // 调试日志
+    // std::cout << "checkIdleTimeout: " << name_ << " elapsed=" << elapsed 
+    //           << " timeout=" << idleTimeoutSeconds_ << std::endl;
+    
+    if (elapsed >= idleTimeoutSeconds_) {
+        // std::cout << "Idle timeout! closing " << name_ << std::endl;
+        // 原来：直接调 handleClose
+        // loop_->runInLoop(std::bind(&TcpConnection::handleClose, shared_from_this()));
+        
+        // 改为：调 forceClose
+        forceClose();
+        return true;
+    }
+    return false;
 }
 
 void TcpConnection::connectEstablished() {
@@ -137,11 +171,16 @@ void TcpConnection::shutdownInLoop() {
 
 void TcpConnection::handleRead() {
     loop_->assertInLoopThread();
+    updateActiveTime();  // ← 新增
+
     std::cout << "handleRead: " << name_ << std::endl;  // ← 加
+
     int savedErrno = 0;
     int64_t receiveTime = 0; // 或用 time(nullptr)
     ssize_t n = inputBuffer_.readFd(channel_->fd(), &savedErrno);
+
     std::cout << "readFd n=" << n << " errno=" << savedErrno << std::endl;  // ← 加
+
     if (n > 0) {
         if (messageCallback_) {
             messageCallback_(shared_from_this(), &inputBuffer_, receiveTime);
@@ -157,6 +196,8 @@ void TcpConnection::handleRead() {
 
 void TcpConnection::handleWrite() {
     loop_->assertInLoopThread();
+    updateActiveTime();  // ← 新增
+
     if (channel_->isWriting()) {
         ssize_t n = ::write(channel_->fd(), outputBuffer_.peek(), outputBuffer_.readableBytes());
         if (n > 0) {
@@ -205,6 +246,14 @@ void TcpConnection::handleError() {
 
 void TcpConnection::setState(StateE s) {
     state_ = s;
+}
+
+// tcp_connection.cc
+void TcpConnection::forceClose() {
+    if (state_ == kConnected || state_ == kDisconnecting) {
+        setState(kDisconnecting);
+        loop_->queueInLoop(std::bind(&TcpConnection::handleClose, shared_from_this()));
+    }
 }
 
 } // namespace rpc

@@ -176,9 +176,20 @@ CMakeFiles/network.dir/src/network/tcp_server.cc.o: \
  /home/machao/projects/rpc_framework/src/network/event_loop.h \
  /usr/include/x86_64-linux-gnu/sys/epoll.h \
  /usr/include/x86_64-linux-gnu/bits/epoll.h /usr/include/c++/11/cassert \
- /usr/include/assert.h \
+ /usr/include/assert.h /usr/include/c++/11/mutex \
+ /usr/include/c++/11/chrono /usr/include/c++/11/ratio \
+ /usr/include/c++/11/limits /usr/include/c++/11/ctime \
+ /usr/include/c++/11/bits/parse_numbers.h \
+ /usr/include/c++/11/system_error \
+ /usr/include/x86_64-linux-gnu/c++/11/bits/error_constants.h \
+ /usr/include/c++/11/stdexcept /usr/include/c++/11/bits/std_mutex.h \
+ /usr/include/c++/11/bits/unique_lock.h /usr/include/c++/11/queue \
+ /usr/include/c++/11/deque /usr/include/c++/11/bits/stl_deque.h \
+ /usr/include/c++/11/bits/deque.tcc /usr/include/c++/11/bits/stl_queue.h \
  /home/machao/projects/rpc_framework/src/network/acceptor.h \
  /home/machao/projects/rpc_framework/src/network/tcp_connection.h \
- /usr/include/c++/11/atomic /usr/include/arpa/inet.h \
- /usr/include/c++/11/cstring /usr/include/string.h /usr/include/strings.h \
+ /usr/include/c++/11/atomic \
+ /home/machao/projects/rpc_framework/src/network/buffer.h \
+ /usr/include/arpa/inet.h /usr/include/c++/11/cstring \
+ /usr/include/string.h /usr/include/strings.h \
  /home/machao/projects/rpc_framework/src/network/event_loop_thread_pool.h

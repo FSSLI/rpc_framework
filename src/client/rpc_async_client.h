@@ -44,6 +44,9 @@ public:
 
     bool connected() const;
 
+    void startHeartbeat(double intervalSeconds = 30.0);
+    void stopHeartbeat();
+
 private:
     void onConnection(const TcpConnectionPtr& conn);
     void onMessage(const TcpConnectionPtr& conn, Buffer* buf, int64_t);
@@ -66,6 +69,9 @@ private:
     std::mutex pendingMutex_;
     std::unordered_map<uint64_t, ResponsePromise> pendingPromises_;
     std::unordered_map<uint64_t, ResponseCallback> pendingCallbacks_;
+
+    // 新增
+    std::atomic<bool> heartbeatRunning_{false};
 };
 
 } // namespace rpc

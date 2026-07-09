@@ -188,4 +188,30 @@ bool RpcAsyncClient::connected() const {
     return connected_;
 }
 
+// src/client/rpc_async_client.cc
+void RpcAsyncClient::startHeartbeat(double intervalSeconds) {
+    if (loop_ && !heartbeatRunning_.exchange(true)) {
+        // 在 IO 线程启动定时器
+        loop_->runInLoop([this, intervalSeconds]() {
+            loop_->runEvery(intervalSeconds, [this]() {
+                if (connected_ && connection_) {
+                    rpc::Heartbeat hb;
+                    hb.set_service_name("client");
+                    hb.set_node_id("node_1");
+                    hb.set_timestamp(std::time(nullptr));
+                    
+                    std::string packet = Codec::encodeHeartbeat(hb);
+                    std::string packetWithLen = Codec::encodeWithLength(packet);
+                    connection_->send(packetWithLen);
+                }
+            });
+        });
+    }
+}
+
+void RpcAsyncClient::stopHeartbeat() {
+    heartbeatRunning_ = false;
+    // 实际停止需要定时器支持 cancel，当前简化版不支持
+}
+
 } // namespace rpc

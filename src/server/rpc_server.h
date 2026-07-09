@@ -23,6 +23,9 @@ public:
     // 启动
     void start();
 
+    // 新增：设置连接 idle 超时（秒），透传给 TcpServer
+    void setIdleTimeout(int seconds) { server_.setIdleTimeout(seconds); }
+
 private:
     void onConnection(const TcpConnectionPtr& conn);
     void onMessage(const TcpConnectionPtr& conn, Buffer* buf, int64_t);

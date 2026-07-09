@@ -7,6 +7,7 @@
 #include <vector>
 #include <unordered_map>
 #include <functional>
+#include <mutex>  // ← 新增
 
 namespace rpc {
 
@@ -44,6 +45,8 @@ private:
     
     // 物理节点 -> 虚拟节点hash值列表
     std::unordered_map<std::string, std::vector<uint32_t>> nodeHashes_;
+    
+    mutable std::mutex mutex_;  // ← 新增：保护 ring_ 和 nodeHashes_
 };
 
 } // namespace rpc

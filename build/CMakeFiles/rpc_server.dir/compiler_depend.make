@@ -568,10 +568,25 @@ CMakeFiles/rpc_server.dir/examples/rpc/rpc_server_main.cc.o: ../examples/rpc/rpc
   /usr/include/x86_64-linux-gnu/bits/epoll.h \
   /usr/include/c++/11/cassert \
   /usr/include/assert.h \
+  /usr/include/c++/11/mutex \
+  /usr/include/c++/11/chrono \
+  /usr/include/c++/11/ratio \
+  /usr/include/c++/11/limits \
+  /usr/include/c++/11/ctime \
+  /usr/include/c++/11/bits/parse_numbers.h \
+  /usr/include/c++/11/system_error \
+  /usr/include/x86_64-linux-gnu/c++/11/bits/error_constants.h \
+  /usr/include/c++/11/stdexcept \
+  /usr/include/c++/11/bits/std_mutex.h \
+  /usr/include/c++/11/bits/unique_lock.h \
+  /usr/include/c++/11/queue \
+  /usr/include/c++/11/deque \
+  /usr/include/c++/11/bits/stl_deque.h \
+  /usr/include/c++/11/bits/deque.tcc \
+  /usr/include/c++/11/bits/stl_queue.h \
   ../src/codec/rpc_codec.h \
   ../src/network/buffer.h \
   ../src/protocol/rpc_service.pb.h \
-  /usr/include/c++/11/limits \
   /usr/include/google/protobuf/port_def.inc \
   /usr/include/google/protobuf/port_undef.inc \
   /usr/include/google/protobuf/io/coded_stream.h \
@@ -632,9 +647,6 @@ CMakeFiles/rpc_server.dir/examples/rpc/rpc_server_main.cc.o: ../examples/rpc/rpc
   /usr/include/c++/11/bits/ios_base.h \
   /usr/include/c++/11/bits/locale_classes.h \
   /usr/include/c++/11/bits/locale_classes.tcc \
-  /usr/include/c++/11/system_error \
-  /usr/include/x86_64-linux-gnu/c++/11/bits/error_constants.h \
-  /usr/include/c++/11/stdexcept \
   /usr/include/c++/11/streambuf \
   /usr/include/c++/11/bits/streambuf.tcc \
   /usr/include/c++/11/bits/basic_ios.h \
@@ -677,13 +689,6 @@ CMakeFiles/rpc_server.dir/examples/rpc/rpc_server_main.cc.o: ../examples/rpc/rpc
   /usr/include/google/protobuf/message_lite.h \
   /usr/include/google/protobuf/metadata_lite.h \
   /usr/include/google/protobuf/stubs/once.h \
-  /usr/include/c++/11/mutex \
-  /usr/include/c++/11/chrono \
-  /usr/include/c++/11/ratio \
-  /usr/include/c++/11/ctime \
-  /usr/include/c++/11/bits/parse_numbers.h \
-  /usr/include/c++/11/bits/std_mutex.h \
-  /usr/include/c++/11/bits/unique_lock.h \
   /usr/include/google/protobuf/map_type_handler.h \
   /usr/include/google/protobuf/parse_context.h \
   /usr/include/google/protobuf/io/zero_copy_stream.h \
@@ -719,6 +724,8 @@ CMakeFiles/rpc_server.dir/examples/rpc/rpc_server_main.cc.o: ../examples/rpc/rpc
 /usr/include/arpa/inet.h:
 
 ../src/codec/rpc_codec.h:
+
+/usr/include/c++/11/deque:
 
 ../src/network/event_loop.h:
 
@@ -834,6 +841,8 @@ CMakeFiles/rpc_server.dir/examples/rpc/rpc_server_main.cc.o: ../examples/rpc/rpc
 
 /usr/include/c++/11/backward/auto_ptr.h:
 
+/usr/include/c++/11/queue:
+
 /usr/include/c++/11/bits/shared_ptr_atomic.h:
 
 /usr/include/c++/11/ext/concurrence.h:
@@ -931,6 +940,8 @@ CMakeFiles/rpc_server.dir/examples/rpc/rpc_server_main.cc.o: ../examples/rpc/rpc
 /usr/include/x86_64-linux-gnu/c++/11/bits/gthr-default.h:
 
 /usr/include/x86_64-linux-gnu/bits/endian.h:
+
+/usr/include/c++/11/bits/stl_deque.h:
 
 /usr/include/x86_64-linux-gnu/gnu/stubs.h:
 
@@ -1074,9 +1085,13 @@ CMakeFiles/rpc_server.dir/examples/rpc/rpc_server_main.cc.o: ../examples/rpc/rpc
 
 /usr/include/x86_64-linux-gnu/bits/local_lim.h:
 
+/usr/include/c++/11/bits/stl_queue.h:
+
 /usr/include/x86_64-linux-gnu/bits/stdint-uintn.h:
 
 /usr/include/x86_64-linux-gnu/bits/types/struct_timespec.h:
+
+/usr/include/c++/11/bits/deque.tcc:
 
 ../src/server/rpc_service.h:
 

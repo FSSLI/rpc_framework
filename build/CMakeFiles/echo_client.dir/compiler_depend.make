@@ -136,6 +136,12 @@ CMakeFiles/echo_client.dir/examples/echo/echo_client.cc.o: ../examples/echo/echo
   /usr/include/c++/11/functional \
   /usr/include/c++/11/bits/std_function.h \
   /usr/include/c++/11/atomic \
+  /usr/include/c++/11/chrono \
+  /usr/include/c++/11/ratio \
+  /usr/include/c++/11/cstdint \
+  /usr/include/c++/11/limits \
+  /usr/include/c++/11/ctime \
+  /usr/include/c++/11/bits/parse_numbers.h \
   ../src/network/buffer.h \
   /usr/include/c++/11/vector \
   /usr/include/c++/11/bits/stl_vector.h \
@@ -143,7 +149,6 @@ CMakeFiles/echo_client.dir/examples/echo/echo_client.cc.o: ../examples/echo/echo
   /usr/include/c++/11/bits/vector.tcc \
   /usr/include/c++/11/string \
   /usr/include/c++/11/bits/char_traits.h \
-  /usr/include/c++/11/cstdint \
   /usr/include/c++/11/bits/localefwd.h \
   /usr/include/x86_64-linux-gnu/c++/11/bits/c++locale.h \
   /usr/include/c++/11/clocale \
@@ -215,10 +220,19 @@ CMakeFiles/echo_client.dir/examples/echo/echo_client.cc.o: ../examples/echo/echo
   /usr/include/x86_64-linux-gnu/bits/epoll.h \
   /usr/include/c++/11/cassert \
   /usr/include/assert.h \
-  ../src/network/buffer.h \
+  /usr/include/c++/11/mutex \
+  /usr/include/c++/11/system_error \
+  /usr/include/x86_64-linux-gnu/c++/11/bits/error_constants.h \
+  /usr/include/c++/11/stdexcept \
+  /usr/include/c++/11/bits/std_mutex.h \
+  /usr/include/c++/11/bits/unique_lock.h \
+  /usr/include/c++/11/queue \
+  /usr/include/c++/11/deque \
+  /usr/include/c++/11/bits/stl_deque.h \
+  /usr/include/c++/11/bits/deque.tcc \
+  /usr/include/c++/11/bits/stl_queue.h \
   ../src/codec/rpc_codec.h \
   ../src/protocol/rpc_service.pb.h \
-  /usr/include/c++/11/limits \
   /usr/include/google/protobuf/port_def.inc \
   /usr/include/google/protobuf/port_undef.inc \
   /usr/include/google/protobuf/io/coded_stream.h \
@@ -278,9 +292,6 @@ CMakeFiles/echo_client.dir/examples/echo/echo_client.cc.o: ../examples/echo/echo
   /usr/include/c++/11/bits/ios_base.h \
   /usr/include/c++/11/bits/locale_classes.h \
   /usr/include/c++/11/bits/locale_classes.tcc \
-  /usr/include/c++/11/system_error \
-  /usr/include/x86_64-linux-gnu/c++/11/bits/error_constants.h \
-  /usr/include/c++/11/stdexcept \
   /usr/include/c++/11/streambuf \
   /usr/include/c++/11/bits/streambuf.tcc \
   /usr/include/c++/11/bits/basic_ios.h \
@@ -333,13 +344,6 @@ CMakeFiles/echo_client.dir/examples/echo/echo_client.cc.o: ../examples/echo/echo
   /usr/include/google/protobuf/message_lite.h \
   /usr/include/google/protobuf/metadata_lite.h \
   /usr/include/google/protobuf/stubs/once.h \
-  /usr/include/c++/11/mutex \
-  /usr/include/c++/11/chrono \
-  /usr/include/c++/11/ratio \
-  /usr/include/c++/11/ctime \
-  /usr/include/c++/11/bits/parse_numbers.h \
-  /usr/include/c++/11/bits/std_mutex.h \
-  /usr/include/c++/11/bits/unique_lock.h \
   /usr/include/google/protobuf/map_type_handler.h \
   /usr/include/google/protobuf/parse_context.h \
   /usr/include/google/protobuf/io/zero_copy_stream.h \
@@ -403,16 +407,6 @@ CMakeFiles/echo_client.dir/examples/echo/echo_client.cc.o: ../examples/echo/echo
 /usr/include/google/protobuf/parse_context.h:
 
 /usr/include/google/protobuf/map_type_handler.h:
-
-/usr/include/c++/11/bits/std_mutex.h:
-
-/usr/include/c++/11/bits/parse_numbers.h:
-
-/usr/include/c++/11/ctime:
-
-/usr/include/c++/11/ratio:
-
-/usr/include/c++/11/mutex:
 
 /usr/include/google/protobuf/stubs/once.h:
 
@@ -492,12 +486,6 @@ CMakeFiles/echo_client.dir/examples/echo/echo_client.cc.o: ../examples/echo/echo
 
 /usr/include/c++/11/streambuf:
 
-/usr/include/google/protobuf/arena_impl.h:
-
-/usr/include/c++/11/stdexcept:
-
-/usr/include/c++/11/system_error:
-
 /usr/include/c++/11/bits/locale_classes.tcc:
 
 /usr/include/c++/11/bits/locale_classes.h:
@@ -522,6 +510,28 @@ CMakeFiles/echo_client.dir/examples/echo/echo_client.cc.o: ../examples/echo/echo
 
 /usr/include/x86_64-linux-gnu/bits/getopt_core.h:
 
+/usr/include/x86_64-linux-gnu/bits/confname.h:
+
+/usr/include/x86_64-linux-gnu/bits/posix_opt.h:
+
+/usr/include/x86_64-linux-gnu/bits/sigstksz.h:
+
+/usr/include/x86_64-linux-gnu/sys/ucontext.h:
+
+/usr/include/x86_64-linux-gnu/bits/types/stack_t.h:
+
+/usr/include/x86_64-linux-gnu/bits/sigcontext.h:
+
+/usr/include/x86_64-linux-gnu/bits/sigaction.h:
+
+/usr/include/x86_64-linux-gnu/bits/sigevent-consts.h:
+
+/usr/include/x86_64-linux-gnu/bits/types/sigval_t.h:
+
+/usr/include/x86_64-linux-gnu/bits/siginfo-consts-arch.h:
+
+/usr/include/x86_64-linux-gnu/bits/siginfo-consts.h:
+
 /usr/include/c++/11/exception:
 
 /usr/include/c++/11/ext/concurrence.h:
@@ -533,6 +543,8 @@ CMakeFiles/echo_client.dir/examples/echo/echo_client.cc.o: ../examples/echo/echo
 /usr/include/x86_64-linux-gnu/bits/types/__fpos64_t.h:
 
 /usr/include/x86_64-linux-gnu/bits/types/timer_t.h:
+
+/usr/include/c++/11/mutex:
 
 /usr/include/c++/11/ext/atomicity.h:
 
@@ -556,8 +568,6 @@ CMakeFiles/echo_client.dir/examples/echo/echo_client.cc.o: ../examples/echo/echo
 
 /usr/include/x86_64-linux-gnu/bits/endian.h:
 
-/usr/include/x86_64-linux-gnu/gnu/stubs.h:
-
 /usr/include/wctype.h:
 
 /usr/include/sched.h:
@@ -574,11 +584,11 @@ CMakeFiles/echo_client.dir/examples/echo/echo_client.cc.o: ../examples/echo/echo
 
 /usr/include/c++/11/ext/new_allocator.h:
 
-/usr/include/x86_64-linux-gnu/bits/sigcontext.h:
-
 /usr/include/x86_64-linux-gnu/bits/types/struct_sigstack.h:
 
 /usr/include/x86_64-linux-gnu/bits/types/__locale_t.h:
+
+/usr/include/c++/11/deque:
 
 /usr/include/google/protobuf/map_entry.h:
 
@@ -606,6 +616,8 @@ CMakeFiles/echo_client.dir/examples/echo/echo_client.cc.o: ../examples/echo/echo
 
 /usr/include/x86_64-linux-gnu/bits/types/struct_itimerspec.h:
 
+/usr/include/c++/11/bits/std_mutex.h:
+
 /usr/include/x86_64-linux-gnu/bits/pthreadtypes-arch.h:
 
 /usr/include/google/protobuf/stubs/common.h:
@@ -621,6 +633,10 @@ CMakeFiles/echo_client.dir/examples/echo/echo_client.cc.o: ../examples/echo/echo
 /usr/include/c++/11/cwchar:
 
 /usr/lib/gcc/x86_64-linux-gnu/11/include/stdint.h:
+
+/usr/include/unistd.h:
+
+/usr/include/c++/11/bits/stl_algobase.h:
 
 /usr/include/x86_64-linux-gnu/bits/sockaddr.h:
 
@@ -646,6 +662,8 @@ CMakeFiles/echo_client.dir/examples/echo/echo_client.cc.o: ../examples/echo/echo
 
 /usr/include/c++/11/algorithm:
 
+/usr/include/c++/11/bits/deque.tcc:
+
 /usr/include/asm-generic/posix_types.h:
 
 /usr/include/c++/11/ext/type_traits.h:
@@ -656,11 +674,15 @@ CMakeFiles/echo_client.dir/examples/echo/echo_client.cc.o: ../examples/echo/echo
 
 /usr/include/x86_64-linux-gnu/c++/11/bits/atomic_word.h:
 
+/usr/include/x86_64-linux-gnu/bits/environments.h:
+
+/usr/include/x86_64-linux-gnu/c++/11/bits/os_defines.h:
+
+/usr/include/c++/11/bits/exception_defines.h:
+
 /usr/include/c++/11/atomic:
 
 /usr/include/x86_64-linux-gnu/bits/byteswap.h:
-
-/usr/include/x86_64-linux-gnu/bits/siginfo-consts-arch.h:
 
 /usr/include/x86_64-linux-gnu/bits/atomic_wide_counter.h:
 
@@ -671,10 +693,6 @@ CMakeFiles/echo_client.dir/examples/echo/echo_client.cc.o: ../examples/echo/echo
 /usr/include/x86_64-linux-gnu/bits/types.h:
 
 /usr/include/x86_64-linux-gnu/bits/stdint-intn.h:
-
-/usr/include/c++/11/chrono:
-
-/usr/include/x86_64-linux-gnu/bits/wordsize.h:
 
 /usr/lib/gcc/x86_64-linux-gnu/11/include/stdarg.h:
 
@@ -720,13 +738,13 @@ CMakeFiles/echo_client.dir/examples/echo/echo_client.cc.o: ../examples/echo/echo
 
 /usr/include/google/protobuf/port_def.inc:
 
-/usr/include/x86_64-linux-gnu/bits/sigevent-consts.h:
-
 /usr/include/c++/11/initializer_list:
 
 /usr/include/c++/11/iosfwd:
 
 /usr/include/x86_64-linux-gnu/bits/time64.h:
+
+/usr/include/c++/11/ctime:
 
 /usr/include/x86_64-linux-gnu/sys/single_threaded.h:
 
@@ -766,17 +784,7 @@ CMakeFiles/echo_client.dir/examples/echo/echo_client.cc.o: ../examples/echo/echo
 
 /usr/include/x86_64-linux-gnu/bits/siginfo-arch.h:
 
-/usr/include/x86_64-linux-gnu/bits/confname.h:
-
 /usr/include/x86_64-linux-gnu/gnu/stubs-64.h:
-
-/usr/include/c++/11/bits/stl_algobase.h:
-
-/usr/include/unistd.h:
-
-/usr/include/x86_64-linux-gnu/bits/stdint-uintn.h:
-
-/usr/include/x86_64-linux-gnu/bits/types/struct_timespec.h:
 
 /usr/include/c++/11/memory:
 
@@ -791,10 +799,6 @@ CMakeFiles/echo_client.dir/examples/echo/echo_client.cc.o: ../examples/echo/echo
 /usr/include/x86_64-linux-gnu/bits/in.h:
 
 /usr/include/assert.h:
-
-/usr/include/c++/11/bits/unique_lock.h:
-
-/usr/include/c++/11/bits/uses_allocator.h:
 
 /usr/include/x86_64-linux-gnu/bits/types/struct_timeval.h:
 
@@ -829,12 +833,6 @@ CMakeFiles/echo_client.dir/examples/echo/echo_client.cc.o: ../examples/echo/echo
 /usr/include/c++/11/new:
 
 /usr/include/x86_64-linux-gnu/sys/epoll.h:
-
-/usr/include/x86_64-linux-gnu/c++/11/bits/error_constants.h:
-
-/usr/include/c++/11/ios:
-
-/usr/include/c++/11/utility:
 
 /usr/include/google/protobuf/generated_message_util.h:
 
@@ -874,6 +872,12 @@ CMakeFiles/echo_client.dir/examples/echo/echo_client.cc.o: ../examples/echo/echo
 
 /usr/include/c++/11/bits/stl_iterator_base_funcs.h:
 
+/usr/include/x86_64-linux-gnu/bits/stdint-uintn.h:
+
+/usr/include/x86_64-linux-gnu/bits/types/struct_timespec.h:
+
+/usr/include/c++/11/bits/stl_queue.h:
+
 /usr/include/c++/11/bits/stl_uninitialized.h:
 
 /usr/include/c++/11/backward/auto_ptr.h:
@@ -902,7 +906,11 @@ CMakeFiles/echo_client.dir/examples/echo/echo_client.cc.o: ../examples/echo/echo
 
 /usr/include/c++/11/bits/nested_exception.h:
 
+/usr/include/c++/11/queue:
+
 /usr/include/c++/11/bits/shared_ptr_atomic.h:
+
+/usr/include/c++/11/bits/parse_numbers.h:
 
 /usr/include/c++/11/bits/atomic_lockfree_defines.h:
 
@@ -920,11 +928,27 @@ CMakeFiles/echo_client.dir/examples/echo/echo_client.cc.o: ../examples/echo/echo
 
 /usr/include/x86_64-linux-gnu/asm/posix_types_64.h:
 
+/usr/include/x86_64-linux-gnu/bits/wordsize.h:
+
+/usr/include/c++/11/chrono:
+
+/usr/include/c++/11/cstdio:
+
+/usr/include/c++/11/ratio:
+
+/usr/include/x86_64-linux-gnu/bits/waitstatus.h:
+
+/usr/include/c++/11/cstdint:
+
+/usr/include/c++/11/limits:
+
 /usr/include/google/protobuf/any.h:
 
 /usr/include/c++/11/cstddef:
 
 /usr/include/c++/11/bits/stl_vector.h:
+
+/usr/include/c++/11/system_error:
 
 /usr/include/x86_64-linux-gnu/bits/types/struct___jmp_buf_tag.h:
 
@@ -932,11 +956,17 @@ CMakeFiles/echo_client.dir/examples/echo/echo_client.cc.o: ../examples/echo/echo
 
 /usr/include/c++/11/bits/stl_bvector.h:
 
+/usr/include/x86_64-linux-gnu/bits/types/sigevent_t.h:
+
+/usr/include/x86_64-linux-gnu/bits/types/struct_osockaddr.h:
+
 /usr/include/c++/11/bits/vector.tcc:
 
-/usr/include/x86_64-linux-gnu/bits/waitstatus.h:
+/usr/include/x86_64-linux-gnu/bits/types/__FILE.h:
 
-/usr/include/c++/11/cstdint:
+/usr/include/c++/11/cstring:
+
+/usr/include/x86_64-linux-gnu/asm/sockios.h:
 
 /usr/include/c++/11/bits/localefwd.h:
 
@@ -944,7 +974,9 @@ CMakeFiles/echo_client.dir/examples/echo/echo_client.cc.o: ../examples/echo/echo
 
 /usr/include/x86_64-linux-gnu/bits/xopen_lim.h:
 
-/usr/include/x86_64-linux-gnu/bits/siginfo-consts.h:
+/usr/include/x86_64-linux-gnu/bits/sigstack.h:
+
+/usr/include/c++/11/clocale:
 
 /usr/include/google/protobuf/stubs/macros.h:
 
@@ -978,8 +1010,6 @@ CMakeFiles/echo_client.dir/examples/echo/echo_client.cc.o: ../examples/echo/echo
 
 /usr/include/alloca.h:
 
-/usr/include/c++/11/cstdio:
-
 /usr/include/stdio.h:
 
 /usr/include/x86_64-linux-gnu/bits/types/cookie_io_functions_t.h:
@@ -997,8 +1027,6 @@ CMakeFiles/echo_client.dir/examples/echo/echo_client.cc.o: ../examples/echo/echo
 /usr/include/google/protobuf/stubs/stl_util.h:
 
 /usr/include/c++/11/bits/basic_string.tcc:
-
-/usr/include/x86_64-linux-gnu/bits/sigaction.h:
 
 /usr/include/c++/11/bits/stl_algo.h:
 
@@ -1020,10 +1048,6 @@ CMakeFiles/echo_client.dir/examples/echo/echo_client.cc.o: ../examples/echo/echo
 
 /usr/include/x86_64-linux-gnu/bits/socket.h:
 
-/usr/include/c++/11/clocale:
-
-/usr/include/x86_64-linux-gnu/bits/sigstack.h:
-
 /usr/include/x86_64-linux-gnu/bits/socket_type.h:
 
 /usr/include/linux/posix_types.h:
@@ -1040,9 +1064,25 @@ CMakeFiles/echo_client.dir/examples/echo/echo_client.cc.o: ../examples/echo/echo
 
 ../src/network/event_loop.h:
 
-../src/codec/rpc_codec.h:
+/usr/include/c++/11/ios:
 
-/usr/include/c++/11/limits:
+/usr/include/c++/11/utility:
+
+/usr/include/x86_64-linux-gnu/c++/11/bits/error_constants.h:
+
+/usr/include/google/protobuf/arena_impl.h:
+
+/usr/include/c++/11/stdexcept:
+
+/usr/include/c++/11/bits/uses_allocator.h:
+
+/usr/include/c++/11/bits/unique_lock.h:
+
+/usr/include/x86_64-linux-gnu/gnu/stubs.h:
+
+/usr/include/c++/11/bits/stl_deque.h:
+
+../src/codec/rpc_codec.h:
 
 /usr/include/google/protobuf/message.h:
 
@@ -1057,12 +1097,6 @@ CMakeFiles/echo_client.dir/examples/echo/echo_client.cc.o: ../examples/echo/echo
 /usr/include/c++/11/string:
 
 /usr/include/x86_64-linux-gnu/bits/uio_lim.h:
-
-/usr/include/x86_64-linux-gnu/bits/types/__FILE.h:
-
-/usr/include/x86_64-linux-gnu/asm/sockios.h:
-
-/usr/include/c++/11/cstring:
 
 /usr/include/c++/11/bits/streambuf.tcc:
 
@@ -1081,23 +1115,3 @@ CMakeFiles/echo_client.dir/examples/echo/echo_client.cc.o: ../examples/echo/echo
 /usr/include/c++/11/bits/ios_base.h:
 
 /usr/include/x86_64-linux-gnu/bits/types/siginfo_t.h:
-
-/usr/include/x86_64-linux-gnu/bits/types/sigval_t.h:
-
-/usr/include/x86_64-linux-gnu/bits/types/struct_osockaddr.h:
-
-/usr/include/x86_64-linux-gnu/bits/types/sigevent_t.h:
-
-/usr/include/x86_64-linux-gnu/bits/types/stack_t.h:
-
-/usr/include/x86_64-linux-gnu/sys/ucontext.h:
-
-/usr/include/x86_64-linux-gnu/bits/sigstksz.h:
-
-/usr/include/x86_64-linux-gnu/bits/posix_opt.h:
-
-/usr/include/x86_64-linux-gnu/c++/11/bits/os_defines.h:
-
-/usr/include/c++/11/bits/exception_defines.h:
-
-/usr/include/x86_64-linux-gnu/bits/environments.h:

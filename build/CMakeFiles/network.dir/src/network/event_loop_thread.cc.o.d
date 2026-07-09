@@ -163,4 +163,7 @@ CMakeFiles/network.dir/src/network/event_loop_thread.cc.o: \
  /usr/include/c++/11/backward/auto_ptr.h \
  /usr/include/x86_64-linux-gnu/sys/epoll.h \
  /usr/include/x86_64-linux-gnu/bits/epoll.h /usr/include/c++/11/cassert \
- /usr/include/assert.h
+ /usr/include/assert.h /usr/include/c++/11/queue \
+ /usr/include/c++/11/deque /usr/include/c++/11/bits/stl_deque.h \
+ /usr/include/c++/11/bits/deque.tcc /usr/include/c++/11/bits/stl_heap.h \
+ /usr/include/c++/11/bits/stl_queue.h

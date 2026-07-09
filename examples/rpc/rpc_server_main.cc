@@ -18,6 +18,7 @@ int main() {
     listenAddr.sin_addr.s_addr = INADDR_ANY;
     
     RpcServer server(&loop, listenAddr);
+    server.setIdleTimeout(60);  // ← 新增：60 秒 idle 超时
     
     // 注册 EchoService
     auto echoService = std::make_shared<EchoService>();

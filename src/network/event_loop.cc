@@ -1,6 +1,6 @@
 // src/network/event_loop.cc
-#include "event_loop.h"
-#include "channel.h"
+#include "network/event_loop.h"
+#include "network/channel.h"
 #include <sys/eventfd.h>
 #include <unistd.h>
 #include <errno.h>
@@ -10,7 +10,6 @@
 
 namespace rpc {
 
-// __thread 线程局部变量，确保一个线程只有一个 EventLoop
 __thread EventLoop* t_loopInThisThread = nullptr;
 
 EventLoop::EventLoop()
@@ -18,28 +17,25 @@ EventLoop::EventLoop()
       events_(16),
       looping_(false),
       quit_(false),
-      wakeupFd_(::eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC)),
-      pendingFunctors_() {
+      wakeupFd_(::eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC)) {
     
-    // 先设置线程局部变量
     if (t_loopInThisThread) {
-        // LOG_FATAL << "Another EventLoop exists in this thread";
-        abort();  // 或者抛异常
+        abort();
     } else {
-        t_loopInThisThread = this;  // ← 移到最前面
+        t_loopInThisThread = this;
     }
     
     if (epollfd_ < 0) {
-        // LOG_FATAL
+        abort();
     }
     
     if (wakeupFd_ < 0) {
-        // LOG_FATAL
+        abort();
     }
     
     wakeupChannel_ = std::make_unique<Channel>(this, wakeupFd_);
     wakeupChannel_->setReadCallback(std::bind(&EventLoop::handleRead, this));
-    wakeupChannel_->enableReading();  // 现在 t_loopInThisThread 已经设置了
+    wakeupChannel_->enableReading();
 }
 
 EventLoop::~EventLoop() {
@@ -58,7 +54,7 @@ void EventLoop::loop() {
     quit_ = false;
     
     while (!quit_) {
-        events_.resize(16);  // 每次重置，Channel::handleEvent 会动态扩容
+        events_.resize(16);
         int numEvents = ::epoll_wait(epollfd_, &*events_.begin(), 
                                       static_cast<int>(events_.size()),
                                       kEpollWaitTimeoutMs);
@@ -70,15 +66,18 @@ void EventLoop::loop() {
                 channel->handleEvent();
             }
             if (static_cast<size_t>(numEvents) == events_.size()) {
-                events_.resize(events_.size() * 2);  // 扩容
+                events_.resize(events_.size() * 2);
             }
         } else if (numEvents == 0) {
-            // timeout，正常
+            // timeout
         } else {
             if (errno != EINTR) {
-                // LOG_SYSERR << "EventLoop::loop() epoll_wait";
+                // LOG_SYSERR
             }
         }
+        
+        // 执行定时器
+        processTimers();
         
         // 执行回调
         doPendingFunctors();
@@ -86,6 +85,30 @@ void EventLoop::loop() {
     
     looping_ = false;
 }
+
+void EventLoop::processTimers() {
+    auto now = std::chrono::steady_clock::now();
+    while (!timers_.empty() && timers_.top().nextRun <= now) {
+        auto task = timers_.top();
+        timers_.pop();
+        task.callback();
+        // 重新加入队列（周期性执行）
+        task.nextRun = now + task.interval;
+        timers_.push(task);
+    }
+}
+
+void EventLoop::runEvery(double intervalSeconds, std::function<void()> cb) {
+    assertInLoopThread();
+    TimerTask task;
+    task.nextRun = std::chrono::steady_clock::now() + 
+                   std::chrono::milliseconds(static_cast<int>(intervalSeconds * 1000));
+    task.interval = std::chrono::milliseconds(static_cast<int>(intervalSeconds * 1000));
+    task.callback = std::move(cb);
+    timers_.push(std::move(task));
+}
+
+// ... 其他代码不变 ...
 
 void EventLoop::quit() {
     quit_ = true;
@@ -96,7 +119,6 @@ void EventLoop::quit() {
 
 void EventLoop::updateChannel(Channel* channel) {
     assertInLoopThread();
-    std::cout << "updateChannel fd=" << channel->fd() << " index=" << channel->index() << std::endl;  // ← 加
     
     struct epoll_event event;
     memset(&event, 0, sizeof(event));
@@ -106,24 +128,20 @@ void EventLoop::updateChannel(Channel* channel) {
     int fd = channel->fd();
     int index = channel->index();
     
-    if (index == -1 || index == 2) {  // kNew = -1, kDeleted = 2
-        if (index == -1) {
-            // 新 Channel
-        }
+    if (index == -1 || index == 2) {
         if (::epoll_ctl(epollfd_, EPOLL_CTL_ADD, fd, &event) < 0) {
-            // LOG_SYSERR << "epoll_ctl add";
+            // LOG_SYSERR
         }
-        channel->set_index(1);  // kAdded
+        channel->set_index(1);
     } else {
-        // 已存在，修改
         if (channel->isNoneEvent()) {
             if (::epoll_ctl(epollfd_, EPOLL_CTL_DEL, fd, &event) < 0) {
-                // LOG_SYSERR << "epoll_ctl del";
+                // LOG_SYSERR
             }
-            channel->set_index(2);  // kDeleted
+            channel->set_index(2);
         } else {
             if (::epoll_ctl(epollfd_, EPOLL_CTL_MOD, fd, &event) < 0) {
-                // LOG_SYSERR << "epoll_ctl mod";
+                // LOG_SYSERR
             }
         }
     }
@@ -135,12 +153,12 @@ void EventLoop::removeChannel(Channel* channel) {
     int fd = channel->fd();
     int index = channel->index();
     
-    if (index == 1) {  // kAdded
+    if (index == 1) {
         if (::epoll_ctl(epollfd_, EPOLL_CTL_DEL, fd, nullptr) < 0) {
-            // LOG_SYSERR << "epoll_ctl del";
+            // LOG_SYSERR
         }
     }
-    channel->set_index(-1);  // kNew
+    channel->set_index(-1);
 }
 
 bool EventLoop::isInLoopThread() const {
@@ -149,7 +167,6 @@ bool EventLoop::isInLoopThread() const {
 
 void EventLoop::assertInLoopThread() {
     if (!isInLoopThread()) {
-        // LOG_FATAL << "not in loop thread";
         abort();
     }
 }
@@ -164,7 +181,7 @@ void EventLoop::runInLoop(std::function<void()> cb) {
 
 void EventLoop::queueInLoop(std::function<void()> cb) {
     {
-        // TODO: 加锁保护 pendingFunctors_
+        std::lock_guard<std::mutex> lock(pendingMutex_);
         pendingFunctors_.push_back(std::move(cb));
     }
     if (!isInLoopThread()) {
@@ -175,7 +192,7 @@ void EventLoop::queueInLoop(std::function<void()> cb) {
 void EventLoop::doPendingFunctors() {
     std::vector<std::function<void()>> functors;
     {
-        // TODO: 加锁，swap 出来减少锁持有时间
+        std::lock_guard<std::mutex> lock(pendingMutex_);
         functors.swap(pendingFunctors_);
     }
     
@@ -188,7 +205,7 @@ void EventLoop::wakeup() {
     uint64_t one = 1;
     ssize_t n = ::write(wakeupFd_, &one, sizeof(one));
     if (n != sizeof(one)) {
-        // LOG_ERROR << "EventLoop::wakeup() writes " << n << " bytes";
+        // LOG_ERROR
     }
 }
 
@@ -196,7 +213,7 @@ void EventLoop::handleRead() {
     uint64_t one;
     ssize_t n = ::read(wakeupFd_, &one, sizeof(one));
     if (n != sizeof(one)) {
-        // LOG_ERROR << "EventLoop::handleRead() reads " << n << " bytes";
+        // LOG_ERROR
     }
 }
 

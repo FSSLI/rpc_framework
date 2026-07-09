@@ -5,7 +5,8 @@
 #include <memory>
 #include <functional>
 #include <atomic>
-#include "buffer.h"
+#include <chrono>  // ← 新增
+#include "network/buffer.h"
 #include <netinet/in.h>
 
 namespace rpc {
@@ -21,7 +22,6 @@ public:
     using MessageCallback = std::function<void(const std::shared_ptr<TcpConnection>&, Buffer*, int64_t)>;
     using WriteCompleteCallback = std::function<void(const std::shared_ptr<TcpConnection>&)>;
     using CloseCallback = std::function<void(const std::shared_ptr<TcpConnection>&)>;
-
 
     TcpConnection(EventLoop* loop,
                   const std::string& name,
@@ -47,6 +47,16 @@ public:
 
     void setContext(void* context) { context_ = context; }
     void* getContext() const { return context_; }
+
+    // 新增：idle 超时检测
+    void setIdleTimeout(int seconds);
+    void updateActiveTime();
+    bool checkIdleTimeout();
+
+    // 新增：判断连接是否已建立
+    bool connected() const { return state_ == kConnected; }
+
+    void forceClose();
 
 private:
     enum StateE { kDisconnected, kConnecting, kConnected, kDisconnecting };
@@ -79,7 +89,11 @@ private:
     Buffer inputBuffer_;
     Buffer outputBuffer_;
 
-    void* context_;  // 用于绑定 RPC 上下文
+    void* context_;
+    
+    // 新增：idle 超时
+    int idleTimeoutSeconds_ = 0;
+    std::chrono::steady_clock::time_point lastActiveTime_;
 };
 
 using TcpConnectionPtr = std::shared_ptr<TcpConnection>;

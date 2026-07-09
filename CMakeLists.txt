@@ -26,10 +26,6 @@ set(PROTO_SRCS
     src/protocol/rpc_service.pb.cc
 )
 
-set(CLIENT_SRCS
-    src/client/rpc_sync_client.cc
-)
-
 set(SERVER_SRCS
     src/server/rpc_service.cc
     src/server/rpc_server.cc

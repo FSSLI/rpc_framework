@@ -41,6 +41,17 @@ void TcpServer::start() {
     if (!started_) {
         started_ = true;
         threadPool_->start();
+
+        // 新增：启动 idle 检测定时器
+        if (idleTimeoutSeconds_ > 0) {
+            loop_->runEvery(5.0, [this]() {
+                // 每 5 秒检查一次所有连接
+                for (auto& item : connections_) {
+                    item.second->checkIdleTimeout();
+                }
+            });
+        }
+
         acceptor_->listen();
     }
 }
@@ -64,6 +75,12 @@ void TcpServer::newConnection(int sockfd, const struct sockaddr_in& peerAddr) {
     }
     
     TcpConnectionPtr conn(new TcpConnection(ioLoop, connName, sockfd, localAddr, peerAddr));
+
+    // 新增：设置 idle 超时
+    if (idleTimeoutSeconds_ > 0) {
+        conn->setIdleTimeout(idleTimeoutSeconds_);
+    }
+
     connections_[connName] = conn;
     
     conn->setConnectionCallback(connectionCallback_);
@@ -86,7 +103,10 @@ void TcpServer::removeConnectionInLoop(const TcpConnectionPtr& conn) {
     assert(n == 1);
     
     EventLoop* ioLoop = conn->getLoop();
-    ioLoop->queueInLoop(std::bind(&TcpConnection::connectDestroyed, conn));
+    // 用 shared_ptr 拷贝延长生命周期
+    ioLoop->queueInLoop([conn]() {
+        conn->connectDestroyed();
+    });
 }
 
 } // namespace rpc

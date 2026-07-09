@@ -28,7 +28,7 @@ void RpcServer::start() {
 }
 
 void RpcServer::onConnection(const TcpConnectionPtr& conn) {
-    if (conn->getContext() == nullptr) {
+    if (conn->connected()) {  // ← 改为判断连接状态
         std::cout << "RpcServer new connection: " << conn->name() << std::endl;
     } else {
         std::cout << "RpcServer connection closed: " << conn->name() << std::endl;

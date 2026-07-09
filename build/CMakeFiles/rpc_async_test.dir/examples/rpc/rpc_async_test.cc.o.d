@@ -194,11 +194,12 @@ CMakeFiles/rpc_async_test.dir/examples/rpc/rpc_async_test.cc.o: \
  /home/machao/projects/rpc_framework/src/network/event_loop.h \
  /usr/include/x86_64-linux-gnu/sys/epoll.h \
  /usr/include/x86_64-linux-gnu/bits/epoll.h /usr/include/c++/11/cassert \
- /usr/include/assert.h \
+ /usr/include/assert.h /usr/include/c++/11/queue \
+ /usr/include/c++/11/deque /usr/include/c++/11/bits/stl_deque.h \
+ /usr/include/c++/11/bits/deque.tcc /usr/include/c++/11/bits/stl_queue.h \
  /home/machao/projects/rpc_framework/src/network/event_loop_thread.h \
  /usr/include/c++/11/thread /usr/include/c++/11/bits/this_thread_sleep.h \
  /home/machao/projects/rpc_framework/src/codec/rpc_codec.h \
- /home/machao/projects/rpc_framework/src/network/buffer.h \
  /home/machao/projects/rpc_framework/src/protocol/rpc_service.pb.h \
  /usr/include/google/protobuf/port_def.inc \
  /usr/include/google/protobuf/port_undef.inc \

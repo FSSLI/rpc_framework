@@ -237,11 +237,15 @@ CMakeFiles/rpc_async_test.dir/examples/rpc/rpc_async_test.cc.o: ../examples/rpc/
   /usr/include/x86_64-linux-gnu/bits/epoll.h \
   /usr/include/c++/11/cassert \
   /usr/include/assert.h \
+  /usr/include/c++/11/queue \
+  /usr/include/c++/11/deque \
+  /usr/include/c++/11/bits/stl_deque.h \
+  /usr/include/c++/11/bits/deque.tcc \
+  /usr/include/c++/11/bits/stl_queue.h \
   ../src/network/event_loop_thread.h \
   /usr/include/c++/11/thread \
   /usr/include/c++/11/bits/this_thread_sleep.h \
   ../src/codec/rpc_codec.h \
-  ../src/network/buffer.h \
   ../src/protocol/rpc_service.pb.h \
   /usr/include/google/protobuf/port_def.inc \
   /usr/include/google/protobuf/port_undef.inc \
@@ -541,6 +545,12 @@ CMakeFiles/rpc_async_test.dir/examples/rpc/rpc_async_test.cc.o: ../examples/rpc/
 
 /usr/include/strings.h:
 
+/usr/include/c++/11/bits/streambuf.tcc:
+
+/usr/include/string.h:
+
+/usr/include/x86_64-linux-gnu/bits/xopen_lim.h:
+
 /usr/include/stdlib.h:
 
 /usr/include/x86_64-linux-gnu/sys/select.h:
@@ -595,8 +605,6 @@ CMakeFiles/rpc_async_test.dir/examples/rpc/rpc_async_test.cc.o: ../examples/rpc/
 
 /usr/include/x86_64-linux-gnu/bits/endian.h:
 
-/usr/include/x86_64-linux-gnu/gnu/stubs.h:
-
 /usr/include/x86_64-linux-gnu/bits/time.h:
 
 /usr/include/x86_64-linux-gnu/bits/select.h:
@@ -604,6 +612,8 @@ CMakeFiles/rpc_async_test.dir/examples/rpc/rpc_async_test.cc.o: ../examples/rpc/
 ../src/network/tcp_connection.h:
 
 /usr/include/c++/11/algorithm:
+
+/usr/include/c++/11/bits/deque.tcc:
 
 /usr/include/x86_64-linux-gnu/bits/endianness.h:
 
@@ -671,8 +681,6 @@ CMakeFiles/rpc_async_test.dir/examples/rpc/rpc_async_test.cc.o: ../examples/rpc/
 
 /usr/include/x86_64-linux-gnu/c++/11/bits/c++locale.h:
 
-/usr/include/x86_64-linux-gnu/bits/xopen_lim.h:
-
 /usr/include/unistd.h:
 
 /usr/include/c++/11/bits/stl_algobase.h:
@@ -735,6 +743,10 @@ CMakeFiles/rpc_async_test.dir/examples/rpc/rpc_async_test.cc.o: ../examples/rpc/
 
 /usr/include/x86_64-linux-gnu/bits/types/FILE.h:
 
+/usr/include/x86_64-linux-gnu/bits/uio_lim.h:
+
+/usr/include/c++/11/string:
+
 /usr/include/x86_64-linux-gnu/bits/wchar.h:
 
 /usr/include/x86_64-linux-gnu/bits/local_lim.h:
@@ -775,11 +787,15 @@ CMakeFiles/rpc_async_test.dir/examples/rpc/rpc_async_test.cc.o: ../examples/rpc/
 
 /usr/include/x86_64-linux-gnu/bits/stdint-uintn.h:
 
+/usr/include/c++/11/bits/stl_queue.h:
+
 /usr/include/x86_64-linux-gnu/bits/types/struct_timespec.h:
 
 /usr/include/x86_64-linux-gnu/bits/types/struct_sigstack.h:
 
 /usr/include/x86_64-linux-gnu/bits/types/__locale_t.h:
+
+/usr/include/c++/11/deque:
 
 /usr/include/x86_64-linux-gnu/bits/types.h:
 
@@ -977,6 +993,8 @@ CMakeFiles/rpc_async_test.dir/examples/rpc/rpc_async_test.cc.o: ../examples/rpc/
 
 /usr/include/c++/11/bits/nested_exception.h:
 
+/usr/include/c++/11/queue:
+
 /usr/include/c++/11/bits/shared_ptr_atomic.h:
 
 /usr/include/c++/11/bits/parse_numbers.h:
@@ -1057,9 +1075,9 @@ CMakeFiles/rpc_async_test.dir/examples/rpc/rpc_async_test.cc.o: ../examples/rpc/
 
 /usr/include/c++/11/bits/vector.tcc:
 
-/usr/include/x86_64-linux-gnu/bits/types/__FILE.h:
-
 /usr/include/c++/11/cstring:
+
+/usr/include/x86_64-linux-gnu/bits/types/__FILE.h:
 
 /usr/include/x86_64-linux-gnu/asm/sockios.h:
 
@@ -1103,6 +1121,10 @@ CMakeFiles/rpc_async_test.dir/examples/rpc/rpc_async_test.cc.o: ../examples/rpc/
 
 ../src/network/event_loop.h:
 
+/usr/include/x86_64-linux-gnu/gnu/stubs.h:
+
+/usr/include/c++/11/bits/stl_deque.h:
+
 ../src/codec/rpc_codec.h:
 
 /usr/include/google/protobuf/message.h:
@@ -1114,11 +1136,3 @@ CMakeFiles/rpc_async_test.dir/examples/rpc/rpc_async_test.cc.o: ../examples/rpc/
 /usr/include/c++/11/bits/stl_relops.h:
 
 /usr/include/limits.h:
-
-/usr/include/c++/11/string:
-
-/usr/include/x86_64-linux-gnu/bits/uio_lim.h:
-
-/usr/include/c++/11/bits/streambuf.tcc:
-
-/usr/include/string.h:

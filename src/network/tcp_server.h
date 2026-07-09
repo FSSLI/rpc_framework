@@ -36,6 +36,9 @@ public:
 
     void start();
 
+    // 新增：设置连接 idle 超时（秒），0 表示不检测
+    void setIdleTimeout(int seconds) { idleTimeoutSeconds_ = seconds; }
+
 private:
     void newConnection(int sockfd, const struct sockaddr_in& peerAddr);
     void removeConnection(const TcpConnectionPtr& conn);
@@ -53,6 +56,9 @@ private:
     bool started_;
     int nextConnId_;
     std::map<std::string, TcpConnectionPtr> connections_;
+
+    // ... 其他成员 ...
+    int idleTimeoutSeconds_ = 0;  // ← 新增
 };
 
 } // namespace rpc
