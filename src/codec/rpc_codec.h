@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <string>
 #include <vector>
+#include "network/buffer.h"        // ← 替换
 
 #include "protocol/rpc_service.pb.h"
 
@@ -73,32 +74,6 @@ struct HeartbeatHeader {
 };
 
 #pragma pack(pop)
-
-// ==================== Buffer ====================
-
-class Buffer {
-public:
-    Buffer();
-    
-    size_t readableBytes() const;
-    size_t writableBytes() const;
-    
-    void append(const char* data, size_t len);
-    void append(const std::string& str);
-    
-    const char* peek() const;
-    
-    std::string retrieveAsString(size_t len);
-    std::string retrieveAllAsString();
-    
-    void ensureWritableBytes(size_t len);
-    void retrieve(size_t len);
-
-private:
-    std::vector<char> buffer_;
-    size_t readerIndex_;
-    size_t writerIndex_;
-};
 
 // ==================== 解码结果 ====================
 

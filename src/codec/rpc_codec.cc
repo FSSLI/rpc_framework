@@ -92,61 +92,6 @@ uint64_t Codec::decodeU64(uint64_t v) { return be64toh(v); }
 uint16_t Codec::encodeU16(uint16_t v) { return htons(v); }
 uint16_t Codec::decodeU16(uint16_t v) { return ntohs(v); }
 
-// ==================== Buffer ====================
-
-Buffer::Buffer() : readerIndex_(0), writerIndex_(0) {
-    buffer_.resize(1024);
-}
-
-size_t Buffer::readableBytes() const { return writerIndex_ - readerIndex_; }
-size_t Buffer::writableBytes() const { return buffer_.size() - writerIndex_; }
-
-void Buffer::ensureWritableBytes(size_t len) {
-    if (writableBytes() < len) {
-        if (readerIndex_ + writableBytes() >= len) {
-            size_t readable = readableBytes();
-            std::memmove(buffer_.data(), buffer_.data() + readerIndex_, readable);
-            readerIndex_ = 0;
-            writerIndex_ = readable;
-        } else {
-            buffer_.resize(writerIndex_ + len);
-        }
-    }
-}
-
-void Buffer::append(const char* data, size_t len) {
-    ensureWritableBytes(len);
-    std::memcpy(buffer_.data() + writerIndex_, data, len);
-    writerIndex_ += len;
-}
-
-void Buffer::append(const std::string& str) {
-    append(str.data(), str.size());
-}
-
-const char* Buffer::peek() const {
-    return buffer_.data() + readerIndex_;
-}
-
-std::string Buffer::retrieveAsString(size_t len) {
-    std::string result(peek(), len);
-    retrieve(len);
-    return result;
-}
-
-std::string Buffer::retrieveAllAsString() {
-    return retrieveAsString(readableBytes());
-}
-
-void Buffer::retrieve(size_t len) {
-    if (len < readableBytes()) {
-        readerIndex_ += len;
-    } else {
-        readerIndex_ = 0;
-        writerIndex_ = 0;
-    }
-}
-
 // ==================== 辅助函数 ====================
 
 bool Codec::checkMagic(uint32_t magic) {
