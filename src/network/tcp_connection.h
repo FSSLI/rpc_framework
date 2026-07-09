@@ -21,7 +21,7 @@ public:
     using MessageCallback = std::function<void(const std::shared_ptr<TcpConnection>&, Buffer*, int64_t)>;
     using WriteCompleteCallback = std::function<void(const std::shared_ptr<TcpConnection>&)>;
     using CloseCallback = std::function<void(const std::shared_ptr<TcpConnection>&)>;
-    using TcpConnectionPtr = std::shared_ptr<TcpConnection>;
+
 
     TcpConnection(EventLoop* loop,
                   const std::string& name,
@@ -81,6 +81,8 @@ private:
 
     void* context_;  // 用于绑定 RPC 上下文
 };
+
+using TcpConnectionPtr = std::shared_ptr<TcpConnection>;
 
 } // namespace rpc
 

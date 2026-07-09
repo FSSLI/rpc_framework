@@ -111,6 +111,9 @@ public:
     static uint16_t encodeU16(uint16_t v);
     static uint16_t decodeU16(uint16_t v);
 
+    static std::string encodeWithLength(const std::string& packet);
+    static bool decodeWithLength(Buffer& buf, std::string& packet);
+
 private:
     static bool checkMagic(uint32_t magic);
     static void appendString(std::string& out, const std::string& str);

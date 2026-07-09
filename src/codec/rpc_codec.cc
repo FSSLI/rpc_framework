@@ -423,4 +423,23 @@ bool Codec::decodeHeartbeat(Buffer& buf, DecodedPacket& packet) {
     return true;
 }
 
+std::string Codec::encodeWithLength(const std::string& packet) {
+    std::string result;
+    uint32_t len = encodeU32(static_cast<uint32_t>(packet.size()));
+    result.append(reinterpret_cast<const char*>(&len), sizeof(len));
+    result.append(packet);
+    return result;
+}
+
+bool Codec::decodeWithLength(Buffer& buf, std::string& packet) {
+    if (buf.readableBytes() < sizeof(uint32_t)) return false;
+    
+    uint32_t len = decodeU32(*reinterpret_cast<const uint32_t*>(buf.peek()));
+    if (buf.readableBytes() < sizeof(uint32_t) + len) return false;
+    
+    buf.retrieve(sizeof(uint32_t));
+    packet = buf.retrieveAsString(len);
+    return true;
+}
+
 } // namespace rpc

@@ -6,6 +6,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <cstring>  // ← 加这行，memset
+#include "event_loop_thread_pool.h"
 
 namespace rpc {
 
@@ -13,9 +14,9 @@ TcpServer::TcpServer(EventLoop* loop, const struct sockaddr_in& listenAddr)
     : loop_(loop),
       name_(inet_ntoa(listenAddr.sin_addr)),
       acceptor_(new Acceptor(loop, listenAddr)),
-      threadPool_(nullptr),
+      threadPool_(std::make_shared<EventLoopThreadPool>(loop, name_)),  // ← 用 shared_ptr 或 unique_ptr
       started_(false),
-      nextConnId_(1) {
+      nextConnId_(1)  {
     
     acceptor_->setNewConnectionCallback(
         std::bind(&TcpServer::newConnection, this, std::placeholders::_1, std::placeholders::_2));
@@ -33,12 +34,13 @@ TcpServer::~TcpServer() {
 
 void TcpServer::setThreadNum(int numThreads) {
     // TODO: 创建 EventLoopThreadPool
-    (void)numThreads;
+    threadPool_->setThreadNum(numThreads);
 }
 
 void TcpServer::start() {
     if (!started_) {
         started_ = true;
+        threadPool_->start();
         acceptor_->listen();
     }
 }
@@ -52,7 +54,7 @@ void TcpServer::newConnection(int sockfd, const struct sockaddr_in& peerAddr) {
     std::string connName = name_ + buf;
     
     // TODO: 从 threadPool_ 取 loop
-    EventLoop* ioLoop = loop_;
+    EventLoop* ioLoop = threadPool_->getNextLoop();
     
     struct sockaddr_in localAddr;
     memset(&localAddr, 0, sizeof(localAddr));

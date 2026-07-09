@@ -46,4 +46,6 @@ set(CMAKE_DEPEND_INFO_FILES
   "CMakeFiles/network.dir/DependInfo.cmake"
   "CMakeFiles/echo_server.dir/DependInfo.cmake"
   "CMakeFiles/echo_client.dir/DependInfo.cmake"
+  "CMakeFiles/rpc_sync_test.dir/DependInfo.cmake"
+  "CMakeFiles/rpc_server.dir/DependInfo.cmake"
   )

@@ -21,18 +21,26 @@ void onConnection(const TcpConnectionPtr& conn) {
 }
 
 void onMessage(const TcpConnectionPtr& conn, Buffer* buf, int64_t) {
-    DecodedPacket packet;
-    std::string service_name, method_name;
-    
-    while (Codec::decode(*buf, packet, &service_name, &method_name)) {
-        if (packet.msg_type == MsgType::REQUEST) {
+    std::string packet;
+    while (Codec::decodeWithLength(*buf, packet)) {
+        // 解码 RPC 消息
+        Buffer rpcBuf;
+        rpcBuf.append(packet.data(), packet.size());
+        
+        DecodedPacket decoded;
+        std::string service_name, method_name;
+        if (!Codec::decode(rpcBuf, decoded, &service_name, &method_name)) {
+            continue;
+        }
+        
+        if (decoded.msg_type == MsgType::REQUEST) {
             std::cout << "received request: service=" << service_name 
                       << " method=" << method_name 
-                      << " req_id=" << packet.req_id << std::endl;
+                      << " req_id=" << decoded.req_id << std::endl;
             
             // 解析 EchoRequest
             EchoRequest echoReq;
-            if (echoReq.ParseFromString(packet.rpc_request.payload())) {
+            if (echoReq.ParseFromString(decoded.rpc_request.payload())) {
                 std::cout << "echo message: " << echoReq.message() << std::endl;
                 
                 // 构造 EchoResponse
@@ -43,9 +51,10 @@ void onMessage(const TcpConnectionPtr& conn, Buffer* buf, int64_t) {
                 rpcResp.set_success(true);
                 rpcResp.set_payload(echoResp.SerializeAsString());
                 
-                // 编码发送
-                std::string response = Codec::encodeResponse(rpcResp, packet.req_id, Status::SUCCESS);
-                conn->send(response);
+                // 编码发送（加 Length-Field）
+                std::string response = Codec::encodeResponse(rpcResp, decoded.req_id, Status::SUCCESS);
+                std::string responseWithLen = Codec::encodeWithLength(response);
+                conn->send(responseWithLen);
             }
         }
     }

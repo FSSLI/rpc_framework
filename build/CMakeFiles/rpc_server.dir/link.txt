@@ -1,0 +1,1 @@
+/usr/bin/c++ CMakeFiles/rpc_server.dir/examples/rpc/rpc_server_main.cc.o CMakeFiles/rpc_server.dir/examples/rpc/echo_service.cc.o -o rpc_server  libnetwork.a -lprotobuf -lpthread 

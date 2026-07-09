@@ -155,6 +155,32 @@ echo_client/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/echo_client.dir/build.make CMakeFiles/echo_client.dir/build
 .PHONY : echo_client/fast
 
+#=============================================================================
+# Target rules for targets named rpc_sync_test
+
+# Build rule for target.
+rpc_sync_test: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 rpc_sync_test
+.PHONY : rpc_sync_test
+
+# fast build rule for target.
+rpc_sync_test/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rpc_sync_test.dir/build.make CMakeFiles/rpc_sync_test.dir/build
+.PHONY : rpc_sync_test/fast
+
+#=============================================================================
+# Target rules for targets named rpc_server
+
+# Build rule for target.
+rpc_server: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 rpc_server
+.PHONY : rpc_server
+
+# fast build rule for target.
+rpc_server/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rpc_server.dir/build.make CMakeFiles/rpc_server.dir/build
+.PHONY : rpc_server/fast
+
 examples/echo/echo_client.o: examples/echo/echo_client.cc.o
 .PHONY : examples/echo/echo_client.o
 
@@ -202,6 +228,102 @@ examples/echo/echo_server.s: examples/echo/echo_server.cc.s
 examples/echo/echo_server.cc.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/echo_server.dir/build.make CMakeFiles/echo_server.dir/examples/echo/echo_server.cc.s
 .PHONY : examples/echo/echo_server.cc.s
+
+examples/rpc/echo_service.o: examples/rpc/echo_service.cc.o
+.PHONY : examples/rpc/echo_service.o
+
+# target to build an object file
+examples/rpc/echo_service.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rpc_server.dir/build.make CMakeFiles/rpc_server.dir/examples/rpc/echo_service.cc.o
+.PHONY : examples/rpc/echo_service.cc.o
+
+examples/rpc/echo_service.i: examples/rpc/echo_service.cc.i
+.PHONY : examples/rpc/echo_service.i
+
+# target to preprocess a source file
+examples/rpc/echo_service.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rpc_server.dir/build.make CMakeFiles/rpc_server.dir/examples/rpc/echo_service.cc.i
+.PHONY : examples/rpc/echo_service.cc.i
+
+examples/rpc/echo_service.s: examples/rpc/echo_service.cc.s
+.PHONY : examples/rpc/echo_service.s
+
+# target to generate assembly for a file
+examples/rpc/echo_service.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rpc_server.dir/build.make CMakeFiles/rpc_server.dir/examples/rpc/echo_service.cc.s
+.PHONY : examples/rpc/echo_service.cc.s
+
+examples/rpc/rpc_server_main.o: examples/rpc/rpc_server_main.cc.o
+.PHONY : examples/rpc/rpc_server_main.o
+
+# target to build an object file
+examples/rpc/rpc_server_main.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rpc_server.dir/build.make CMakeFiles/rpc_server.dir/examples/rpc/rpc_server_main.cc.o
+.PHONY : examples/rpc/rpc_server_main.cc.o
+
+examples/rpc/rpc_server_main.i: examples/rpc/rpc_server_main.cc.i
+.PHONY : examples/rpc/rpc_server_main.i
+
+# target to preprocess a source file
+examples/rpc/rpc_server_main.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rpc_server.dir/build.make CMakeFiles/rpc_server.dir/examples/rpc/rpc_server_main.cc.i
+.PHONY : examples/rpc/rpc_server_main.cc.i
+
+examples/rpc/rpc_server_main.s: examples/rpc/rpc_server_main.cc.s
+.PHONY : examples/rpc/rpc_server_main.s
+
+# target to generate assembly for a file
+examples/rpc/rpc_server_main.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rpc_server.dir/build.make CMakeFiles/rpc_server.dir/examples/rpc/rpc_server_main.cc.s
+.PHONY : examples/rpc/rpc_server_main.cc.s
+
+examples/rpc/rpc_sync_test.o: examples/rpc/rpc_sync_test.cc.o
+.PHONY : examples/rpc/rpc_sync_test.o
+
+# target to build an object file
+examples/rpc/rpc_sync_test.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rpc_sync_test.dir/build.make CMakeFiles/rpc_sync_test.dir/examples/rpc/rpc_sync_test.cc.o
+.PHONY : examples/rpc/rpc_sync_test.cc.o
+
+examples/rpc/rpc_sync_test.i: examples/rpc/rpc_sync_test.cc.i
+.PHONY : examples/rpc/rpc_sync_test.i
+
+# target to preprocess a source file
+examples/rpc/rpc_sync_test.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rpc_sync_test.dir/build.make CMakeFiles/rpc_sync_test.dir/examples/rpc/rpc_sync_test.cc.i
+.PHONY : examples/rpc/rpc_sync_test.cc.i
+
+examples/rpc/rpc_sync_test.s: examples/rpc/rpc_sync_test.cc.s
+.PHONY : examples/rpc/rpc_sync_test.s
+
+# target to generate assembly for a file
+examples/rpc/rpc_sync_test.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rpc_sync_test.dir/build.make CMakeFiles/rpc_sync_test.dir/examples/rpc/rpc_sync_test.cc.s
+.PHONY : examples/rpc/rpc_sync_test.cc.s
+
+src/client/rpc_sync_client.o: src/client/rpc_sync_client.cc.o
+.PHONY : src/client/rpc_sync_client.o
+
+# target to build an object file
+src/client/rpc_sync_client.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/network.dir/build.make CMakeFiles/network.dir/src/client/rpc_sync_client.cc.o
+.PHONY : src/client/rpc_sync_client.cc.o
+
+src/client/rpc_sync_client.i: src/client/rpc_sync_client.cc.i
+.PHONY : src/client/rpc_sync_client.i
+
+# target to preprocess a source file
+src/client/rpc_sync_client.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/network.dir/build.make CMakeFiles/network.dir/src/client/rpc_sync_client.cc.i
+.PHONY : src/client/rpc_sync_client.cc.i
+
+src/client/rpc_sync_client.s: src/client/rpc_sync_client.cc.s
+.PHONY : src/client/rpc_sync_client.s
+
+# target to generate assembly for a file
+src/client/rpc_sync_client.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/network.dir/build.make CMakeFiles/network.dir/src/client/rpc_sync_client.cc.s
+.PHONY : src/client/rpc_sync_client.cc.s
 
 src/codec/rpc_codec.o: src/codec/rpc_codec.cc.o
 .PHONY : src/codec/rpc_codec.o
@@ -323,6 +445,54 @@ src/network/event_loop.cc.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/network.dir/build.make CMakeFiles/network.dir/src/network/event_loop.cc.s
 .PHONY : src/network/event_loop.cc.s
 
+src/network/event_loop_thread.o: src/network/event_loop_thread.cc.o
+.PHONY : src/network/event_loop_thread.o
+
+# target to build an object file
+src/network/event_loop_thread.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/network.dir/build.make CMakeFiles/network.dir/src/network/event_loop_thread.cc.o
+.PHONY : src/network/event_loop_thread.cc.o
+
+src/network/event_loop_thread.i: src/network/event_loop_thread.cc.i
+.PHONY : src/network/event_loop_thread.i
+
+# target to preprocess a source file
+src/network/event_loop_thread.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/network.dir/build.make CMakeFiles/network.dir/src/network/event_loop_thread.cc.i
+.PHONY : src/network/event_loop_thread.cc.i
+
+src/network/event_loop_thread.s: src/network/event_loop_thread.cc.s
+.PHONY : src/network/event_loop_thread.s
+
+# target to generate assembly for a file
+src/network/event_loop_thread.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/network.dir/build.make CMakeFiles/network.dir/src/network/event_loop_thread.cc.s
+.PHONY : src/network/event_loop_thread.cc.s
+
+src/network/event_loop_thread_pool.o: src/network/event_loop_thread_pool.cc.o
+.PHONY : src/network/event_loop_thread_pool.o
+
+# target to build an object file
+src/network/event_loop_thread_pool.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/network.dir/build.make CMakeFiles/network.dir/src/network/event_loop_thread_pool.cc.o
+.PHONY : src/network/event_loop_thread_pool.cc.o
+
+src/network/event_loop_thread_pool.i: src/network/event_loop_thread_pool.cc.i
+.PHONY : src/network/event_loop_thread_pool.i
+
+# target to preprocess a source file
+src/network/event_loop_thread_pool.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/network.dir/build.make CMakeFiles/network.dir/src/network/event_loop_thread_pool.cc.i
+.PHONY : src/network/event_loop_thread_pool.cc.i
+
+src/network/event_loop_thread_pool.s: src/network/event_loop_thread_pool.cc.s
+.PHONY : src/network/event_loop_thread_pool.s
+
+# target to generate assembly for a file
+src/network/event_loop_thread_pool.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/network.dir/build.make CMakeFiles/network.dir/src/network/event_loop_thread_pool.cc.s
+.PHONY : src/network/event_loop_thread_pool.cc.s
+
 src/network/socket.o: src/network/socket.cc.o
 .PHONY : src/network/socket.o
 
@@ -419,6 +589,54 @@ src/protocol/rpc_service.pb.cc.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/network.dir/build.make CMakeFiles/network.dir/src/protocol/rpc_service.pb.cc.s
 .PHONY : src/protocol/rpc_service.pb.cc.s
 
+src/server/rpc_server.o: src/server/rpc_server.cc.o
+.PHONY : src/server/rpc_server.o
+
+# target to build an object file
+src/server/rpc_server.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/network.dir/build.make CMakeFiles/network.dir/src/server/rpc_server.cc.o
+.PHONY : src/server/rpc_server.cc.o
+
+src/server/rpc_server.i: src/server/rpc_server.cc.i
+.PHONY : src/server/rpc_server.i
+
+# target to preprocess a source file
+src/server/rpc_server.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/network.dir/build.make CMakeFiles/network.dir/src/server/rpc_server.cc.i
+.PHONY : src/server/rpc_server.cc.i
+
+src/server/rpc_server.s: src/server/rpc_server.cc.s
+.PHONY : src/server/rpc_server.s
+
+# target to generate assembly for a file
+src/server/rpc_server.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/network.dir/build.make CMakeFiles/network.dir/src/server/rpc_server.cc.s
+.PHONY : src/server/rpc_server.cc.s
+
+src/server/rpc_service.o: src/server/rpc_service.cc.o
+.PHONY : src/server/rpc_service.o
+
+# target to build an object file
+src/server/rpc_service.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/network.dir/build.make CMakeFiles/network.dir/src/server/rpc_service.cc.o
+.PHONY : src/server/rpc_service.cc.o
+
+src/server/rpc_service.i: src/server/rpc_service.cc.i
+.PHONY : src/server/rpc_service.i
+
+# target to preprocess a source file
+src/server/rpc_service.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/network.dir/build.make CMakeFiles/network.dir/src/server/rpc_service.cc.i
+.PHONY : src/server/rpc_service.cc.i
+
+src/server/rpc_service.s: src/server/rpc_service.cc.s
+.PHONY : src/server/rpc_service.s
+
+# target to generate assembly for a file
+src/server/rpc_service.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/network.dir/build.make CMakeFiles/network.dir/src/server/rpc_service.cc.s
+.PHONY : src/server/rpc_service.cc.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -430,12 +648,26 @@ help:
 	@echo "... echo_client"
 	@echo "... echo_server"
 	@echo "... network"
+	@echo "... rpc_server"
+	@echo "... rpc_sync_test"
 	@echo "... examples/echo/echo_client.o"
 	@echo "... examples/echo/echo_client.i"
 	@echo "... examples/echo/echo_client.s"
 	@echo "... examples/echo/echo_server.o"
 	@echo "... examples/echo/echo_server.i"
 	@echo "... examples/echo/echo_server.s"
+	@echo "... examples/rpc/echo_service.o"
+	@echo "... examples/rpc/echo_service.i"
+	@echo "... examples/rpc/echo_service.s"
+	@echo "... examples/rpc/rpc_server_main.o"
+	@echo "... examples/rpc/rpc_server_main.i"
+	@echo "... examples/rpc/rpc_server_main.s"
+	@echo "... examples/rpc/rpc_sync_test.o"
+	@echo "... examples/rpc/rpc_sync_test.i"
+	@echo "... examples/rpc/rpc_sync_test.s"
+	@echo "... src/client/rpc_sync_client.o"
+	@echo "... src/client/rpc_sync_client.i"
+	@echo "... src/client/rpc_sync_client.s"
 	@echo "... src/codec/rpc_codec.o"
 	@echo "... src/codec/rpc_codec.i"
 	@echo "... src/codec/rpc_codec.s"
@@ -451,6 +683,12 @@ help:
 	@echo "... src/network/event_loop.o"
 	@echo "... src/network/event_loop.i"
 	@echo "... src/network/event_loop.s"
+	@echo "... src/network/event_loop_thread.o"
+	@echo "... src/network/event_loop_thread.i"
+	@echo "... src/network/event_loop_thread.s"
+	@echo "... src/network/event_loop_thread_pool.o"
+	@echo "... src/network/event_loop_thread_pool.i"
+	@echo "... src/network/event_loop_thread_pool.s"
 	@echo "... src/network/socket.o"
 	@echo "... src/network/socket.i"
 	@echo "... src/network/socket.s"
@@ -463,6 +701,12 @@ help:
 	@echo "... src/protocol/rpc_service.pb.o"
 	@echo "... src/protocol/rpc_service.pb.i"
 	@echo "... src/protocol/rpc_service.pb.s"
+	@echo "... src/server/rpc_server.o"
+	@echo "... src/server/rpc_server.i"
+	@echo "... src/server/rpc_server.s"
+	@echo "... src/server/rpc_service.o"
+	@echo "... src/server/rpc_service.i"
+	@echo "... src/server/rpc_service.s"
 .PHONY : help
 
 

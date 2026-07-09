@@ -14,6 +14,8 @@ set(NETWORK_SRCS
     src/network/acceptor.cc
     src/network/tcp_connection.cc
     src/network/tcp_server.cc
+    src/network/event_loop_thread.cc      # ← 新增
+    src/network/event_loop_thread_pool.cc # ← 新增
 )
 
 set(CODEC_SRCS
@@ -24,11 +26,27 @@ set(PROTO_SRCS
     src/protocol/rpc_service.pb.cc
 )
 
-add_library(network ${NETWORK_SRCS} ${CODEC_SRCS} ${PROTO_SRCS})
-target_link_libraries(network protobuf)
+set(CLIENT_SRCS
+    src/client/rpc_sync_client.cc
+)
+
+set(SERVER_SRCS
+    src/server/rpc_service.cc
+    src/server/rpc_server.cc
+)
+
+add_library(network ${NETWORK_SRCS} ${CODEC_SRCS} ${PROTO_SRCS} ${CLIENT_SRCS} ${SERVER_SRCS})
+target_link_libraries(network protobuf pthread)
 
 add_executable(echo_server examples/echo/echo_server.cc)
 target_link_libraries(echo_server network)
 
 add_executable(echo_client examples/echo/echo_client.cc)
 target_link_libraries(echo_client network)
+
+add_executable(rpc_sync_test examples/rpc/rpc_sync_test.cc)
+target_link_libraries(rpc_sync_test network)
+
+# 新的 rpc_server 示例
+add_executable(rpc_server examples/rpc/rpc_server_main.cc examples/rpc/echo_service.cc)
+target_link_libraries(rpc_server network)

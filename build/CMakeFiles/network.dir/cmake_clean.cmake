@@ -1,4 +1,6 @@
 file(REMOVE_RECURSE
+  "CMakeFiles/network.dir/src/client/rpc_sync_client.cc.o"
+  "CMakeFiles/network.dir/src/client/rpc_sync_client.cc.o.d"
   "CMakeFiles/network.dir/src/codec/rpc_codec.cc.o"
   "CMakeFiles/network.dir/src/codec/rpc_codec.cc.o.d"
   "CMakeFiles/network.dir/src/network/acceptor.cc.o"
@@ -9,6 +11,10 @@ file(REMOVE_RECURSE
   "CMakeFiles/network.dir/src/network/channel.cc.o.d"
   "CMakeFiles/network.dir/src/network/event_loop.cc.o"
   "CMakeFiles/network.dir/src/network/event_loop.cc.o.d"
+  "CMakeFiles/network.dir/src/network/event_loop_thread.cc.o"
+  "CMakeFiles/network.dir/src/network/event_loop_thread.cc.o.d"
+  "CMakeFiles/network.dir/src/network/event_loop_thread_pool.cc.o"
+  "CMakeFiles/network.dir/src/network/event_loop_thread_pool.cc.o.d"
   "CMakeFiles/network.dir/src/network/socket.cc.o"
   "CMakeFiles/network.dir/src/network/socket.cc.o.d"
   "CMakeFiles/network.dir/src/network/tcp_connection.cc.o"
@@ -17,6 +23,10 @@ file(REMOVE_RECURSE
   "CMakeFiles/network.dir/src/network/tcp_server.cc.o.d"
   "CMakeFiles/network.dir/src/protocol/rpc_service.pb.cc.o"
   "CMakeFiles/network.dir/src/protocol/rpc_service.pb.cc.o.d"
+  "CMakeFiles/network.dir/src/server/rpc_server.cc.o"
+  "CMakeFiles/network.dir/src/server/rpc_server.cc.o.d"
+  "CMakeFiles/network.dir/src/server/rpc_service.cc.o"
+  "CMakeFiles/network.dir/src/server/rpc_service.cc.o.d"
   "libnetwork.a"
   "libnetwork.pdb"
 )

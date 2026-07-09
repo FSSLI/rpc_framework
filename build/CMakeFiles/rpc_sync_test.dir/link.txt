@@ -1,0 +1,1 @@
+/usr/bin/c++ CMakeFiles/rpc_sync_test.dir/examples/rpc/rpc_sync_test.cc.o -o rpc_sync_test  libnetwork.a -lprotobuf -lpthread 
