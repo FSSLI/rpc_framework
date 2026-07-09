@@ -4,5 +4,6 @@
 /home/machao/projects/rpc_framework/build/CMakeFiles/rpc_sync_test.dir
 /home/machao/projects/rpc_framework/build/CMakeFiles/rpc_server.dir
 /home/machao/projects/rpc_framework/build/CMakeFiles/rpc_async_test.dir
+/home/machao/projects/rpc_framework/build/CMakeFiles/test_consistent_hash.dir
 /home/machao/projects/rpc_framework/build/CMakeFiles/edit_cache.dir
 /home/machao/projects/rpc_framework/build/CMakeFiles/rebuild_cache.dir

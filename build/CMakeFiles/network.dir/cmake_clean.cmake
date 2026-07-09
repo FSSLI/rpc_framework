@@ -5,6 +5,8 @@ file(REMOVE_RECURSE
   "CMakeFiles/network.dir/src/client/rpc_sync_client.cc.o.d"
   "CMakeFiles/network.dir/src/codec/rpc_codec.cc.o"
   "CMakeFiles/network.dir/src/codec/rpc_codec.cc.o.d"
+  "CMakeFiles/network.dir/src/loadbalance/consistent_hash.cc.o"
+  "CMakeFiles/network.dir/src/loadbalance/consistent_hash.cc.o.d"
   "CMakeFiles/network.dir/src/network/acceptor.cc.o"
   "CMakeFiles/network.dir/src/network/acceptor.cc.o.d"
   "CMakeFiles/network.dir/src/network/buffer.cc.o"

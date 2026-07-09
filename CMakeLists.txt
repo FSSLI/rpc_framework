@@ -40,7 +40,11 @@ set(CLIENT_SRCS
     src/client/rpc_async_client.cc  # 新增
 )
 
-add_library(network ${NETWORK_SRCS} ${CODEC_SRCS} ${PROTO_SRCS} ${CLIENT_SRCS} ${SERVER_SRCS})
+set(LOADBALANCE_SRCS
+    src/loadbalance/consistent_hash.cc
+)
+
+add_library(network ${NETWORK_SRCS} ${CODEC_SRCS} ${PROTO_SRCS} ${CLIENT_SRCS} ${SERVER_SRCS} ${LOADBALANCE_SRCS})
 target_link_libraries(network protobuf pthread)
 
 add_executable(echo_server examples/echo/echo_server.cc)
@@ -58,3 +62,6 @@ target_link_libraries(rpc_server network)
 
 add_executable(rpc_async_test examples/rpc/rpc_async_test.cc)
 target_link_libraries(rpc_async_test network)
+
+add_executable(test_consistent_hash tests/test_consistent_hash.cc)
+target_link_libraries(test_consistent_hash network)

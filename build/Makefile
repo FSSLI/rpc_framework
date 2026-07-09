@@ -194,6 +194,19 @@ rpc_async_test/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/rpc_async_test.dir/build.make CMakeFiles/rpc_async_test.dir/build
 .PHONY : rpc_async_test/fast
 
+#=============================================================================
+# Target rules for targets named test_consistent_hash
+
+# Build rule for target.
+test_consistent_hash: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 test_consistent_hash
+.PHONY : test_consistent_hash
+
+# fast build rule for target.
+test_consistent_hash/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_consistent_hash.dir/build.make CMakeFiles/test_consistent_hash.dir/build
+.PHONY : test_consistent_hash/fast
+
 examples/echo/echo_client.o: examples/echo/echo_client.cc.o
 .PHONY : examples/echo/echo_client.o
 
@@ -409,6 +422,30 @@ src/codec/rpc_codec.s: src/codec/rpc_codec.cc.s
 src/codec/rpc_codec.cc.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/network.dir/build.make CMakeFiles/network.dir/src/codec/rpc_codec.cc.s
 .PHONY : src/codec/rpc_codec.cc.s
+
+src/loadbalance/consistent_hash.o: src/loadbalance/consistent_hash.cc.o
+.PHONY : src/loadbalance/consistent_hash.o
+
+# target to build an object file
+src/loadbalance/consistent_hash.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/network.dir/build.make CMakeFiles/network.dir/src/loadbalance/consistent_hash.cc.o
+.PHONY : src/loadbalance/consistent_hash.cc.o
+
+src/loadbalance/consistent_hash.i: src/loadbalance/consistent_hash.cc.i
+.PHONY : src/loadbalance/consistent_hash.i
+
+# target to preprocess a source file
+src/loadbalance/consistent_hash.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/network.dir/build.make CMakeFiles/network.dir/src/loadbalance/consistent_hash.cc.i
+.PHONY : src/loadbalance/consistent_hash.cc.i
+
+src/loadbalance/consistent_hash.s: src/loadbalance/consistent_hash.cc.s
+.PHONY : src/loadbalance/consistent_hash.s
+
+# target to generate assembly for a file
+src/loadbalance/consistent_hash.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/network.dir/build.make CMakeFiles/network.dir/src/loadbalance/consistent_hash.cc.s
+.PHONY : src/loadbalance/consistent_hash.cc.s
 
 src/network/acceptor.o: src/network/acceptor.cc.o
 .PHONY : src/network/acceptor.o
@@ -698,6 +735,30 @@ src/server/rpc_service.cc.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/network.dir/build.make CMakeFiles/network.dir/src/server/rpc_service.cc.s
 .PHONY : src/server/rpc_service.cc.s
 
+tests/test_consistent_hash.o: tests/test_consistent_hash.cc.o
+.PHONY : tests/test_consistent_hash.o
+
+# target to build an object file
+tests/test_consistent_hash.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_consistent_hash.dir/build.make CMakeFiles/test_consistent_hash.dir/tests/test_consistent_hash.cc.o
+.PHONY : tests/test_consistent_hash.cc.o
+
+tests/test_consistent_hash.i: tests/test_consistent_hash.cc.i
+.PHONY : tests/test_consistent_hash.i
+
+# target to preprocess a source file
+tests/test_consistent_hash.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_consistent_hash.dir/build.make CMakeFiles/test_consistent_hash.dir/tests/test_consistent_hash.cc.i
+.PHONY : tests/test_consistent_hash.cc.i
+
+tests/test_consistent_hash.s: tests/test_consistent_hash.cc.s
+.PHONY : tests/test_consistent_hash.s
+
+# target to generate assembly for a file
+tests/test_consistent_hash.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_consistent_hash.dir/build.make CMakeFiles/test_consistent_hash.dir/tests/test_consistent_hash.cc.s
+.PHONY : tests/test_consistent_hash.cc.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -712,6 +773,7 @@ help:
 	@echo "... rpc_async_test"
 	@echo "... rpc_server"
 	@echo "... rpc_sync_test"
+	@echo "... test_consistent_hash"
 	@echo "... examples/echo/echo_client.o"
 	@echo "... examples/echo/echo_client.i"
 	@echo "... examples/echo/echo_client.s"
@@ -739,6 +801,9 @@ help:
 	@echo "... src/codec/rpc_codec.o"
 	@echo "... src/codec/rpc_codec.i"
 	@echo "... src/codec/rpc_codec.s"
+	@echo "... src/loadbalance/consistent_hash.o"
+	@echo "... src/loadbalance/consistent_hash.i"
+	@echo "... src/loadbalance/consistent_hash.s"
 	@echo "... src/network/acceptor.o"
 	@echo "... src/network/acceptor.i"
 	@echo "... src/network/acceptor.s"
@@ -775,6 +840,9 @@ help:
 	@echo "... src/server/rpc_service.o"
 	@echo "... src/server/rpc_service.i"
 	@echo "... src/server/rpc_service.s"
+	@echo "... tests/test_consistent_hash.o"
+	@echo "... tests/test_consistent_hash.i"
+	@echo "... tests/test_consistent_hash.s"
 .PHONY : help
 
 
