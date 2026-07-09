@@ -35,6 +35,11 @@ set(SERVER_SRCS
     src/server/rpc_server.cc
 )
 
+set(CLIENT_SRCS
+    src/client/rpc_sync_client.cc
+    src/client/rpc_async_client.cc  # 新增
+)
+
 add_library(network ${NETWORK_SRCS} ${CODEC_SRCS} ${PROTO_SRCS} ${CLIENT_SRCS} ${SERVER_SRCS})
 target_link_libraries(network protobuf pthread)
 
@@ -50,3 +55,6 @@ target_link_libraries(rpc_sync_test network)
 # 新的 rpc_server 示例
 add_executable(rpc_server examples/rpc/rpc_server_main.cc examples/rpc/echo_service.cc)
 target_link_libraries(rpc_server network)
+
+add_executable(rpc_async_test examples/rpc/rpc_async_test.cc)
+target_link_libraries(rpc_async_test network)

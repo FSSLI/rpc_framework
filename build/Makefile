@@ -181,6 +181,19 @@ rpc_server/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/rpc_server.dir/build.make CMakeFiles/rpc_server.dir/build
 .PHONY : rpc_server/fast
 
+#=============================================================================
+# Target rules for targets named rpc_async_test
+
+# Build rule for target.
+rpc_async_test: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 rpc_async_test
+.PHONY : rpc_async_test
+
+# fast build rule for target.
+rpc_async_test/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rpc_async_test.dir/build.make CMakeFiles/rpc_async_test.dir/build
+.PHONY : rpc_async_test/fast
+
 examples/echo/echo_client.o: examples/echo/echo_client.cc.o
 .PHONY : examples/echo/echo_client.o
 
@@ -253,6 +266,30 @@ examples/rpc/echo_service.cc.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/rpc_server.dir/build.make CMakeFiles/rpc_server.dir/examples/rpc/echo_service.cc.s
 .PHONY : examples/rpc/echo_service.cc.s
 
+examples/rpc/rpc_async_test.o: examples/rpc/rpc_async_test.cc.o
+.PHONY : examples/rpc/rpc_async_test.o
+
+# target to build an object file
+examples/rpc/rpc_async_test.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rpc_async_test.dir/build.make CMakeFiles/rpc_async_test.dir/examples/rpc/rpc_async_test.cc.o
+.PHONY : examples/rpc/rpc_async_test.cc.o
+
+examples/rpc/rpc_async_test.i: examples/rpc/rpc_async_test.cc.i
+.PHONY : examples/rpc/rpc_async_test.i
+
+# target to preprocess a source file
+examples/rpc/rpc_async_test.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rpc_async_test.dir/build.make CMakeFiles/rpc_async_test.dir/examples/rpc/rpc_async_test.cc.i
+.PHONY : examples/rpc/rpc_async_test.cc.i
+
+examples/rpc/rpc_async_test.s: examples/rpc/rpc_async_test.cc.s
+.PHONY : examples/rpc/rpc_async_test.s
+
+# target to generate assembly for a file
+examples/rpc/rpc_async_test.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rpc_async_test.dir/build.make CMakeFiles/rpc_async_test.dir/examples/rpc/rpc_async_test.cc.s
+.PHONY : examples/rpc/rpc_async_test.cc.s
+
 examples/rpc/rpc_server_main.o: examples/rpc/rpc_server_main.cc.o
 .PHONY : examples/rpc/rpc_server_main.o
 
@@ -300,6 +337,30 @@ examples/rpc/rpc_sync_test.s: examples/rpc/rpc_sync_test.cc.s
 examples/rpc/rpc_sync_test.cc.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/rpc_sync_test.dir/build.make CMakeFiles/rpc_sync_test.dir/examples/rpc/rpc_sync_test.cc.s
 .PHONY : examples/rpc/rpc_sync_test.cc.s
+
+src/client/rpc_async_client.o: src/client/rpc_async_client.cc.o
+.PHONY : src/client/rpc_async_client.o
+
+# target to build an object file
+src/client/rpc_async_client.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/network.dir/build.make CMakeFiles/network.dir/src/client/rpc_async_client.cc.o
+.PHONY : src/client/rpc_async_client.cc.o
+
+src/client/rpc_async_client.i: src/client/rpc_async_client.cc.i
+.PHONY : src/client/rpc_async_client.i
+
+# target to preprocess a source file
+src/client/rpc_async_client.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/network.dir/build.make CMakeFiles/network.dir/src/client/rpc_async_client.cc.i
+.PHONY : src/client/rpc_async_client.cc.i
+
+src/client/rpc_async_client.s: src/client/rpc_async_client.cc.s
+.PHONY : src/client/rpc_async_client.s
+
+# target to generate assembly for a file
+src/client/rpc_async_client.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/network.dir/build.make CMakeFiles/network.dir/src/client/rpc_async_client.cc.s
+.PHONY : src/client/rpc_async_client.cc.s
 
 src/client/rpc_sync_client.o: src/client/rpc_sync_client.cc.o
 .PHONY : src/client/rpc_sync_client.o
@@ -648,6 +709,7 @@ help:
 	@echo "... echo_client"
 	@echo "... echo_server"
 	@echo "... network"
+	@echo "... rpc_async_test"
 	@echo "... rpc_server"
 	@echo "... rpc_sync_test"
 	@echo "... examples/echo/echo_client.o"
@@ -659,12 +721,18 @@ help:
 	@echo "... examples/rpc/echo_service.o"
 	@echo "... examples/rpc/echo_service.i"
 	@echo "... examples/rpc/echo_service.s"
+	@echo "... examples/rpc/rpc_async_test.o"
+	@echo "... examples/rpc/rpc_async_test.i"
+	@echo "... examples/rpc/rpc_async_test.s"
 	@echo "... examples/rpc/rpc_server_main.o"
 	@echo "... examples/rpc/rpc_server_main.i"
 	@echo "... examples/rpc/rpc_server_main.s"
 	@echo "... examples/rpc/rpc_sync_test.o"
 	@echo "... examples/rpc/rpc_sync_test.i"
 	@echo "... examples/rpc/rpc_sync_test.s"
+	@echo "... src/client/rpc_async_client.o"
+	@echo "... src/client/rpc_async_client.i"
+	@echo "... src/client/rpc_async_client.s"
 	@echo "... src/client/rpc_sync_client.o"
 	@echo "... src/client/rpc_sync_client.i"
 	@echo "... src/client/rpc_sync_client.s"

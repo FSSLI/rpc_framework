@@ -48,4 +48,5 @@ set(CMAKE_DEPEND_INFO_FILES
   "CMakeFiles/echo_client.dir/DependInfo.cmake"
   "CMakeFiles/rpc_sync_test.dir/DependInfo.cmake"
   "CMakeFiles/rpc_server.dir/DependInfo.cmake"
+  "CMakeFiles/rpc_async_test.dir/DependInfo.cmake"
   )

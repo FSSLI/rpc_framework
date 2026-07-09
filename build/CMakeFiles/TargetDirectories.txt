@@ -3,5 +3,6 @@
 /home/machao/projects/rpc_framework/build/CMakeFiles/echo_client.dir
 /home/machao/projects/rpc_framework/build/CMakeFiles/rpc_sync_test.dir
 /home/machao/projects/rpc_framework/build/CMakeFiles/rpc_server.dir
+/home/machao/projects/rpc_framework/build/CMakeFiles/rpc_async_test.dir
 /home/machao/projects/rpc_framework/build/CMakeFiles/edit_cache.dir
 /home/machao/projects/rpc_framework/build/CMakeFiles/rebuild_cache.dir
