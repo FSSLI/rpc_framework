@@ -6,7 +6,7 @@
 
 namespace rpc {
 
-// ==================== CRC32 ====================
+// ==================== CRC32 查表法 ====================
 
 static const uint32_t kCrc32Table[256] = {
     0x00000000, 0x77073096, 0xee0e612c, 0x990951ba,
@@ -114,331 +114,277 @@ bool Codec::readString(const char* data, size_t& pos, size_t totalLen, std::stri
     return true;
 }
 
-// ==================== 编码 ====================
+// ==================== Body 编码 ====================
 
-std::string Codec::encodeRequest(const rpc::RpcRequest& req, uint64_t req_id,
-                               const std::string& service_name,
-                               const std::string& method_name) {
+std::string Codec::encodeRequestBody(const rpc::RpcRequest& req,
+                                     const std::string& service_name,
+                                     const std::string& method_name) {
+    std::string body;
+
+    // service_name (2B_len + str)
+    appendString(body, service_name);
+    // method_name (2B_len + str)
+    appendString(body, method_name);
+    // payload_len (4B) + payload
     std::string payload;
     if (!req.SerializeToString(&payload)) {
         return "";
     }
-    
-    std::string variablePart;
-    appendString(variablePart, service_name);   // 从参数传进来
-    appendString(variablePart, method_name);      // 从参数传进来
-    
     uint32_t payloadLen = encodeU32(static_cast<uint32_t>(payload.size()));
-    variablePart.append(reinterpret_cast<const char*>(&payloadLen), sizeof(payloadLen));
-    variablePart.append(payload);
-    
-    RequestHeader header;
-    header.magic = encodeU32(kMagic);
-    header.version = kVersion;
-    header.msg_type = static_cast<uint8_t>(MsgType::REQUEST);
-    header.serialize_type = static_cast<uint8_t>(SerializeType::PROTOBUF);
-    header.compress_type = static_cast<uint8_t>(CompressType::NONE);
-    header.req_id = encodeU64(req_id);
-    
-    std::string packet;
-    packet.append(reinterpret_cast<const char*>(&header), sizeof(header));
-    packet.append(variablePart);
-    
-    uint32_t checksum = crc32(packet.data(), packet.size());
-    uint32_t checksumBE = encodeU32(checksum);
-    packet.append(reinterpret_cast<const char*>(&checksumBE), sizeof(checksumBE));
-    
-    return packet;
+    body.append(reinterpret_cast<const char*>(&payloadLen), sizeof(payloadLen));
+    body.append(payload);
+
+    return body;
 }
 
-std::string Codec::encodeResponse(const rpc::RpcResponse& resp, 
-                                 uint64_t req_id,
-                                 Status status) {
+std::string Codec::encodeResponseBody(const rpc::RpcResponse& resp, Status status) {
+    std::string body;
+
+    // status (1B)
+    body.push_back(static_cast<uint8_t>(status));
+    // payload_len (4B) + payload
     std::string payload;
     if (!resp.SerializeToString(&payload)) {
         return "";
     }
-    
-    ResponseHeader header;
-    header.magic = encodeU32(kMagic);
-    header.version = kVersion;
-    header.msg_type = static_cast<uint8_t>(MsgType::RESPONSE);
-    header.status = static_cast<uint8_t>(status);
-    header.req_id = encodeU64(req_id);
-    header.payload_len = encodeU32(static_cast<uint32_t>(payload.size()));
-    
-    std::string packet;
-    packet.append(reinterpret_cast<const char*>(&header), sizeof(header));
-    packet.append(payload);
-    
-    uint16_t errorLen = 0;
-    packet.append(reinterpret_cast<const char*>(&errorLen), sizeof(errorLen));
-    
-    uint32_t checksum = crc32(packet.data(), packet.size());
-    uint32_t checksumBE = encodeU32(checksum);
-    packet.append(reinterpret_cast<const char*>(&checksumBE), sizeof(checksumBE));
-    
-    return packet;
+    uint32_t payloadLen = encodeU32(static_cast<uint32_t>(payload.size()));
+    body.append(reinterpret_cast<const char*>(&payloadLen), sizeof(payloadLen));
+    body.append(payload);
+    // error_msg (2B_len + str)
+    appendString(body, resp.error_msg());
+
+    return body;
 }
 
-std::string Codec::encodeHeartbeat(const rpc::Heartbeat& hb) {
-    std::string packet;
-    
-    // 固定头
-    HeartbeatHeader header;
-    header.magic = encodeU32(kMagic);
-    header.version = kVersion;
-    header.msg_type = static_cast<uint8_t>(MsgType::HEARTBEAT);
-    header.service_len = encodeU16(static_cast<uint16_t>(hb.service_name().size()));
-    
-    packet.append(reinterpret_cast<const char*>(&header), sizeof(header));
-    
-    // service
-    packet.append(hb.service_name());
-    
-    // node_id
-    appendString(packet, hb.node_id());
-    
-    // timestamp
+std::string Codec::encodeHeartbeatBody(const rpc::Heartbeat& hb) {
+    std::string body;
+
+    // service_name (2B_len + str)
+    appendString(body, hb.service_name());
+    // node_id (2B_len + str)
+    appendString(body, hb.node_id());
+    // timestamp (8B)
     uint64_t timestamp = encodeU64(static_cast<uint64_t>(hb.timestamp()));
-    packet.append(reinterpret_cast<const char*>(&timestamp), sizeof(timestamp));
-    
-    // extra map
+    body.append(reinterpret_cast<const char*>(&timestamp), sizeof(timestamp));
+    // extra_count (2B) + extras
     uint16_t extraCount = encodeU16(static_cast<uint16_t>(hb.extra_size()));
-    packet.append(reinterpret_cast<const char*>(&extraCount), sizeof(extraCount));
+    body.append(reinterpret_cast<const char*>(&extraCount), sizeof(extraCount));
     for (const auto& pair : hb.extra()) {
-        appendString(packet, pair.first);
-        appendString(packet, pair.second);
+        appendString(body, pair.first);
+        appendString(body, pair.second);
     }
-    
-    // checksum
+
+    return body;
+}
+
+// ==================== 组装完整包 ====================
+// 格式：[Fixed Header: 16B][Body: body_len B][Checksum: 4B]
+// ============================================================================
+
+std::string Codec::pack(MsgType msg_type, uint64_t req_id, const std::string& body) {
+    std::string packet;
+
+    // Fixed Header
+    FixedHeader header;
+    header.magic = encodeU32(kMagic);
+    header.version = kVersion;
+    header.msg_type = static_cast<uint8_t>(msg_type);
+    header.body_len = encodeU16(static_cast<uint16_t>(body.size()));
+    header.req_id = encodeU64(req_id);
+
+    packet.append(reinterpret_cast<const char*>(&header), sizeof(header));
+    packet.append(body);
+
+    // Checksum (header + body)
     uint32_t checksum = crc32(packet.data(), packet.size());
     uint32_t checksumBE = encodeU32(checksum);
     packet.append(reinterpret_cast<const char*>(&checksumBE), sizeof(checksumBE));
-    
+
     return packet;
 }
 
-// ==================== 解码 ====================
+// ==================== 对外编码接口 ====================
 
-bool Codec::decode(Buffer& buf, DecodedPacket& packet,
-                   std::string* service_name,
-                   std::string* method_name) {
-    if (buf.readableBytes() < sizeof(uint32_t)) return false;
-    
-    //  reinterpret_cast 不移动数据，不复制数据，不改变数据，只改变编译器对数据的解释方式。
-    uint32_t magic = decodeU32(*reinterpret_cast<const uint32_t*>(buf.peek()));  // * 解引用，读取 4 字节，得到 uint32_t
+std::string Codec::encodeRequest(const rpc::RpcRequest& req, uint64_t req_id,
+                                 const std::string& service_name,
+                                 const std::string& method_name) {
+    std::string body = encodeRequestBody(req, service_name, method_name);
+    if (body.empty()) return "";
+    return pack(MsgType::REQUEST, req_id, body);
+}
+
+std::string Codec::encodeResponse(const rpc::RpcResponse& resp, 
+                                  uint64_t req_id,
+                                  Status status) {
+    std::string body = encodeResponseBody(resp, status);
+    if (body.empty()) return "";
+    return pack(MsgType::RESPONSE, req_id, body);
+}
+
+std::string Codec::encodeHeartbeat(const rpc::Heartbeat& hb, uint64_t req_id) {
+    std::string body = encodeHeartbeatBody(hb);
+    if (body.empty()) return "";
+    return pack(MsgType::HEARTBEAT, req_id, body);
+}
+
+// ==================== Body 解码 ====================
+
+bool Codec::decodeRequestBody(const char* data, size_t bodyLen, DecodedPacket& packet) {
+    size_t pos = 0;
+
+    if (!readString(data, pos, bodyLen, packet.service_name)) return false;
+    if (!readString(data, pos, bodyLen, packet.method_name)) return false;
+
+    if (pos + sizeof(uint32_t) > bodyLen) return false;
+    uint32_t payloadLen = decodeU32(*reinterpret_cast<const uint32_t*>(data + pos));
+    pos += sizeof(uint32_t);
+    if (pos + payloadLen > bodyLen) return false;
+    std::string payload(data + pos, payloadLen);
+    pos += payloadLen;
+
+    // 校验：body 应该刚好读完
+    if (pos != bodyLen) return false;
+
+    if (!packet.rpc_request.ParseFromString(payload)) return false;
+    return true;
+}
+
+bool Codec::decodeResponseBody(const char* data, size_t bodyLen, DecodedPacket& packet) {
+    if (bodyLen < 1) return false;
+    size_t pos = 0;
+
+    // status (1B)
+    uint8_t status = data[pos++];
+
+    if (pos + sizeof(uint32_t) > bodyLen) return false;
+    uint32_t payloadLen = decodeU32(*reinterpret_cast<const uint32_t*>(data + pos));
+    pos += sizeof(uint32_t);
+    if (pos + payloadLen > bodyLen) return false;
+    std::string payload(data + pos, payloadLen);
+    pos += payloadLen;
+
+    // error_msg
+    std::string errorMsg;
+    if (!readString(data, pos, bodyLen, errorMsg)) return false;
+
+    if (pos != bodyLen) return false;
+
+    if (!packet.rpc_response.ParseFromString(payload)) return false;
+    packet.rpc_response.set_success(status == 0);
+    packet.rpc_response.set_error_msg(errorMsg);
+    return true;
+}
+
+bool Codec::decodeHeartbeatBody(const char* data, size_t bodyLen, DecodedPacket& packet) {
+    size_t pos = 0;
+
+    std::string serviceName, nodeId;
+    if (!readString(data, pos, bodyLen, serviceName)) return false;
+    if (!readString(data, pos, bodyLen, nodeId)) return false;
+
+    if (pos + sizeof(uint64_t) > bodyLen) return false;
+    uint64_t timestamp = decodeU64(*reinterpret_cast<const uint64_t*>(data + pos));
+    pos += sizeof(uint64_t);
+
+    if (pos + sizeof(uint16_t) > bodyLen) return false;
+    uint16_t extraCount = decodeU16(*reinterpret_cast<const uint16_t*>(data + pos));
+    pos += sizeof(uint16_t);
+
+    for (uint16_t i = 0; i < extraCount; ++i) {
+        std::string key, value;
+        if (!readString(data, pos, bodyLen, key)) return false;
+        if (!readString(data, pos, bodyLen, value)) return false;
+        (*packet.heartbeat.mutable_extra())[key] = value;
+    }
+
+    if (pos != bodyLen) return false;
+
+    packet.heartbeat.set_service_name(serviceName);
+    packet.heartbeat.set_node_id(nodeId);
+    packet.heartbeat.set_timestamp(static_cast<int64_t>(timestamp));
+    return true;
+}
+
+// ==================== 统一解码入口 ====================
+// 从 Buffer 中尝试解码一个完整包
+// 返回值：true = 解码成功；false = 数据不足或校验失败
+//
+// 流程：
+// 1. 检查可读字节是否 >= 16B（header）
+// 2. 检查 magic、version
+// 3. 根据 body_len 检查是否收到完整包（16 + body_len + 4）
+// 4. 验证 CRC32
+// 5. 根据 msg_type 分发到具体解码
+// 6. 从 Buffer 中消费掉已解码的字节
+// ============================================================================
+
+bool Codec::decode(Buffer& buf, DecodedPacket& packet) {
+    // 1. 检查 header 是否完整
+    if (buf.readableBytes() < kFixedHeaderSize) return false;
+
+    const char* data = buf.peek();
+
+    // 2. 解析 header（不移动读指针，先检查）
+    uint32_t magic = decodeU32(*reinterpret_cast<const uint32_t*>(data));
     if (!checkMagic(magic)) {
+        // 魔数错误：可能是数据错乱，丢弃 1 字节尝试重新同步
         buf.retrieve(1);
         return false;
     }
-    
-    if (buf.readableBytes() < 6) return false;
-    uint8_t version = buf.peek()[4];
-    uint8_t msgType = buf.peek()[5];
-    
+
+    uint8_t version = data[4];
     if (version != kVersion) {
-        // buf.retrieve(6);
+        buf.retrieve(1);  // 版本不匹配，同样丢弃重同步
         return false;
     }
-    
+
+    uint8_t msgType = data[5];
+    uint16_t bodyLen = decodeU16(*reinterpret_cast<const uint16_t*>(data + 6));
+    uint64_t reqId = decodeU64(*reinterpret_cast<const uint64_t*>(data + 8));
+
+    // 3. 检查完整包是否到达
+    size_t totalLen = kFixedHeaderSize + bodyLen + kChecksumSize;
+    if (buf.readableBytes() < totalLen) return false;
+
+    // 4. 验证 CRC32（header + body，不包括 checksum 本身）
+    uint32_t checksum = decodeU32(*reinterpret_cast<const uint32_t*>(data + kFixedHeaderSize + bodyLen));
+    uint32_t calcCrc = crc32(data, kFixedHeaderSize + bodyLen);
+    if (calcCrc != checksum) {
+        // 校验失败：丢弃整个包，尝试从下一个字节重新同步
+        buf.retrieve(totalLen);
+        return false;
+    }
+
+    // 5. 根据 msg_type 解码 body
+    const char* bodyData = data + kFixedHeaderSize;
+    bool ok = false;
+
     switch (static_cast<MsgType>(msgType)) {
         case MsgType::REQUEST:
-            return decodeRequest(buf, packet, service_name, method_name);
+            ok = decodeRequestBody(bodyData, bodyLen, packet);
+            packet.msg_type = MsgType::REQUEST;
+            break;
         case MsgType::RESPONSE:
-            return decodeResponse(buf, packet);
+            ok = decodeResponseBody(bodyData, bodyLen, packet);
+            packet.msg_type = MsgType::RESPONSE;
+            break;
         case MsgType::HEARTBEAT:
-            return decodeHeartbeat(buf, packet);
+            ok = decodeHeartbeatBody(bodyData, bodyLen, packet);
+            packet.msg_type = MsgType::HEARTBEAT;
+            break;
         default:
-            buf.retrieve(4);
+            buf.retrieve(totalLen);
             return false;
     }
-}
 
-bool Codec::decodeRequest(Buffer& buf, DecodedPacket& packet,
-                          std::string* service_name,
-                          std::string* method_name) {
-    if (buf.readableBytes() < kRequestHeaderSize + sizeof(uint16_t)) return false;
-    
-    const char* data = buf.peek();
-    RequestHeader header;
-    std::memcpy(&header, data, sizeof(header));
-    
-    header.magic = decodeU32(header.magic);
-    header.req_id = decodeU64(header.req_id);
-    
-    size_t pos = kRequestHeaderSize;
-    size_t totalLen = buf.readableBytes();
-    
-    std::string serviceName, methodName, payload;
-    if (!readString(data, pos, totalLen, serviceName)) return false;
-    if (!readString(data, pos, totalLen, methodName)) return false;
-    
-    if (pos + sizeof(uint32_t) > totalLen) return false;
-    uint32_t payloadLen = decodeU32(*reinterpret_cast<const uint32_t*>(data + pos));
-    pos += sizeof(uint32_t);
-    if (pos + payloadLen > totalLen) return false;
-    payload.assign(data + pos, payloadLen);
-    pos += payloadLen;
-    
-    if (pos + sizeof(uint32_t) > totalLen) return false;
-    uint32_t checksum = decodeU32(*reinterpret_cast<const uint32_t*>(data + pos));
-    pos += sizeof(uint32_t);
-    
-    uint32_t calcCrc = crc32(data, pos - sizeof(uint32_t));
-    if (calcCrc != checksum) {
-        buf.retrieve(pos);
+    if (!ok) {
+        buf.retrieve(totalLen);
         return false;
     }
-    
-    rpc::RpcRequest req;
-    if (!req.ParseFromString(payload)) {
-        buf.retrieve(pos);
-        return false;
-    }
-    
-    // 不需要再从 req 里取 service/method，直接从协议头返回
-    packet.msg_type = MsgType::REQUEST;
-    packet.req_id = header.req_id;
-    packet.rpc_request = req;
-    if (service_name) *service_name = serviceName;
-    if (method_name) *method_name = methodName;
-    
-    buf.retrieve(pos);
-    return true;
-}
 
-bool Codec::decodeResponse(Buffer& buf, DecodedPacket& packet) {
-    if (buf.readableBytes() < kResponseHeaderSize + sizeof(uint32_t)) return false;
-    
-    const char* data = buf.peek();
-    ResponseHeader header;
-    std::memcpy(&header, data, sizeof(header));
-    
-    header.magic = decodeU32(header.magic);
-    header.req_id = decodeU64(header.req_id);
-    header.payload_len = decodeU32(header.payload_len);
-    
-    size_t pos = kResponseHeaderSize;
-    size_t totalLen = buf.readableBytes();
-    
-    if (pos + header.payload_len > totalLen) return false;
-    std::string payload(data + pos, header.payload_len);
-    pos += header.payload_len;
-    
-    if (pos + sizeof(uint16_t) > totalLen) return false;
-    uint16_t errorLen = decodeU16(*reinterpret_cast<const uint16_t*>(data + pos));
-    pos += sizeof(uint16_t);
-    if (errorLen > 0) {
-        if (pos + errorLen > totalLen) return false;
-        pos += errorLen;
-    }
-    
-    if (pos + sizeof(uint32_t) > totalLen) return false;
-    uint32_t checksum = decodeU32(*reinterpret_cast<const uint32_t*>(data + pos));
-    pos += sizeof(uint32_t);
-    
-    uint32_t calcCrc = crc32(data, pos - sizeof(uint32_t));
-    if (calcCrc != checksum) {
-        buf.retrieve(pos);
-        return false;
-    }
-    
-    rpc::RpcResponse resp;
-    if (!resp.ParseFromString(payload)) {
-        buf.retrieve(pos);
-        return false;
-    }
-    
-    packet.msg_type = MsgType::RESPONSE;
-    packet.req_id = header.req_id;
-    packet.rpc_response = resp;
-    
-    buf.retrieve(pos);
-    return true;
-}
-
-bool Codec::decodeHeartbeat(Buffer& buf, DecodedPacket& packet) {
-    // 最小：header(10B) + checksum(4B) = 14B
-    // 但实际上必须有 service（至少0字节）+ node_id_len(2B) + timestamp(8B) + extra_count(2B)
-    if (buf.readableBytes() < sizeof(HeartbeatHeader) + sizeof(uint32_t)) return false;
-    
-    const char* data = buf.peek();
-    HeartbeatHeader header;
-    std::memcpy(&header, data, sizeof(header));
-    
-    header.magic = decodeU32(header.magic);
-    header.service_len = decodeU16(header.service_len);
-    
-    size_t pos = sizeof(HeartbeatHeader);
-    size_t totalLen = buf.readableBytes();
-    
-    // service
-    if (pos + header.service_len > totalLen) return false;
-    std::string serviceName(data + pos, header.service_len);
-    pos += header.service_len;
-    
-    // node_id
-    std::string nodeId;
-    if (!readString(data, pos, totalLen, nodeId)) return false;
-    
-    // timestamp
-    if (pos + sizeof(uint64_t) > totalLen) return false;
-    uint64_t timestamp = decodeU64(*reinterpret_cast<const uint64_t*>(data + pos));
-    pos += sizeof(uint64_t);
-    
-    // extra map
-    if (pos + sizeof(uint16_t) > totalLen) return false;
-    uint16_t extraCount = decodeU16(*reinterpret_cast<const uint16_t*>(data + pos));
-    pos += sizeof(uint16_t);
-    
-    rpc::Heartbeat hb;
-    for (uint16_t i = 0; i < extraCount; ++i) {
-        std::string key, value;
-        if (!readString(data, pos, totalLen, key)) return false;
-        if (!readString(data, pos, totalLen, value)) return false;
-        (*hb.mutable_extra())[key] = value;
-    }
-    
-    // checksum
-    if (pos + sizeof(uint32_t) > totalLen) return false;
-    uint32_t checksum = decodeU32(*reinterpret_cast<const uint32_t*>(data + pos));
-    pos += sizeof(uint32_t);
-    
-    uint32_t calcCrc = crc32(data, pos - sizeof(uint32_t));
-    if (calcCrc != checksum) {
-        buf.retrieve(pos);
-        return false;
-    }
-    
-    hb.set_service_name(serviceName);
-    hb.set_node_id(nodeId);
-    hb.set_timestamp(static_cast<int64_t>(timestamp));
-    
-    packet.msg_type = MsgType::HEARTBEAT;
-    packet.req_id = 0;
-    packet.heartbeat = hb;
-    
-    buf.retrieve(pos);
-    return true;
-}
-
-std::string Codec::encodeWithLength(const std::string& packet) {
-    std::string result;
-    uint32_t len = encodeU32(static_cast<uint32_t>(packet.size()));
-    result.append(reinterpret_cast<const char*>(&len), sizeof(len));
-    result.append(packet);
-    return result;
-}
-
-bool Codec::decodeWithLength(Buffer& buf, std::string& packet) {
-    if (buf.readableBytes() < sizeof(uint32_t)) return false;
-    
-    uint32_t len = decodeU32(*reinterpret_cast<const uint32_t*>(buf.peek()));
-    if (buf.readableBytes() < sizeof(uint32_t) + len) return false;
-    
-    buf.retrieve(sizeof(uint32_t));
-    packet = buf.retrieveAsString(len);
+    // 6. 消费掉已解码的字节
+    packet.req_id = reqId;
+    buf.retrieve(totalLen);
     return true;
 }
 

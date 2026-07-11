@@ -43,11 +43,11 @@ set(LOADBALANCE_SRCS
 add_library(network ${NETWORK_SRCS} ${CODEC_SRCS} ${PROTO_SRCS} ${CLIENT_SRCS} ${SERVER_SRCS} ${LOADBALANCE_SRCS})
 target_link_libraries(network protobuf pthread)
 
-add_executable(echo_server examples/echo/echo_server.cc)
-target_link_libraries(echo_server network)
+# add_executable(echo_server examples/echo/echo_server.cc)
+# target_link_libraries(echo_server network)
 
-add_executable(echo_client examples/echo/echo_client.cc)
-target_link_libraries(echo_client network)
+# add_executable(echo_client examples/echo/echo_client.cc)
+# target_link_libraries(echo_client network)
 
 add_executable(rpc_sync_test examples/rpc/rpc_sync_test.cc)
 target_link_libraries(rpc_sync_test network)

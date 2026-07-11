@@ -3,9 +3,7 @@
 
 #include <cstdint>
 #include <string>
-#include <vector>
-#include "network/buffer.h"        // ← 替换
-
+#include "network/buffer.h"
 #include "protocol/rpc_service.pb.h"
 
 namespace rpc {
@@ -14,10 +12,8 @@ namespace rpc {
 
 constexpr uint32_t kMagic = 0x52504346;  // "RPCF"
 constexpr uint8_t  kVersion = 1;
-
-// 固定头长度
-constexpr size_t kRequestHeaderSize = 16;   // 4+1+1+1+1+8
-constexpr size_t kResponseHeaderSize = 19;  // 4+1+1+1+8+4
+constexpr size_t   kFixedHeaderSize = 16;  // 4+1+1+2+8
+constexpr size_t   kChecksumSize = 4;
 
 // ==================== 枚举 ====================
 
@@ -43,34 +39,23 @@ enum class Status : uint8_t {
     TIMEOUT = 2,
 };
 
-// ==================== 协议头（纯固定字段，1字节对齐） ====================
+// ==================== 统一固定头（1字节对齐） ====================
+// 所有消息类型共用此头，body_len 解决粘包，无需外部 Length-Field
+//
+// 协议格式：
+//   [Fixed Header: 16B][Variable Body: body_len B][Checksum: 4B]
+//
+// 总包长度 = 16 + body_len + 4 = 20 + body_len
+// ============================================================================
 
 #pragma pack(push, 1)
 
-struct RequestHeader {
-    uint32_t magic;           // 4B
-    uint8_t  version;         // 1B
-    uint8_t  msg_type;        // 1B (REQUEST=0)
-    uint8_t  serialize_type;  // 1B
-    uint8_t  compress_type;   // 1B
-    uint64_t req_id;          // 8B
-};
-
-struct ResponseHeader {
-    uint32_t magic;           // 4B
-    uint8_t  version;         // 1B
-    uint8_t  msg_type;        // 1B (RESPONSE=1)
-    uint8_t  status;          // 1B
-    uint64_t req_id;          // 8B
-    uint32_t payload_len;     // 4B
-};
-
-struct HeartbeatHeader {
-    uint32_t magic;           // 4B
-    uint8_t  version;         // 1B
-    uint8_t  msg_type;        // 1B (HEARTBEAT=2)
-    uint16_t service_len;     // 2B
-    // 后面跟变长：service + node_id_len(2B) + node_id + timestamp(8B) + extra_count(2B) + extras + checksum(4B)
+struct FixedHeader {
+    uint32_t magic;      // 4B  魔数 "RPCF"
+    uint8_t  version;    // 1B  协议版本
+    uint8_t  msg_type;   // 1B  消息类型
+    uint16_t body_len;   // 2B  变长体长度（网络字节序）
+    uint64_t req_id;     // 8B  请求ID
 };
 
 #pragma pack(pop)
@@ -80,30 +65,37 @@ struct HeartbeatHeader {
 struct DecodedPacket {
     MsgType msg_type;
     uint64_t req_id;
-    
+
     rpc::RpcRequest rpc_request;
     rpc::RpcResponse rpc_response;
     rpc::Heartbeat heartbeat;
+
+    // 辅助字段（仅 REQUEST 有效）
+    std::string service_name;
+    std::string method_name;
 };
 
 // ==================== Codec ====================
 
 class Codec {
 public:
+    // 编码：返回完整包（header + body + checksum），直接发送，无需再加长度头
     static std::string encodeRequest(const rpc::RpcRequest& req, uint64_t req_id,
-                               const std::string& service_name,
-                               const std::string& method_name);
+                                     const std::string& service_name,
+                                     const std::string& method_name);
     static std::string encodeResponse(const rpc::RpcResponse& resp, 
-                                       uint64_t req_id,
-                                       Status status = Status::SUCCESS);
-    static std::string encodeHeartbeat(const rpc::Heartbeat& hb);
+                                      uint64_t req_id,
+                                      Status status = Status::SUCCESS);
+    static std::string encodeHeartbeat(const rpc::Heartbeat& hb, uint64_t req_id = 0);
 
-    static bool decode(Buffer& buf, DecodedPacket& packet,
-                  std::string* service_name = nullptr,
-                  std::string* method_name = nullptr);
+    // 解码：从 Buffer 中尝试解码一个完整包
+    // 返回值：true = 解码成功，packet 填充；false = 数据不足或校验失败
+    static bool decode(Buffer& buf, DecodedPacket& packet);
 
+    // CRC32 校验
     static uint32_t crc32(const char* data, size_t len);
-    
+
+    // 字节序转换（网络字节序 <-> 主机字节序）
     static uint32_t encodeU32(uint32_t v);
     static uint32_t decodeU32(uint32_t v);
     static uint64_t encodeU64(uint64_t v);
@@ -111,19 +103,26 @@ public:
     static uint16_t encodeU16(uint16_t v);
     static uint16_t decodeU16(uint16_t v);
 
-    static std::string encodeWithLength(const std::string& packet);
-    static bool decodeWithLength(Buffer& buf, std::string& packet);
-
 private:
     static bool checkMagic(uint32_t magic);
+
+    // 变长字符串编码：2B_len + str_bytes
     static void appendString(std::string& out, const std::string& str);
     static bool readString(const char* data, size_t& pos, size_t totalLen, std::string& out);
-    
-    static bool decodeRequest(Buffer& buf, DecodedPacket& packet,
-                           std::string* service_name = nullptr,
-                           std::string* method_name = nullptr);
-    static bool decodeResponse(Buffer& buf, DecodedPacket& packet);
-    static bool decodeHeartbeat(Buffer& buf, DecodedPacket& packet);
+
+    // 各类型 body 编解码
+    static std::string encodeRequestBody(const rpc::RpcRequest& req,
+                                         const std::string& service_name,
+                                         const std::string& method_name);
+    static std::string encodeResponseBody(const rpc::RpcResponse& resp, Status status);
+    static std::string encodeHeartbeatBody(const rpc::Heartbeat& hb);
+
+    static bool decodeRequestBody(const char* data, size_t bodyLen, DecodedPacket& packet);
+    static bool decodeResponseBody(const char* data, size_t bodyLen, DecodedPacket& packet);
+    static bool decodeHeartbeatBody(const char* data, size_t bodyLen, DecodedPacket& packet);
+
+    // 组装完整包：header + body + checksum
+    static std::string pack(MsgType msg_type, uint64_t req_id, const std::string& body);
 };
 
 } // namespace rpc

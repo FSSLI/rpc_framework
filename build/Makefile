@@ -130,32 +130,6 @@ network/fast:
 .PHONY : network/fast
 
 #=============================================================================
-# Target rules for targets named echo_server
-
-# Build rule for target.
-echo_server: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 echo_server
-.PHONY : echo_server
-
-# fast build rule for target.
-echo_server/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/echo_server.dir/build.make CMakeFiles/echo_server.dir/build
-.PHONY : echo_server/fast
-
-#=============================================================================
-# Target rules for targets named echo_client
-
-# Build rule for target.
-echo_client: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 echo_client
-.PHONY : echo_client
-
-# fast build rule for target.
-echo_client/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/echo_client.dir/build.make CMakeFiles/echo_client.dir/build
-.PHONY : echo_client/fast
-
-#=============================================================================
 # Target rules for targets named rpc_sync_test
 
 # Build rule for target.
@@ -206,54 +180,6 @@ test_consistent_hash: cmake_check_build_system
 test_consistent_hash/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_consistent_hash.dir/build.make CMakeFiles/test_consistent_hash.dir/build
 .PHONY : test_consistent_hash/fast
-
-examples/echo/echo_client.o: examples/echo/echo_client.cc.o
-.PHONY : examples/echo/echo_client.o
-
-# target to build an object file
-examples/echo/echo_client.cc.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/echo_client.dir/build.make CMakeFiles/echo_client.dir/examples/echo/echo_client.cc.o
-.PHONY : examples/echo/echo_client.cc.o
-
-examples/echo/echo_client.i: examples/echo/echo_client.cc.i
-.PHONY : examples/echo/echo_client.i
-
-# target to preprocess a source file
-examples/echo/echo_client.cc.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/echo_client.dir/build.make CMakeFiles/echo_client.dir/examples/echo/echo_client.cc.i
-.PHONY : examples/echo/echo_client.cc.i
-
-examples/echo/echo_client.s: examples/echo/echo_client.cc.s
-.PHONY : examples/echo/echo_client.s
-
-# target to generate assembly for a file
-examples/echo/echo_client.cc.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/echo_client.dir/build.make CMakeFiles/echo_client.dir/examples/echo/echo_client.cc.s
-.PHONY : examples/echo/echo_client.cc.s
-
-examples/echo/echo_server.o: examples/echo/echo_server.cc.o
-.PHONY : examples/echo/echo_server.o
-
-# target to build an object file
-examples/echo/echo_server.cc.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/echo_server.dir/build.make CMakeFiles/echo_server.dir/examples/echo/echo_server.cc.o
-.PHONY : examples/echo/echo_server.cc.o
-
-examples/echo/echo_server.i: examples/echo/echo_server.cc.i
-.PHONY : examples/echo/echo_server.i
-
-# target to preprocess a source file
-examples/echo/echo_server.cc.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/echo_server.dir/build.make CMakeFiles/echo_server.dir/examples/echo/echo_server.cc.i
-.PHONY : examples/echo/echo_server.cc.i
-
-examples/echo/echo_server.s: examples/echo/echo_server.cc.s
-.PHONY : examples/echo/echo_server.s
-
-# target to generate assembly for a file
-examples/echo/echo_server.cc.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/echo_server.dir/build.make CMakeFiles/echo_server.dir/examples/echo/echo_server.cc.s
-.PHONY : examples/echo/echo_server.cc.s
 
 examples/rpc/echo_service.o: examples/rpc/echo_service.cc.o
 .PHONY : examples/rpc/echo_service.o
@@ -767,19 +693,11 @@ help:
 	@echo "... depend"
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
-	@echo "... echo_client"
-	@echo "... echo_server"
 	@echo "... network"
 	@echo "... rpc_async_test"
 	@echo "... rpc_server"
 	@echo "... rpc_sync_test"
 	@echo "... test_consistent_hash"
-	@echo "... examples/echo/echo_client.o"
-	@echo "... examples/echo/echo_client.i"
-	@echo "... examples/echo/echo_client.s"
-	@echo "... examples/echo/echo_server.o"
-	@echo "... examples/echo/echo_server.i"
-	@echo "... examples/echo/echo_server.s"
 	@echo "... examples/rpc/echo_service.o"
 	@echo "... examples/rpc/echo_service.i"
 	@echo "... examples/rpc/echo_service.s"
