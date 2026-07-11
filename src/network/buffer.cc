@@ -106,11 +106,11 @@ ssize_t Buffer::writeFd(int fd, int* savedErrno) {
 }
 
 char* Buffer::begin() {
-    return &*buffer_.begin();
+    return buffer_.data();  // 返回指向底层数组的指针
 }
 
 const char* Buffer::begin() const {
-    return &*buffer_.begin();
+    return buffer_.data();  // 返回指向底层数组的指针
 }
 
 void Buffer::makeSpace(size_t len) {
