@@ -48,7 +48,7 @@ enum class Status : uint8_t {
 // 总包长度 = 16 + body_len + 4 = 20 + body_len
 // ============================================================================
 
-#pragma pack(push, 1)
+#pragma pack(push, 1)  //一字节对齐
 
 struct FixedHeader {
     uint32_t magic;      // 4B  魔数 "RPCF"

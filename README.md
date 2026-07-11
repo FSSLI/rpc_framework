@@ -6,11 +6,11 @@
 
 - [x] 自定义二进制协议（魔数 + 版本 + CRC32 校验）
 - [x] Protobuf 序列化
-- [x] TCP 粘包处理（Length-Field 帧格式）
+- [x] TCP 粘包处理（固定头 body_len 字段，自描述协议）
 - [x] epoll/Reactor 网络模型（主从 Reactor + one loop per thread）
 - [x] 多 IO 线程（EventLoopThreadPool 轮询分发连接）
 - [x] 同步 RPC 客户端（底层复用异步，future.wait_for 超时控制）
-- [x] 异步 RPC 客户端（Future/Promise + Callback 双模式）
+- [x] 异步 RPC 客户端（Future/Promise + Callback 双模式，当前直接操作 socket，Week 2 重构为基于 TcpClient）
 - [x] 服务端服务注册 + 方法分发（RpcServer）
 - [x] 连接 idle 超时检测（服务端主动断开不活跃连接）
 - [x] 一致性哈希负载均衡（MurmurHash + 虚拟节点）
@@ -20,6 +20,8 @@
 - [ ] 接入 MySQL/Redis/MQ
 
 ## 项目结构
+
+```
 rpc_framework/
 ├── CMakeLists.txt              # 构建配置
 ├── README.md                   # 项目说明
@@ -36,24 +38,24 @@ rpc_framework/
 │   │   ├── acceptor.h/cc       # 监听新连接
 │   │   ├── tcp_connection.h/cc # 连接管理（状态机）
 │   │   ├── tcp_server.h/cc     # 服务端（Acceptor + ThreadPool）
-│   │   └── tcp_client.h        # 客户端骨架（待实现）
+│   │   └── tcp_client.h        # 客户端骨架（待实现，Week 2）
 │   ├── codec/                  # 编解码器
-│   │   ├── rpc_codec.h/cc      # Length-Field + Protobuf + CRC32
+│   │   └── rpc_codec.h/cc      # 统一协议：Fixed Header(16B) + Protobuf + CRC32
 │   ├── client/                 # RPC 客户端
 │   │   ├── rpc_sync_client.h/cc    # 同步阻塞调用 + 超时
-│   │   └── rpc_async_client.h/cc   # 异步 Future/Callback
+│   │   └── rpc_async_client.h/cc   # 异步 Future/Callback（Week 2 重构）
 │   ├── server/                 # RPC 服务端
 │   │   ├── rpc_service.h/cc    # 服务基类 + 方法注册
 │   │   └── rpc_server.h/cc     # 服务注册 + 请求分发
 │   ├── loadbalance/            # 负载均衡
-│   │   ├── consistent_hash.h/cc    # 一致性哈希 + 虚拟节点
-│   ├── common/                 # 公共工具（空）
-│   └── discovery/              # 服务发现（空）
+│   │   └── consistent_hash.h/cc    # 一致性哈希 + 虚拟节点
+│   ├── common/                 # 公共工具（空，Week 3 TraceId/Metrics）
+│   └── discovery/              # 服务发现（空，Week 2 etcd）
 ├── examples/
-│   ├── echo/
-│   │   ├── echo_server.cc      # 裸TCP echo测试
-│   │   └── echo_client.cc      # 裸TCP echo客户端
-│   └── rpc/
+│   ├── echo/                   # 裸TCP echo测试（旧协议，已废弃）
+│   │   ├── echo_server.cc
+│   │   └── echo_client.cc
+│   └── rpc/                    # RPC 框架测试
 │       ├── rpc_server_main.cc  # RpcServer + EchoService
 │       ├── echo_service.h/cc   # Echo服务实现
 │       ├── rpc_sync_test.cc    # 同步客户端测试
@@ -61,31 +63,71 @@ rpc_framework/
 ├── tests/
 │   └── test_consistent_hash.cc # 一致性哈希测试
 └── build/                      # 编译输出
+```
+
+## 协议设计
+
+### 统一二进制协议格式
+
+```
+┌─────────────────┬─────────────────┬─────────────────┐
+│  Fixed Header   │  Variable Body  │    Checksum     │
+│     16 Bytes    │   body_len B    │     4 Bytes     │
+└─────────────────┴─────────────────┴─────────────────┘
+```
+
+### Fixed Header（16B）
+
+| 字段 | 类型 | 大小 | 说明 |
+|------|------|------|------|
+| magic | uint32_t | 4B | 魔数 "RPCF" = 0x52504346 |
+| version | uint8_t | 1B | 协议版本 = 1 |
+| msg_type | uint8_t | 1B | 0=REQUEST, 1=RESPONSE, 2=HEARTBEAT |
+| body_len | uint16_t | 2B | 变长体长度（网络字节序，解决粘包） |
+| req_id | uint64_t | 8B | 请求ID |
+
+### 消息类型
+
+- **Request**：service_name + method_name + protobuf payload
+- **Response**：status + protobuf payload + error_msg
+- **Heartbeat**：service_name + node_id + timestamp + extras
+
+### 设计要点
+
+1. **自描述**：header 中的 `body_len` 直接解决 TCP 粘包，无需外部 Length-Field 层
+2. **统一性**：所有消息类型共用 FixedHeader，编解码逻辑统一
+3. **可靠性**：CRC32 校验覆盖 header + body，防止数据损坏
 
 ## 核心数据流
+
+```
 ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│  RpcAsync    │────▶│  Length-Field │────▶│  TcpConnection │
-│  Client      │     │  + Protobuf   │     │  (EventLoop)    │
-│  (Future/CB) │◀────│  + CRC32     │◀────│  (epoll LT)     │
+│  RpcAsync    │────▶│ Fixed Header │────▶│  TcpConnection │
+│  Client      │     │ + Protobuf   │     │  (EventLoop)    │
+│  (Future/CB) │◀────│ + CRC32      │◀────│  (epoll LT)     │
 └─────────────┘     └─────────────┘     └─────────────┘
                                               │
 ┌─────────────┐     ┌─────────────┐     ┌─────────────┘
 │  EchoService  │◀────│  RpcServer   │◀────│  Acceptor      │
 │  (业务逻辑)   │     │  (方法分发)   │     │  (监听8888)    │
 └─────────────┘     └─────────────┘     └─────────────┘
+```
 
 ## 已完成 vs 待完成
-模块	完成度	状态
-网络层骨架	100%	✅
-编解码器	100%	✅
-同步/异步客户端	100%	✅
-服务端注册分发	100%	✅
-一致性哈希	100%	✅
-服务发现（etcd）	0%	🔲 Week2
-熔断降级	0%	🔲 Week2
-限流（令牌桶）	0%	🔲 Week2
-接入MySQL/Redis	0%	🔲 Week3
-压测优化	0%	🔲 Week3
+
+| 模块 | 完成度 | 状态 |
+|------|--------|------|
+| 网络层骨架 | 100% | ✅ |
+| 统一二进制协议 | 100% | ✅（7.11 重构，去掉 Length-Field） |
+| 同步/异步客户端 | 90% | ✅（异步客户端 Week 2 重构为基于 TcpClient） |
+| 服务端注册分发 | 100% | ✅ |
+| 一致性哈希 | 100% | ✅ |
+| 服务发现（etcd） | 0% | 🔲 Week 2 |
+| 连接池 + 自动重连 | 0% | 🔲 Week 2 |
+| 熔断降级 | 0% | 🔲 Week 2 |
+| 限流（令牌桶） | 0% | 🔲 Week 2 |
+| 接入 MySQL/Redis | 0% | 🔲 Week 3 |
+| 压测优化 | 0% | 🔲 Week 3 |
 
 ## 踩坑记录
 
@@ -109,6 +151,9 @@ rpc_framework/
 **问题：** `onConnection` 用 `context_ == nullptr` 判断连接状态，但断开时 `context_` 已非空，导致日志反了。  
 **解决：** 加 `TcpConnection::connected()` 方法，通过 `state_ == kConnected` 判断，逻辑清晰。
 
+### 6. 协议不统一导致维护困难
+**问题：** Request/Response/Heartbeat 三种消息结构不一致，外部又包了一层 Length-Field，编解码逻辑三套。  
+**解决：** 统一为 Fixed Header(16B) + Variable Body + Checksum 的三段式结构，header 中的 `body_len` 自描述解决粘包，去掉冗余的 `encodeWithLength`/`decodeWithLength`。
 
 ## 快速开始
 
@@ -127,11 +172,18 @@ make
 
 # 运行同步客户端测试
 ./rpc_sync_test
-协议设计
-详见 docs/protocol.md（待补充）
-技术要点
-网络模型：epoll LT + one loop per thread
-协议格式：Length-Field + 固定头 + Protobuf Payload + CRC32
-线程安全：std::future/promise 实现同步调用超时控制
-作者
+
+# 运行异步客户端测试
+./rpc_async_test
+```
+
+## 技术要点
+
+- **网络模型**：epoll LT + one loop per thread
+- **协议格式**：Fixed Header(16B) + Protobuf Payload + CRC32（自描述，无需外部 Length-Field）
+- **线程安全**：`std::future/promise` 实现同步调用超时控制
+- **异步模式**：Future/Promise + Callback 双模式，req_id 关联请求-响应
+
+## 作者
+
 马超 - 西北大学计算机硕士
