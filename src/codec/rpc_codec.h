@@ -12,7 +12,7 @@ namespace rpc {
 
 constexpr uint32_t kMagic = 0x52504346;  // "RPCF"
 constexpr uint8_t  kVersion = 1;
-constexpr size_t   kFixedHeaderSize = 16;  // 4+1+1+2+8
+constexpr size_t   kFixedHeaderSize = 18;  // 4+1+1+4+8
 constexpr size_t   kChecksumSize = 4;
 
 // ==================== 枚举 ====================
@@ -54,7 +54,7 @@ struct FixedHeader {
     uint32_t magic;      // 4B  魔数 "RPCF"
     uint8_t  version;    // 1B  协议版本
     uint8_t  msg_type;   // 1B  消息类型
-    uint16_t body_len;   // 2B  变长体长度（网络字节序）
+    uint32_t body_len;   // 4B  变长体长度（网络字节序）
     uint64_t req_id;     // 8B  请求ID
 };
 

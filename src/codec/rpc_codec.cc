@@ -75,18 +75,18 @@ static const uint32_t kCrc32Table[256] = {
     0xb40bbe37, 0xc30c8ea1, 0x5a05df1b, 0x2d02ef8d
 };
 
-uint32_t Codec::crc32(const char* data, size_t len) {
+uint32_t Codec::crc32(const char* data, size_t len) {  //CRC32校验
     uint32_t crc = 0xFFFFFFFF;
     for (size_t i = 0; i < len; ++i) {
-        crc = kCrc32Table[(crc ^ static_cast<uint8_t>(data[i])) & 0xFF] ^ (crc >> 8);
+        crc = kCrc32Table[(crc ^ static_cast<uint8_t>(data[i])) & 0xFF] ^ (crc >> 8);  //逐字符计算
     }
     return crc ^ 0xFFFFFFFF;
 }
 
 // ==================== 字节序转换 ====================
 
-uint32_t Codec::encodeU32(uint32_t v) { return htonl(v); }
-uint32_t Codec::decodeU32(uint32_t v) { return ntohl(v); }
+uint32_t Codec::encodeU32(uint32_t v) { return htonl(v); }  //host -> network
+uint32_t Codec::decodeU32(uint32_t v) { return ntohl(v); }  //network -> host
 uint64_t Codec::encodeU64(uint64_t v) { return htobe64(v); }
 uint64_t Codec::decodeU64(uint64_t v) { return be64toh(v); }
 uint16_t Codec::encodeU16(uint16_t v) { return htons(v); }
@@ -94,23 +94,23 @@ uint16_t Codec::decodeU16(uint16_t v) { return ntohs(v); }
 
 // ==================== 辅助函数 ====================
 
-bool Codec::checkMagic(uint32_t magic) {
+bool Codec::checkMagic(uint32_t magic) {  //校验魔术位
     return magic == kMagic;
 }
 
-void Codec::appendString(std::string& out, const std::string& str) {
+void Codec::appendString(std::string& out, const std::string& str) {  //out里面加str的长度+str
     uint16_t len = encodeU16(static_cast<uint16_t>(str.size()));
     out.append(reinterpret_cast<const char*>(&len), sizeof(len));
     out.append(str);
 }
 
-bool Codec::readString(const char* data, size_t& pos, size_t totalLen, std::string& out) {
-    if (pos + sizeof(uint16_t) > totalLen) return false;
-    uint16_t len = decodeU16(*reinterpret_cast<const uint16_t*>(data + pos));
-    pos += sizeof(uint16_t);
-    if (pos + len > totalLen) return false;
-    out.assign(data + pos, len);
-    pos += len;
+bool Codec::readString(const char* data, size_t& pos, size_t totalLen, std::string& out) {  //从data指向的位置+pos处读数据到out
+    if (pos + sizeof(uint16_t) > totalLen) return false;  //判断是否还够2B的长度
+    uint16_t len = decodeU16(*reinterpret_cast<const uint16_t*>(data + pos));  //从data+pos处开始取2B的内容作为长度，类型uint16_t
+    pos += sizeof(uint16_t);  //移动偏移
+    if (pos + len > totalLen) return false;  //判断是否有len长度的数据
+    out.assign(data + pos, len); //有就加到out里面
+    pos += len;  //移动偏移
     return true;
 }
 
@@ -127,11 +127,11 @@ std::string Codec::encodeRequestBody(const rpc::RpcRequest& req,
     appendString(body, method_name);
     // payload_len (4B) + payload
     std::string payload;
-    if (!req.SerializeToString(&payload)) {
+    if (!req.SerializeToString(&payload)) { //先把req序列化payload
         return "";
     }
-    uint32_t payloadLen = encodeU32(static_cast<uint32_t>(payload.size()));
-    body.append(reinterpret_cast<const char*>(&payloadLen), sizeof(payloadLen));
+    uint32_t payloadLen = encodeU32(static_cast<uint32_t>(payload.size()));  //4字节payload_len
+    body.append(reinterpret_cast<const char*>(&payloadLen), sizeof(payloadLen));  //为什么一定要转换，而不是直接加呢？
     body.append(payload);
 
     return body;
@@ -150,8 +150,6 @@ std::string Codec::encodeResponseBody(const rpc::RpcResponse& resp, Status statu
     uint32_t payloadLen = encodeU32(static_cast<uint32_t>(payload.size()));
     body.append(reinterpret_cast<const char*>(&payloadLen), sizeof(payloadLen));
     body.append(payload);
-    // error_msg (2B_len + str)
-    appendString(body, resp.error_msg());
 
     return body;
 }
@@ -178,7 +176,7 @@ std::string Codec::encodeHeartbeatBody(const rpc::Heartbeat& hb) {
 }
 
 // ==================== 组装完整包 ====================
-// 格式：[Fixed Header: 16B][Body: body_len B][Checksum: 4B]
+// 格式：[Fixed Header: 18B][Body: body_len B][Checksum: 4B]
 // ============================================================================
 
 std::string Codec::pack(MsgType msg_type, uint64_t req_id, const std::string& body) {
@@ -189,7 +187,7 @@ std::string Codec::pack(MsgType msg_type, uint64_t req_id, const std::string& bo
     header.magic = encodeU32(kMagic);
     header.version = kVersion;
     header.msg_type = static_cast<uint8_t>(msg_type);
-    header.body_len = encodeU16(static_cast<uint16_t>(body.size()));
+    header.body_len = encodeU32(static_cast<uint32_t>(body.size()));
     header.req_id = encodeU64(req_id);
 
     packet.append(reinterpret_cast<const char*>(&header), sizeof(header));
@@ -263,15 +261,12 @@ bool Codec::decodeResponseBody(const char* data, size_t bodyLen, DecodedPacket& 
     std::string payload(data + pos, payloadLen);
     pos += payloadLen;
 
-    // error_msg
-    std::string errorMsg;
-    if (!readString(data, pos, bodyLen, errorMsg)) return false;
-
+    // 校验：body 应该刚好读完
     if (pos != bodyLen) return false;
 
     if (!packet.rpc_response.ParseFromString(payload)) return false;
     packet.rpc_response.set_success(status == 0);
-    packet.rpc_response.set_error_msg(errorMsg);
+    // error_msg 已由 ParseFromString 从 payload 中解析
     return true;
 }
 
@@ -339,8 +334,8 @@ bool Codec::decode(Buffer& buf, DecodedPacket& packet) {
     }
 
     uint8_t msgType = data[5];
-    uint16_t bodyLen = decodeU16(*reinterpret_cast<const uint16_t*>(data + 6));
-    uint64_t reqId = decodeU64(*reinterpret_cast<const uint64_t*>(data + 8));
+    uint32_t bodyLen = decodeU32(*reinterpret_cast<const uint32_t*>(data + 6));
+    uint64_t reqId = decodeU64(*reinterpret_cast<const uint64_t*>(data + 10));
 
     // 3. 检查完整包是否到达
     size_t totalLen = kFixedHeaderSize + bodyLen + kChecksumSize;
