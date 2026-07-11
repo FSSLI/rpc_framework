@@ -4,10 +4,15 @@
 
 namespace rpc {
 
+// 注册方法：覆盖同名方法
 void RpcService::registerMethod(const std::string& methodName, MethodHandler handler) {
     methods_[methodName] = std::move(handler);
 }
 
+// 调用方法：
+// 1. 在 methods_ 里查找 methodName
+// 2. 找到：执行 handler，返回 true
+// 3. 找不到：设置错误信息，返回 false
 bool RpcService::callMethod(const std::string& methodName,
                             const RpcRequest& request,
                             RpcResponse* response) {
@@ -18,7 +23,7 @@ bool RpcService::callMethod(const std::string& methodName,
         return false;
     }
     
-    it->second(request, response);
+    it->second(request, response);   // 执行方法
     return true;
 }
 
