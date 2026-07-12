@@ -35,7 +35,7 @@ Socket::~Socket() {
 //绑定本地地址和端口
 // 将 sockaddr_in（IPv4专用）通过 reinterpret_cast 转为通用的 sockaddr*
 // 这是 POSIX socket API 的设计：用 sockaddr 统一接口，实际传入具体地址结构体
-void Socket::bindAddress(const struct sockaddr_in& localaddr) {
+void Socket::bindAddress(const ::sockaddr_in& localaddr) {
     int ret = ::bind(sockfd_, reinterpret_cast<const struct sockaddr*>(&localaddr), sizeof(localaddr));
     if (ret < 0) {
         // LOG_SYSFATAL << "bind";
@@ -55,7 +55,7 @@ void Socket::listen() {
 // accept4 是 Linux 特有扩展（glibc 2.10+），比 accept + fcntl 少一次系统调用
 // 参数 SOCK_NONBLOCK | SOCK_CLOEXEC 同时设置非阻塞和 close-on-exec
 // 返回值：新的连接描述符（connfd），peeraddr 输出客户端地址
-int Socket::accept(struct sockaddr_in* peeraddr) {
+int Socket::accept(::sockaddr_in* peeraddr) {
     socklen_t addrlen = sizeof(*peeraddr);
     int connfd = ::accept4(sockfd_, reinterpret_cast<struct sockaddr*>(peeraddr),
                            &addrlen, SOCK_NONBLOCK | SOCK_CLOEXEC);

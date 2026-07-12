@@ -53,7 +53,7 @@ EventLoop::~EventLoop() {
 }
 
 void EventLoop::loop() {
-    assert(!looping_);  //这里是未开始就进断言吗？
+    assert(!looping_);  //避免重复启动
     assertInLoopThread();  //确保是在自己的线程上执行循环
     
     looping_ = true; 

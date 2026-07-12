@@ -23,9 +23,9 @@ public:
 
     int fd() const { return sockfd_; }  //获取连接描述符
 
-    void bindAddress(const struct sockaddr_in& localaddr);   // 绑定本地地址（含IP和端口）
+    void bindAddress(const ::sockaddr_in& localaddr);   // 绑定本地地址（含IP和端口）
     void listen(); // 开始监听，等待客户端连接
-    int accept(struct sockaddr_in* peeraddr);  // 接受连接，返回客户端fd，peeraddr输出客户端地址
+    int accept(::sockaddr_in* peeraddr);  // 接受连接，返回客户端fd，peeraddr输出客户端地址
 
     void shutdownWrite();  //关闭写通道
 

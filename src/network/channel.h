@@ -26,7 +26,7 @@ public:
 
     int fd() const { return fd_; }  //返回绑定的文件描述符
     int events() const { return events_; }  //返回感兴趣的事件
-    void set_revents(int revt) { revents_ = revt; }  // 返回实际发生的事件（epoll_wait 返回后由 EventLoop 设置）
+    void set_revents(int revt) { revents_ = revt; }  // 设置实际发生的事件（epoll_wait 返回后由 EventLoop 设置）
     //注册和取消事件
     void enableReading();  // 注册读事件：设置 events_ 标志，调用 update() 让 EventLoop 通过 epoll_ctl 注册
     void disableReading();
@@ -46,7 +46,7 @@ public:
 
     EventLoop* ownerLoop() { return loop_; }  //返回所属eventLoop指针
     
-    void remove();  // ← 加这行
+    void remove();  // 从 epoll 移除
 
 private:
     static const int kNoneEvent = 0;

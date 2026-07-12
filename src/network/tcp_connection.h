@@ -56,7 +56,7 @@ public:
     // 新增：判断连接是否已建立
     bool connected() const { return state_ == kConnected; }
 
-    void forceClose();
+    void forceClose();  // 强制关闭
 
 private:
     enum StateE { kDisconnected, kConnecting, kConnected, kDisconnecting };  //StateE 状态机

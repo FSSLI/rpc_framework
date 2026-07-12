@@ -30,7 +30,7 @@ private:
     EventLoop* loop_;  // 指向线程内创建的 EventLoop，startLoop() 返回的就是它
     bool exiting_;  //是否退出
     std::thread thread_;  //对应线程对象
-    std::mutex mutex_;  //锁子
+    std::mutex mutex_;  //锁
     std::condition_variable cond_;  //条件变量
     ThreadInitCallback callback_;  // 线程初始化回调，loop() 开始前执行
 };

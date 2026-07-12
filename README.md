@@ -72,24 +72,24 @@ rpc_framework/
 ```
 ┌─────────────────┬─────────────────┬─────────────────┐
 │  Fixed Header   │  Variable Body  │    Checksum     │
-│     16 Bytes    │   body_len B    │     4 Bytes     │
+│     18 Bytes    │   body_len B    │     4 Bytes     │
 └─────────────────┴─────────────────┴─────────────────┘
 ```
 
-### Fixed Header（16B）
+### Fixed Header（18B）
 
 | 字段 | 类型 | 大小 | 说明 |
 |------|------|------|------|
 | magic | uint32_t | 4B | 魔数 "RPCF" = 0x52504346 |
 | version | uint8_t | 1B | 协议版本 = 1 |
 | msg_type | uint8_t | 1B | 0=REQUEST, 1=RESPONSE, 2=HEARTBEAT |
-| body_len | uint16_t | 2B | 变长体长度（网络字节序，解决粘包） |
+| body_len | uint16_t | 4B | 变长体长度（网络字节序，解决粘包） |
 | req_id | uint64_t | 8B | 请求ID |
 
 ### 消息类型
 
 - **Request**：service_name + method_name + protobuf payload
-- **Response**：status + protobuf payload + error_msg
+- **Response**：status + protobuf payload（含 success/payload/error_msg）
 - **Heartbeat**：service_name + node_id + timestamp + extras
 
 ### 设计要点
