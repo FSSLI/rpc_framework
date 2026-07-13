@@ -4,5 +4,7 @@
 /home/machao/projects/rpc_framework/build/CMakeFiles/rpc_async_test.dir
 /home/machao/projects/rpc_framework/build/CMakeFiles/test_consistent_hash.dir
 /home/machao/projects/rpc_framework/build/CMakeFiles/test_connector.dir
+/home/machao/projects/rpc_framework/build/CMakeFiles/test_memory_registry.dir
+/home/machao/projects/rpc_framework/build/CMakeFiles/test_service_discovery_e2e.dir
 /home/machao/projects/rpc_framework/build/CMakeFiles/edit_cache.dir
 /home/machao/projects/rpc_framework/build/CMakeFiles/rebuild_cache.dir

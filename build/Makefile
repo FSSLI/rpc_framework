@@ -194,6 +194,32 @@ test_connector/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connector.dir/build.make CMakeFiles/test_connector.dir/build
 .PHONY : test_connector/fast
 
+#=============================================================================
+# Target rules for targets named test_memory_registry
+
+# Build rule for target.
+test_memory_registry: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 test_memory_registry
+.PHONY : test_memory_registry
+
+# fast build rule for target.
+test_memory_registry/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_memory_registry.dir/build.make CMakeFiles/test_memory_registry.dir/build
+.PHONY : test_memory_registry/fast
+
+#=============================================================================
+# Target rules for targets named test_service_discovery_e2e
+
+# Build rule for target.
+test_service_discovery_e2e: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 test_service_discovery_e2e
+.PHONY : test_service_discovery_e2e
+
+# fast build rule for target.
+test_service_discovery_e2e/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_service_discovery_e2e.dir/build.make CMakeFiles/test_service_discovery_e2e.dir/build
+.PHONY : test_service_discovery_e2e/fast
+
 examples/rpc/echo_service.o: examples/rpc/echo_service.cc.o
 .PHONY : examples/rpc/echo_service.o
 
@@ -361,6 +387,30 @@ src/codec/rpc_codec.s: src/codec/rpc_codec.cc.s
 src/codec/rpc_codec.cc.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/network.dir/build.make CMakeFiles/network.dir/src/codec/rpc_codec.cc.s
 .PHONY : src/codec/rpc_codec.cc.s
+
+src/discovery/memory_registry.o: src/discovery/memory_registry.cc.o
+.PHONY : src/discovery/memory_registry.o
+
+# target to build an object file
+src/discovery/memory_registry.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/network.dir/build.make CMakeFiles/network.dir/src/discovery/memory_registry.cc.o
+.PHONY : src/discovery/memory_registry.cc.o
+
+src/discovery/memory_registry.i: src/discovery/memory_registry.cc.i
+.PHONY : src/discovery/memory_registry.i
+
+# target to preprocess a source file
+src/discovery/memory_registry.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/network.dir/build.make CMakeFiles/network.dir/src/discovery/memory_registry.cc.i
+.PHONY : src/discovery/memory_registry.cc.i
+
+src/discovery/memory_registry.s: src/discovery/memory_registry.cc.s
+.PHONY : src/discovery/memory_registry.s
+
+# target to generate assembly for a file
+src/discovery/memory_registry.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/network.dir/build.make CMakeFiles/network.dir/src/discovery/memory_registry.cc.s
+.PHONY : src/discovery/memory_registry.cc.s
 
 src/loadbalance/consistent_hash.o: src/loadbalance/consistent_hash.cc.o
 .PHONY : src/loadbalance/consistent_hash.o
@@ -770,6 +820,54 @@ tests/test_consistent_hash.cc.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_consistent_hash.dir/build.make CMakeFiles/test_consistent_hash.dir/tests/test_consistent_hash.cc.s
 .PHONY : tests/test_consistent_hash.cc.s
 
+tests/test_memory_registry.o: tests/test_memory_registry.cc.o
+.PHONY : tests/test_memory_registry.o
+
+# target to build an object file
+tests/test_memory_registry.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_memory_registry.dir/build.make CMakeFiles/test_memory_registry.dir/tests/test_memory_registry.cc.o
+.PHONY : tests/test_memory_registry.cc.o
+
+tests/test_memory_registry.i: tests/test_memory_registry.cc.i
+.PHONY : tests/test_memory_registry.i
+
+# target to preprocess a source file
+tests/test_memory_registry.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_memory_registry.dir/build.make CMakeFiles/test_memory_registry.dir/tests/test_memory_registry.cc.i
+.PHONY : tests/test_memory_registry.cc.i
+
+tests/test_memory_registry.s: tests/test_memory_registry.cc.s
+.PHONY : tests/test_memory_registry.s
+
+# target to generate assembly for a file
+tests/test_memory_registry.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_memory_registry.dir/build.make CMakeFiles/test_memory_registry.dir/tests/test_memory_registry.cc.s
+.PHONY : tests/test_memory_registry.cc.s
+
+tests/test_service_discovery_e2e.o: tests/test_service_discovery_e2e.cc.o
+.PHONY : tests/test_service_discovery_e2e.o
+
+# target to build an object file
+tests/test_service_discovery_e2e.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_service_discovery_e2e.dir/build.make CMakeFiles/test_service_discovery_e2e.dir/tests/test_service_discovery_e2e.cc.o
+.PHONY : tests/test_service_discovery_e2e.cc.o
+
+tests/test_service_discovery_e2e.i: tests/test_service_discovery_e2e.cc.i
+.PHONY : tests/test_service_discovery_e2e.i
+
+# target to preprocess a source file
+tests/test_service_discovery_e2e.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_service_discovery_e2e.dir/build.make CMakeFiles/test_service_discovery_e2e.dir/tests/test_service_discovery_e2e.cc.i
+.PHONY : tests/test_service_discovery_e2e.cc.i
+
+tests/test_service_discovery_e2e.s: tests/test_service_discovery_e2e.cc.s
+.PHONY : tests/test_service_discovery_e2e.s
+
+# target to generate assembly for a file
+tests/test_service_discovery_e2e.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_service_discovery_e2e.dir/build.make CMakeFiles/test_service_discovery_e2e.dir/tests/test_service_discovery_e2e.cc.s
+.PHONY : tests/test_service_discovery_e2e.cc.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -784,6 +882,8 @@ help:
 	@echo "... rpc_sync_test"
 	@echo "... test_connector"
 	@echo "... test_consistent_hash"
+	@echo "... test_memory_registry"
+	@echo "... test_service_discovery_e2e"
 	@echo "... examples/rpc/echo_service.o"
 	@echo "... examples/rpc/echo_service.i"
 	@echo "... examples/rpc/echo_service.s"
@@ -805,6 +905,9 @@ help:
 	@echo "... src/codec/rpc_codec.o"
 	@echo "... src/codec/rpc_codec.i"
 	@echo "... src/codec/rpc_codec.s"
+	@echo "... src/discovery/memory_registry.o"
+	@echo "... src/discovery/memory_registry.i"
+	@echo "... src/discovery/memory_registry.s"
 	@echo "... src/loadbalance/consistent_hash.o"
 	@echo "... src/loadbalance/consistent_hash.i"
 	@echo "... src/loadbalance/consistent_hash.s"
@@ -856,6 +959,12 @@ help:
 	@echo "... tests/test_consistent_hash.o"
 	@echo "... tests/test_consistent_hash.i"
 	@echo "... tests/test_consistent_hash.s"
+	@echo "... tests/test_memory_registry.o"
+	@echo "... tests/test_memory_registry.i"
+	@echo "... tests/test_memory_registry.s"
+	@echo "... tests/test_service_discovery_e2e.o"
+	@echo "... tests/test_service_discovery_e2e.i"
+	@echo "... tests/test_service_discovery_e2e.s"
 .PHONY : help
 
 

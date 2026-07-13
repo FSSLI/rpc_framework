@@ -11,6 +11,7 @@ set(CMAKE_DEPENDS_DEPENDENCY_FILES
   "/home/machao/projects/rpc_framework/src/client/rpc_async_client.cc" "CMakeFiles/network.dir/src/client/rpc_async_client.cc.o" "gcc" "CMakeFiles/network.dir/src/client/rpc_async_client.cc.o.d"
   "/home/machao/projects/rpc_framework/src/client/rpc_sync_client.cc" "CMakeFiles/network.dir/src/client/rpc_sync_client.cc.o" "gcc" "CMakeFiles/network.dir/src/client/rpc_sync_client.cc.o.d"
   "/home/machao/projects/rpc_framework/src/codec/rpc_codec.cc" "CMakeFiles/network.dir/src/codec/rpc_codec.cc.o" "gcc" "CMakeFiles/network.dir/src/codec/rpc_codec.cc.o.d"
+  "/home/machao/projects/rpc_framework/src/discovery/memory_registry.cc" "CMakeFiles/network.dir/src/discovery/memory_registry.cc.o" "gcc" "CMakeFiles/network.dir/src/discovery/memory_registry.cc.o.d"
   "/home/machao/projects/rpc_framework/src/loadbalance/consistent_hash.cc" "CMakeFiles/network.dir/src/loadbalance/consistent_hash.cc.o" "gcc" "CMakeFiles/network.dir/src/loadbalance/consistent_hash.cc.o.d"
   "/home/machao/projects/rpc_framework/src/network/acceptor.cc" "CMakeFiles/network.dir/src/network/acceptor.cc.o" "gcc" "CMakeFiles/network.dir/src/network/acceptor.cc.o.d"
   "/home/machao/projects/rpc_framework/src/network/buffer.cc" "CMakeFiles/network.dir/src/network/buffer.cc.o" "gcc" "CMakeFiles/network.dir/src/network/buffer.cc.o.d"

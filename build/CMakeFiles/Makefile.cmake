@@ -49,4 +49,6 @@ set(CMAKE_DEPEND_INFO_FILES
   "CMakeFiles/rpc_async_test.dir/DependInfo.cmake"
   "CMakeFiles/test_consistent_hash.dir/DependInfo.cmake"
   "CMakeFiles/test_connector.dir/DependInfo.cmake"
+  "CMakeFiles/test_memory_registry.dir/DependInfo.cmake"
+  "CMakeFiles/test_service_discovery_e2e.dir/DependInfo.cmake"
   )

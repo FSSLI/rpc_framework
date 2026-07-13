@@ -202,17 +202,29 @@ CMakeFiles/network.dir/src/client/rpc_async_client.cc.o: ../src/client/rpc_async
   /usr/include/c++/11/bits/unordered_map.h \
   /usr/include/c++/11/bits/erase_if.h \
   /usr/include/c++/11/functional \
-  ../src/network/tcp_connection.h \
-  ../src/network/buffer.h \
+  /usr/include/c++/11/random \
+  /usr/include/c++/11/cmath \
+  /usr/include/math.h \
+  /usr/include/x86_64-linux-gnu/bits/math-vector.h \
+  /usr/include/x86_64-linux-gnu/bits/libm-simd-decl-stubs.h \
+  /usr/include/x86_64-linux-gnu/bits/flt-eval-method.h \
+  /usr/include/x86_64-linux-gnu/bits/fp-logb.h \
+  /usr/include/x86_64-linux-gnu/bits/fp-fast.h \
+  /usr/include/x86_64-linux-gnu/bits/mathcalls-helper-functions.h \
+  /usr/include/x86_64-linux-gnu/bits/mathcalls.h \
+  /usr/include/x86_64-linux-gnu/bits/mathcalls-narrow.h \
+  /usr/include/x86_64-linux-gnu/bits/iscanonical.h \
+  /usr/include/c++/11/bits/random.h \
   /usr/include/c++/11/vector \
   /usr/include/c++/11/bits/stl_vector.h \
   /usr/include/c++/11/bits/stl_bvector.h \
   /usr/include/c++/11/bits/vector.tcc \
-  /usr/include/c++/11/algorithm \
-  /usr/include/c++/11/bits/stl_algo.h \
-  /usr/include/c++/11/bits/algorithmfwd.h \
-  /usr/include/c++/11/bits/stl_heap.h \
   /usr/include/c++/11/bits/uniform_int_dist.h \
+  /usr/include/x86_64-linux-gnu/c++/11/bits/opt_random.h \
+  /usr/include/c++/11/bits/random.tcc \
+  /usr/include/c++/11/numeric \
+  /usr/include/c++/11/bits/stl_numeric.h \
+  ../src/network/tcp_client.h \
   /usr/include/netinet/in.h \
   /usr/include/x86_64-linux-gnu/sys/socket.h \
   /usr/include/x86_64-linux-gnu/bits/types/struct_iovec.h \
@@ -232,6 +244,13 @@ CMakeFiles/network.dir/src/client/rpc_async_client.cc.o: ../src/client/rpc_async
   /usr/include/asm-generic/sockios.h \
   /usr/include/x86_64-linux-gnu/bits/types/struct_osockaddr.h \
   /usr/include/x86_64-linux-gnu/bits/in.h \
+  ../src/network/buffer.h \
+  /usr/include/c++/11/algorithm \
+  /usr/include/c++/11/bits/stl_algo.h \
+  /usr/include/c++/11/bits/algorithmfwd.h \
+  /usr/include/c++/11/bits/stl_heap.h \
+  ../src/network/tcp_connection.h \
+  ../src/network/buffer.h \
   ../src/network/event_loop.h \
   /usr/include/x86_64-linux-gnu/sys/epoll.h \
   /usr/include/x86_64-linux-gnu/bits/epoll.h \
@@ -379,6 +398,7 @@ CMakeFiles/network.dir/src/client/rpc_async_client.cc.o: ../src/client/rpc_async
   /usr/include/google/protobuf/reflection_ops.h \
   /usr/include/google/protobuf/map_field_inl.h \
   /usr/include/google/protobuf/map_field.h \
+  ../src/discovery/service_registry.h \
   /usr/include/arpa/inet.h
 
 CMakeFiles/network.dir/src/client/rpc_sync_client.cc.o: ../src/client/rpc_sync_client.cc \
@@ -583,17 +603,29 @@ CMakeFiles/network.dir/src/client/rpc_sync_client.cc.o: ../src/client/rpc_sync_c
   /usr/include/c++/11/bits/unordered_map.h \
   /usr/include/c++/11/bits/erase_if.h \
   /usr/include/c++/11/functional \
-  ../src/network/tcp_connection.h \
-  ../src/network/buffer.h \
+  /usr/include/c++/11/random \
+  /usr/include/c++/11/cmath \
+  /usr/include/math.h \
+  /usr/include/x86_64-linux-gnu/bits/math-vector.h \
+  /usr/include/x86_64-linux-gnu/bits/libm-simd-decl-stubs.h \
+  /usr/include/x86_64-linux-gnu/bits/flt-eval-method.h \
+  /usr/include/x86_64-linux-gnu/bits/fp-logb.h \
+  /usr/include/x86_64-linux-gnu/bits/fp-fast.h \
+  /usr/include/x86_64-linux-gnu/bits/mathcalls-helper-functions.h \
+  /usr/include/x86_64-linux-gnu/bits/mathcalls.h \
+  /usr/include/x86_64-linux-gnu/bits/mathcalls-narrow.h \
+  /usr/include/x86_64-linux-gnu/bits/iscanonical.h \
+  /usr/include/c++/11/bits/random.h \
   /usr/include/c++/11/vector \
   /usr/include/c++/11/bits/stl_vector.h \
   /usr/include/c++/11/bits/stl_bvector.h \
   /usr/include/c++/11/bits/vector.tcc \
-  /usr/include/c++/11/algorithm \
-  /usr/include/c++/11/bits/stl_algo.h \
-  /usr/include/c++/11/bits/algorithmfwd.h \
-  /usr/include/c++/11/bits/stl_heap.h \
   /usr/include/c++/11/bits/uniform_int_dist.h \
+  /usr/include/x86_64-linux-gnu/c++/11/bits/opt_random.h \
+  /usr/include/c++/11/bits/random.tcc \
+  /usr/include/c++/11/numeric \
+  /usr/include/c++/11/bits/stl_numeric.h \
+  ../src/network/tcp_client.h \
   /usr/include/netinet/in.h \
   /usr/include/x86_64-linux-gnu/sys/socket.h \
   /usr/include/x86_64-linux-gnu/bits/types/struct_iovec.h \
@@ -613,6 +645,13 @@ CMakeFiles/network.dir/src/client/rpc_sync_client.cc.o: ../src/client/rpc_sync_c
   /usr/include/asm-generic/sockios.h \
   /usr/include/x86_64-linux-gnu/bits/types/struct_osockaddr.h \
   /usr/include/x86_64-linux-gnu/bits/in.h \
+  ../src/network/buffer.h \
+  /usr/include/c++/11/algorithm \
+  /usr/include/c++/11/bits/stl_algo.h \
+  /usr/include/c++/11/bits/algorithmfwd.h \
+  /usr/include/c++/11/bits/stl_heap.h \
+  ../src/network/tcp_connection.h \
+  ../src/network/buffer.h \
   ../src/network/event_loop.h \
   /usr/include/x86_64-linux-gnu/sys/epoll.h \
   /usr/include/x86_64-linux-gnu/bits/epoll.h \
@@ -759,7 +798,8 @@ CMakeFiles/network.dir/src/client/rpc_sync_client.cc.o: ../src/client/rpc_sync_c
   /usr/include/google/protobuf/map_entry.h \
   /usr/include/google/protobuf/reflection_ops.h \
   /usr/include/google/protobuf/map_field_inl.h \
-  /usr/include/google/protobuf/map_field.h
+  /usr/include/google/protobuf/map_field.h \
+  ../src/discovery/service_registry.h
 
 CMakeFiles/network.dir/src/codec/rpc_codec.cc.o: ../src/codec/rpc_codec.cc \
   /usr/include/stdc-predef.h \
@@ -1122,6 +1162,215 @@ CMakeFiles/network.dir/src/codec/rpc_codec.cc.o: ../src/codec/rpc_codec.cc \
   /usr/include/x86_64-linux-gnu/bits/types/struct_osockaddr.h \
   /usr/include/x86_64-linux-gnu/bits/in.h
 
+CMakeFiles/network.dir/src/discovery/memory_registry.cc.o: ../src/discovery/memory_registry.cc \
+  /usr/include/stdc-predef.h \
+  ../src/discovery/memory_registry.h \
+  ../src/discovery/service_registry.h \
+  /usr/include/c++/11/string \
+  /usr/include/x86_64-linux-gnu/c++/11/bits/c++config.h \
+  /usr/include/x86_64-linux-gnu/c++/11/bits/os_defines.h \
+  /usr/include/features.h \
+  /usr/include/features-time64.h \
+  /usr/include/x86_64-linux-gnu/bits/wordsize.h \
+  /usr/include/x86_64-linux-gnu/bits/timesize.h \
+  /usr/include/x86_64-linux-gnu/sys/cdefs.h \
+  /usr/include/x86_64-linux-gnu/bits/long-double.h \
+  /usr/include/x86_64-linux-gnu/gnu/stubs.h \
+  /usr/include/x86_64-linux-gnu/gnu/stubs-64.h \
+  /usr/include/x86_64-linux-gnu/c++/11/bits/cpu_defines.h \
+  /usr/include/c++/11/bits/stringfwd.h \
+  /usr/include/c++/11/bits/memoryfwd.h \
+  /usr/include/c++/11/bits/char_traits.h \
+  /usr/include/c++/11/bits/stl_algobase.h \
+  /usr/include/c++/11/bits/functexcept.h \
+  /usr/include/c++/11/bits/exception_defines.h \
+  /usr/include/c++/11/bits/cpp_type_traits.h \
+  /usr/include/c++/11/ext/type_traits.h \
+  /usr/include/c++/11/ext/numeric_traits.h \
+  /usr/include/c++/11/bits/stl_pair.h \
+  /usr/include/c++/11/bits/move.h \
+  /usr/include/c++/11/type_traits \
+  /usr/include/c++/11/bits/stl_iterator_base_types.h \
+  /usr/include/c++/11/bits/stl_iterator_base_funcs.h \
+  /usr/include/c++/11/bits/concept_check.h \
+  /usr/include/c++/11/debug/assertions.h \
+  /usr/include/c++/11/bits/stl_iterator.h \
+  /usr/include/c++/11/bits/ptr_traits.h \
+  /usr/include/c++/11/debug/debug.h \
+  /usr/include/c++/11/bits/predefined_ops.h \
+  /usr/include/c++/11/bits/postypes.h \
+  /usr/include/c++/11/cwchar \
+  /usr/include/wchar.h \
+  /usr/include/x86_64-linux-gnu/bits/libc-header-start.h \
+  /usr/include/x86_64-linux-gnu/bits/floatn.h \
+  /usr/include/x86_64-linux-gnu/bits/floatn-common.h \
+  /usr/lib/gcc/x86_64-linux-gnu/11/include/stddef.h \
+  /usr/lib/gcc/x86_64-linux-gnu/11/include/stdarg.h \
+  /usr/include/x86_64-linux-gnu/bits/wchar.h \
+  /usr/include/x86_64-linux-gnu/bits/types/wint_t.h \
+  /usr/include/x86_64-linux-gnu/bits/types/mbstate_t.h \
+  /usr/include/x86_64-linux-gnu/bits/types/__mbstate_t.h \
+  /usr/include/x86_64-linux-gnu/bits/types/__FILE.h \
+  /usr/include/x86_64-linux-gnu/bits/types/FILE.h \
+  /usr/include/x86_64-linux-gnu/bits/types/locale_t.h \
+  /usr/include/x86_64-linux-gnu/bits/types/__locale_t.h \
+  /usr/include/c++/11/cstdint \
+  /usr/lib/gcc/x86_64-linux-gnu/11/include/stdint.h \
+  /usr/include/stdint.h \
+  /usr/include/x86_64-linux-gnu/bits/types.h \
+  /usr/include/x86_64-linux-gnu/bits/typesizes.h \
+  /usr/include/x86_64-linux-gnu/bits/time64.h \
+  /usr/include/x86_64-linux-gnu/bits/stdint-intn.h \
+  /usr/include/x86_64-linux-gnu/bits/stdint-uintn.h \
+  /usr/include/c++/11/bits/allocator.h \
+  /usr/include/x86_64-linux-gnu/c++/11/bits/c++allocator.h \
+  /usr/include/c++/11/ext/new_allocator.h \
+  /usr/include/c++/11/new \
+  /usr/include/c++/11/bits/exception.h \
+  /usr/include/c++/11/bits/localefwd.h \
+  /usr/include/x86_64-linux-gnu/c++/11/bits/c++locale.h \
+  /usr/include/c++/11/clocale \
+  /usr/include/locale.h \
+  /usr/include/x86_64-linux-gnu/bits/locale.h \
+  /usr/include/c++/11/iosfwd \
+  /usr/include/c++/11/cctype \
+  /usr/include/ctype.h \
+  /usr/include/x86_64-linux-gnu/bits/endian.h \
+  /usr/include/x86_64-linux-gnu/bits/endianness.h \
+  /usr/include/c++/11/bits/ostream_insert.h \
+  /usr/include/c++/11/bits/cxxabi_forced.h \
+  /usr/include/c++/11/bits/stl_function.h \
+  /usr/include/c++/11/backward/binders.h \
+  /usr/include/c++/11/bits/range_access.h \
+  /usr/include/c++/11/initializer_list \
+  /usr/include/c++/11/bits/basic_string.h \
+  /usr/include/c++/11/ext/atomicity.h \
+  /usr/include/x86_64-linux-gnu/c++/11/bits/gthr.h \
+  /usr/include/x86_64-linux-gnu/c++/11/bits/gthr-default.h \
+  /usr/include/pthread.h \
+  /usr/include/sched.h \
+  /usr/include/x86_64-linux-gnu/bits/types/time_t.h \
+  /usr/include/x86_64-linux-gnu/bits/types/struct_timespec.h \
+  /usr/include/x86_64-linux-gnu/bits/sched.h \
+  /usr/include/x86_64-linux-gnu/bits/types/struct_sched_param.h \
+  /usr/include/x86_64-linux-gnu/bits/cpu-set.h \
+  /usr/include/time.h \
+  /usr/include/x86_64-linux-gnu/bits/time.h \
+  /usr/include/x86_64-linux-gnu/bits/timex.h \
+  /usr/include/x86_64-linux-gnu/bits/types/struct_timeval.h \
+  /usr/include/x86_64-linux-gnu/bits/types/clock_t.h \
+  /usr/include/x86_64-linux-gnu/bits/types/struct_tm.h \
+  /usr/include/x86_64-linux-gnu/bits/types/clockid_t.h \
+  /usr/include/x86_64-linux-gnu/bits/types/timer_t.h \
+  /usr/include/x86_64-linux-gnu/bits/types/struct_itimerspec.h \
+  /usr/include/x86_64-linux-gnu/bits/pthreadtypes.h \
+  /usr/include/x86_64-linux-gnu/bits/thread-shared-types.h \
+  /usr/include/x86_64-linux-gnu/bits/pthreadtypes-arch.h \
+  /usr/include/x86_64-linux-gnu/bits/atomic_wide_counter.h \
+  /usr/include/x86_64-linux-gnu/bits/struct_mutex.h \
+  /usr/include/x86_64-linux-gnu/bits/struct_rwlock.h \
+  /usr/include/x86_64-linux-gnu/bits/setjmp.h \
+  /usr/include/x86_64-linux-gnu/bits/types/__sigset_t.h \
+  /usr/include/x86_64-linux-gnu/bits/types/struct___jmp_buf_tag.h \
+  /usr/include/x86_64-linux-gnu/bits/pthread_stack_min-dynamic.h \
+  /usr/include/x86_64-linux-gnu/c++/11/bits/atomic_word.h \
+  /usr/include/x86_64-linux-gnu/sys/single_threaded.h \
+  /usr/include/c++/11/ext/alloc_traits.h \
+  /usr/include/c++/11/bits/alloc_traits.h \
+  /usr/include/c++/11/bits/stl_construct.h \
+  /usr/include/c++/11/ext/string_conversions.h \
+  /usr/include/c++/11/cstdlib \
+  /usr/include/stdlib.h \
+  /usr/include/x86_64-linux-gnu/bits/waitflags.h \
+  /usr/include/x86_64-linux-gnu/bits/waitstatus.h \
+  /usr/include/x86_64-linux-gnu/sys/types.h \
+  /usr/include/endian.h \
+  /usr/include/x86_64-linux-gnu/bits/byteswap.h \
+  /usr/include/x86_64-linux-gnu/bits/uintn-identity.h \
+  /usr/include/x86_64-linux-gnu/sys/select.h \
+  /usr/include/x86_64-linux-gnu/bits/select.h \
+  /usr/include/x86_64-linux-gnu/bits/types/sigset_t.h \
+  /usr/include/alloca.h \
+  /usr/include/x86_64-linux-gnu/bits/stdlib-float.h \
+  /usr/include/c++/11/bits/std_abs.h \
+  /usr/include/c++/11/cstdio \
+  /usr/include/stdio.h \
+  /usr/include/x86_64-linux-gnu/bits/types/__fpos_t.h \
+  /usr/include/x86_64-linux-gnu/bits/types/__fpos64_t.h \
+  /usr/include/x86_64-linux-gnu/bits/types/struct_FILE.h \
+  /usr/include/x86_64-linux-gnu/bits/types/cookie_io_functions_t.h \
+  /usr/include/x86_64-linux-gnu/bits/stdio_lim.h \
+  /usr/include/c++/11/cerrno \
+  /usr/include/errno.h \
+  /usr/include/x86_64-linux-gnu/bits/errno.h \
+  /usr/include/linux/errno.h \
+  /usr/include/x86_64-linux-gnu/asm/errno.h \
+  /usr/include/asm-generic/errno.h \
+  /usr/include/asm-generic/errno-base.h \
+  /usr/include/x86_64-linux-gnu/bits/types/error_t.h \
+  /usr/include/c++/11/bits/charconv.h \
+  /usr/include/c++/11/bits/functional_hash.h \
+  /usr/include/c++/11/bits/hash_bytes.h \
+  /usr/include/c++/11/bits/basic_string.tcc \
+  /usr/include/c++/11/vector \
+  /usr/include/c++/11/bits/stl_uninitialized.h \
+  /usr/include/c++/11/bits/stl_vector.h \
+  /usr/include/c++/11/bits/stl_bvector.h \
+  /usr/include/c++/11/bits/vector.tcc \
+  /usr/include/c++/11/functional \
+  /usr/include/c++/11/tuple \
+  /usr/include/c++/11/utility \
+  /usr/include/c++/11/bits/stl_relops.h \
+  /usr/include/c++/11/array \
+  /usr/include/c++/11/bits/uses_allocator.h \
+  /usr/include/c++/11/bits/invoke.h \
+  /usr/include/c++/11/bits/refwrap.h \
+  /usr/include/c++/11/bits/std_function.h \
+  /usr/include/c++/11/typeinfo \
+  /usr/include/c++/11/mutex \
+  /usr/include/c++/11/chrono \
+  /usr/include/c++/11/ratio \
+  /usr/include/c++/11/limits \
+  /usr/include/c++/11/ctime \
+  /usr/include/c++/11/bits/parse_numbers.h \
+  /usr/include/c++/11/exception \
+  /usr/include/c++/11/bits/exception_ptr.h \
+  /usr/include/c++/11/bits/cxxabi_init_exception.h \
+  /usr/include/c++/11/bits/nested_exception.h \
+  /usr/include/c++/11/system_error \
+  /usr/include/x86_64-linux-gnu/c++/11/bits/error_constants.h \
+  /usr/include/c++/11/stdexcept \
+  /usr/include/c++/11/bits/std_mutex.h \
+  /usr/include/c++/11/bits/unique_lock.h \
+  /usr/include/c++/11/unordered_map \
+  /usr/include/c++/11/ext/aligned_buffer.h \
+  /usr/include/c++/11/bits/hashtable.h \
+  /usr/include/c++/11/bits/hashtable_policy.h \
+  /usr/include/c++/11/bits/enable_special_members.h \
+  /usr/include/c++/11/bits/unordered_map.h \
+  /usr/include/c++/11/bits/erase_if.h \
+  /usr/include/c++/11/iostream \
+  /usr/include/c++/11/ostream \
+  /usr/include/c++/11/ios \
+  /usr/include/c++/11/bits/ios_base.h \
+  /usr/include/c++/11/bits/locale_classes.h \
+  /usr/include/c++/11/bits/locale_classes.tcc \
+  /usr/include/c++/11/streambuf \
+  /usr/include/c++/11/bits/streambuf.tcc \
+  /usr/include/c++/11/bits/basic_ios.h \
+  /usr/include/c++/11/bits/locale_facets.h \
+  /usr/include/c++/11/cwctype \
+  /usr/include/wctype.h \
+  /usr/include/x86_64-linux-gnu/bits/wctype-wchar.h \
+  /usr/include/x86_64-linux-gnu/c++/11/bits/ctype_base.h \
+  /usr/include/c++/11/bits/streambuf_iterator.h \
+  /usr/include/x86_64-linux-gnu/c++/11/bits/ctype_inline.h \
+  /usr/include/c++/11/bits/locale_facets.tcc \
+  /usr/include/c++/11/bits/basic_ios.tcc \
+  /usr/include/c++/11/bits/ostream.tcc \
+  /usr/include/c++/11/istream \
+  /usr/include/c++/11/bits/istream.tcc
+
 CMakeFiles/network.dir/src/loadbalance/consistent_hash.cc.o: ../src/loadbalance/consistent_hash.cc \
   /usr/include/stdc-predef.h \
   ../src/loadbalance/consistent_hash.h \
@@ -1333,7 +1582,10 @@ CMakeFiles/network.dir/src/loadbalance/consistent_hash.cc.o: ../src/loadbalance/
   /usr/include/c++/11/ostream \
   /usr/include/c++/11/bits/ostream.tcc \
   /usr/include/c++/11/bits/istream.tcc \
-  /usr/include/c++/11/bits/sstream.tcc
+  /usr/include/c++/11/bits/sstream.tcc \
+  /usr/include/c++/11/cstring \
+  /usr/include/string.h \
+  /usr/include/strings.h
 
 CMakeFiles/network.dir/src/network/acceptor.cc.o: ../src/network/acceptor.cc \
   /usr/include/stdc-predef.h \
@@ -1559,6 +1811,13 @@ CMakeFiles/network.dir/src/network/acceptor.cc.o: ../src/network/acceptor.cc \
   /usr/include/c++/11/bits/deque.tcc \
   /usr/include/c++/11/bits/stl_heap.h \
   /usr/include/c++/11/bits/stl_queue.h \
+  /usr/include/c++/11/atomic \
+  /usr/include/c++/11/unordered_map \
+  /usr/include/c++/11/bits/hashtable.h \
+  /usr/include/c++/11/bits/hashtable_policy.h \
+  /usr/include/c++/11/bits/enable_special_members.h \
+  /usr/include/c++/11/bits/unordered_map.h \
+  /usr/include/c++/11/bits/erase_if.h \
   ../src/network/channel.h \
   ../src/network/socket.h \
   /usr/include/fcntl.h \
@@ -1985,6 +2244,13 @@ CMakeFiles/network.dir/src/network/channel.cc.o: ../src/network/channel.cc \
   /usr/include/c++/11/bits/deque.tcc \
   /usr/include/c++/11/bits/stl_heap.h \
   /usr/include/c++/11/bits/stl_queue.h \
+  /usr/include/c++/11/atomic \
+  /usr/include/c++/11/unordered_map \
+  /usr/include/c++/11/bits/hashtable.h \
+  /usr/include/c++/11/bits/hashtable_policy.h \
+  /usr/include/c++/11/bits/enable_special_members.h \
+  /usr/include/c++/11/bits/unordered_map.h \
+  /usr/include/c++/11/bits/erase_if.h \
   /usr/include/c++/11/iostream \
   /usr/include/c++/11/ostream \
   /usr/include/c++/11/ios \
@@ -2232,6 +2498,12 @@ CMakeFiles/network.dir/src/network/connector.cc.o: ../src/network/connector.cc \
   /usr/include/c++/11/bits/deque.tcc \
   /usr/include/c++/11/bits/stl_heap.h \
   /usr/include/c++/11/bits/stl_queue.h \
+  /usr/include/c++/11/unordered_map \
+  /usr/include/c++/11/bits/hashtable.h \
+  /usr/include/c++/11/bits/hashtable_policy.h \
+  /usr/include/c++/11/bits/enable_special_members.h \
+  /usr/include/c++/11/bits/unordered_map.h \
+  /usr/include/c++/11/bits/erase_if.h \
   ../src/network/channel.h \
   ../src/network/socket.h \
   /usr/include/unistd.h \
@@ -2468,6 +2740,13 @@ CMakeFiles/network.dir/src/network/event_loop.cc.o: ../src/network/event_loop.cc
   /usr/include/c++/11/bits/deque.tcc \
   /usr/include/c++/11/bits/stl_heap.h \
   /usr/include/c++/11/bits/stl_queue.h \
+  /usr/include/c++/11/atomic \
+  /usr/include/c++/11/unordered_map \
+  /usr/include/c++/11/bits/hashtable.h \
+  /usr/include/c++/11/bits/hashtable_policy.h \
+  /usr/include/c++/11/bits/enable_special_members.h \
+  /usr/include/c++/11/bits/unordered_map.h \
+  /usr/include/c++/11/bits/erase_if.h \
   ../src/network/channel.h \
   /usr/include/x86_64-linux-gnu/sys/eventfd.h \
   /usr/include/x86_64-linux-gnu/bits/eventfd.h \
@@ -2711,7 +2990,14 @@ CMakeFiles/network.dir/src/network/event_loop_thread.cc.o: ../src/network/event_
   /usr/include/c++/11/bits/stl_deque.h \
   /usr/include/c++/11/bits/deque.tcc \
   /usr/include/c++/11/bits/stl_heap.h \
-  /usr/include/c++/11/bits/stl_queue.h
+  /usr/include/c++/11/bits/stl_queue.h \
+  /usr/include/c++/11/atomic \
+  /usr/include/c++/11/unordered_map \
+  /usr/include/c++/11/bits/hashtable.h \
+  /usr/include/c++/11/bits/hashtable_policy.h \
+  /usr/include/c++/11/bits/enable_special_members.h \
+  /usr/include/c++/11/bits/unordered_map.h \
+  /usr/include/c++/11/bits/erase_if.h
 
 CMakeFiles/network.dir/src/network/event_loop_thread_pool.cc.o: ../src/network/event_loop_thread_pool.cc \
   /usr/include/stdc-predef.h \
@@ -2922,7 +3208,14 @@ CMakeFiles/network.dir/src/network/event_loop_thread_pool.cc.o: ../src/network/e
   /usr/include/c++/11/bits/stl_deque.h \
   /usr/include/c++/11/bits/deque.tcc \
   /usr/include/c++/11/bits/stl_heap.h \
-  /usr/include/c++/11/bits/stl_queue.h
+  /usr/include/c++/11/bits/stl_queue.h \
+  /usr/include/c++/11/atomic \
+  /usr/include/c++/11/unordered_map \
+  /usr/include/c++/11/bits/hashtable.h \
+  /usr/include/c++/11/bits/hashtable_policy.h \
+  /usr/include/c++/11/bits/enable_special_members.h \
+  /usr/include/c++/11/bits/unordered_map.h \
+  /usr/include/c++/11/bits/erase_if.h
 
 CMakeFiles/network.dir/src/network/socket.cc.o: ../src/network/socket.cc \
   /usr/include/stdc-predef.h \
@@ -3207,6 +3500,7 @@ CMakeFiles/network.dir/src/network/tcp_client.cc.o: ../src/network/tcp_client.cc
   /usr/include/c++/11/bits/basic_string.tcc \
   /usr/include/c++/11/bits/std_mutex.h \
   /usr/include/c++/11/bits/unique_lock.h \
+  /usr/include/c++/11/atomic \
   /usr/include/netinet/in.h \
   /usr/include/x86_64-linux-gnu/sys/socket.h \
   /usr/include/x86_64-linux-gnu/bits/types/struct_iovec.h \
@@ -3237,7 +3531,6 @@ CMakeFiles/network.dir/src/network/tcp_client.cc.o: ../src/network/tcp_client.cc
   /usr/include/c++/11/bits/stl_heap.h \
   /usr/include/c++/11/bits/uniform_int_dist.h \
   ../src/network/connector.h \
-  /usr/include/c++/11/atomic \
   ../src/network/tcp_connection.h \
   ../src/network/buffer.h \
   ../src/network/event_loop.h \
@@ -3250,6 +3543,12 @@ CMakeFiles/network.dir/src/network/tcp_client.cc.o: ../src/network/tcp_client.cc
   /usr/include/c++/11/bits/stl_deque.h \
   /usr/include/c++/11/bits/deque.tcc \
   /usr/include/c++/11/bits/stl_queue.h \
+  /usr/include/c++/11/unordered_map \
+  /usr/include/c++/11/bits/hashtable.h \
+  /usr/include/c++/11/bits/hashtable_policy.h \
+  /usr/include/c++/11/bits/enable_special_members.h \
+  /usr/include/c++/11/bits/unordered_map.h \
+  /usr/include/c++/11/bits/erase_if.h \
   ../src/network/socket.h \
   /usr/include/c++/11/iostream \
   /usr/include/c++/11/ostream \
@@ -3503,6 +3802,12 @@ CMakeFiles/network.dir/src/network/tcp_connection.cc.o: ../src/network/tcp_conne
   /usr/include/c++/11/bits/stl_deque.h \
   /usr/include/c++/11/bits/deque.tcc \
   /usr/include/c++/11/bits/stl_queue.h \
+  /usr/include/c++/11/unordered_map \
+  /usr/include/c++/11/bits/hashtable.h \
+  /usr/include/c++/11/bits/hashtable_policy.h \
+  /usr/include/c++/11/bits/enable_special_members.h \
+  /usr/include/c++/11/bits/unordered_map.h \
+  /usr/include/c++/11/bits/erase_if.h \
   ../src/network/channel.h \
   ../src/network/buffer.h \
   ../src/network/socket.h \
@@ -3771,14 +4076,40 @@ CMakeFiles/network.dir/src/network/tcp_server.cc.o: ../src/network/tcp_server.cc
   /usr/include/c++/11/bits/stl_deque.h \
   /usr/include/c++/11/bits/deque.tcc \
   /usr/include/c++/11/bits/stl_queue.h \
+  /usr/include/c++/11/atomic \
+  /usr/include/c++/11/unordered_map \
+  /usr/include/c++/11/bits/hashtable.h \
+  /usr/include/c++/11/bits/hashtable_policy.h \
+  /usr/include/c++/11/bits/enable_special_members.h \
+  /usr/include/c++/11/bits/unordered_map.h \
   ../src/network/acceptor.h \
   ../src/network/tcp_connection.h \
-  /usr/include/c++/11/atomic \
   ../src/network/buffer.h \
   /usr/include/arpa/inet.h \
   /usr/include/c++/11/cstring \
   /usr/include/string.h \
   /usr/include/strings.h \
+  /usr/include/c++/11/iostream \
+  /usr/include/c++/11/ostream \
+  /usr/include/c++/11/ios \
+  /usr/include/c++/11/bits/ios_base.h \
+  /usr/include/c++/11/bits/locale_classes.h \
+  /usr/include/c++/11/bits/locale_classes.tcc \
+  /usr/include/c++/11/streambuf \
+  /usr/include/c++/11/bits/streambuf.tcc \
+  /usr/include/c++/11/bits/basic_ios.h \
+  /usr/include/c++/11/bits/locale_facets.h \
+  /usr/include/c++/11/cwctype \
+  /usr/include/wctype.h \
+  /usr/include/x86_64-linux-gnu/bits/wctype-wchar.h \
+  /usr/include/x86_64-linux-gnu/c++/11/bits/ctype_base.h \
+  /usr/include/c++/11/bits/streambuf_iterator.h \
+  /usr/include/x86_64-linux-gnu/c++/11/bits/ctype_inline.h \
+  /usr/include/c++/11/bits/locale_facets.tcc \
+  /usr/include/c++/11/bits/basic_ios.tcc \
+  /usr/include/c++/11/bits/ostream.tcc \
+  /usr/include/c++/11/istream \
+  /usr/include/c++/11/bits/istream.tcc \
   ../src/network/event_loop_thread_pool.h
 
 CMakeFiles/network.dir/src/protocol/rpc_service.pb.cc.o: ../src/protocol/rpc_service.pb.cc \
@@ -4361,13 +4692,13 @@ CMakeFiles/network.dir/src/server/rpc_server.cc.o: ../src/server/rpc_server.cc \
   /usr/include/c++/11/bits/stl_deque.h \
   /usr/include/c++/11/bits/deque.tcc \
   /usr/include/c++/11/bits/stl_queue.h \
+  /usr/include/c++/11/atomic \
   ../src/codec/rpc_codec.h \
   ../src/network/buffer.h \
   ../src/protocol/rpc_service.pb.h \
   /usr/include/google/protobuf/port_def.inc \
   /usr/include/google/protobuf/port_undef.inc \
   /usr/include/google/protobuf/io/coded_stream.h \
-  /usr/include/c++/11/atomic \
   /usr/include/c++/11/climits \
   /usr/lib/gcc/x86_64-linux-gnu/11/include/limits.h \
   /usr/lib/gcc/x86_64-linux-gnu/11/include/syslimits.h \
@@ -4879,6 +5210,8 @@ CMakeFiles/network.dir/src/server/rpc_service.cc.o: ../src/server/rpc_service.cc
 
 ../src/loadbalance/consistent_hash.cc:
 
+../src/discovery/memory_registry.h:
+
 ../src/client/rpc_sync_client.h:
 
 /usr/include/arpa/inet.h:
@@ -4914,8 +5247,6 @@ CMakeFiles/network.dir/src/server/rpc_service.cc.o: ../src/server/rpc_service.cc
 /usr/include/google/protobuf/stubs/casts.h:
 
 /usr/include/google/protobuf/repeated_field.h:
-
-/usr/include/google/protobuf/io/zero_copy_stream.h:
 
 /usr/include/google/protobuf/parse_context.h:
 
@@ -5071,6 +5402,28 @@ CMakeFiles/network.dir/src/server/rpc_service.cc.o: ../src/server/rpc_service.cc
 
 /usr/include/x86_64-linux-gnu/bits/xopen_lim.h:
 
+/usr/include/x86_64-linux-gnu/bits/posix2_lim.h:
+
+/usr/include/x86_64-linux-gnu/bits/local_lim.h:
+
+/usr/include/x86_64-linux-gnu/bits/posix1_lim.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/11/include/limits.h:
+
+/usr/include/google/protobuf/message.h:
+
+/usr/include/google/protobuf/port_undef.inc:
+
+../src/protocol/rpc_service.pb.h:
+
+../src/codec/rpc_codec.h:
+
+../src/network/event_loop_thread.h:
+
+../src/server/rpc_service.h:
+
+/usr/include/c++/11/bits/deque.tcc:
+
 /usr/include/stdlib.h:
 
 /usr/include/x86_64-linux-gnu/sys/select.h:
@@ -5082,6 +5435,8 @@ CMakeFiles/network.dir/src/server/rpc_service.cc.o: ../src/server/rpc_service.cc
 /usr/include/x86_64-linux-gnu/bits/types/__fpos64_t.h:
 
 /usr/include/x86_64-linux-gnu/bits/struct_rwlock.h:
+
+/usr/include/c++/11/numeric:
 
 /usr/include/c++/11/cstdlib:
 
@@ -5127,19 +5482,23 @@ CMakeFiles/network.dir/src/server/rpc_service.cc.o: ../src/server/rpc_service.cc
 
 /usr/include/c++/11/ext/concurrence.h:
 
+/usr/include/linux/limits.h:
+
+/usr/include/c++/11/bits/shared_ptr_base.h:
+
+/usr/include/c++/11/bits/basic_string.h:
+
 /usr/include/x86_64-linux-gnu/bits/endian.h:
 
 /usr/include/x86_64-linux-gnu/bits/time.h:
 
 /usr/include/x86_64-linux-gnu/bits/select.h:
 
-../src/network/tcp_connection.h:
-
 /usr/include/c++/11/algorithm:
 
-../src/server/rpc_service.h:
+../src/discovery/service_registry.h:
 
-/usr/include/c++/11/bits/deque.tcc:
+../src/network/tcp_connection.h:
 
 /usr/include/x86_64-linux-gnu/bits/endianness.h:
 
@@ -5166,6 +5525,8 @@ CMakeFiles/network.dir/src/server/rpc_service.cc.o: ../src/server/rpc_service.cc
 /usr/include/google/protobuf/stubs/port.h:
 
 /usr/include/x86_64-linux-gnu/bits/uintn-identity.h:
+
+/usr/include/c++/11/bits/random.tcc:
 
 /usr/include/x86_64-linux-gnu/bits/stdlib-float.h:
 
@@ -5196,12 +5557,6 @@ CMakeFiles/network.dir/src/server/rpc_service.cc.o: ../src/server/rpc_service.cc
 /usr/include/c++/11/cstdint:
 
 /usr/include/x86_64-linux-gnu/bits/waitstatus.h:
-
-/usr/include/linux/falloc.h:
-
-/usr/include/x86_64-linux-gnu/bits/in.h:
-
-/usr/include/c++/11/bits/postypes.h:
 
 /usr/include/x86_64-linux-gnu/c++/11/bits/gthr.h:
 
@@ -5244,6 +5599,8 @@ CMakeFiles/network.dir/src/server/rpc_service.cc.o: ../src/server/rpc_service.cc
 ../src/network/buffer.h:
 
 /usr/include/x86_64-linux-gnu/sys/single_threaded.h:
+
+/usr/include/c++/11/cmath:
 
 /usr/include/c++/11/bits/allocator.h:
 
@@ -5295,11 +5652,9 @@ CMakeFiles/network.dir/src/server/rpc_service.cc.o: ../src/server/rpc_service.cc
 
 /usr/include/x86_64-linux-gnu/bits/wchar.h:
 
-/usr/include/x86_64-linux-gnu/bits/local_lim.h:
+/usr/include/c++/11/bits/stl_queue.h:
 
 /usr/include/x86_64-linux-gnu/bits/stdint-uintn.h:
-
-/usr/include/c++/11/bits/stl_queue.h:
 
 /usr/include/x86_64-linux-gnu/bits/types/struct_timespec.h:
 
@@ -5324,6 +5679,12 @@ CMakeFiles/network.dir/src/server/rpc_service.cc.o: ../src/server/rpc_service.cc
 /usr/include/c++/11/functional:
 
 /usr/include/linux/errno.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/11/include/syslimits.h:
+
+/usr/include/c++/11/debug/debug.h:
+
+/usr/include/features-time64.h:
 
 /usr/include/c++/11/bits/exception_ptr.h:
 
@@ -5373,27 +5734,17 @@ CMakeFiles/network.dir/src/server/rpc_service.cc.o: ../src/server/rpc_service.cc
 
 /usr/include/x86_64-linux-gnu/bits/long-double.h:
 
-/usr/include/c++/11/bits/shared_ptr_base.h:
-
-/usr/include/c++/11/bits/basic_string.h:
-
-/usr/include/linux/limits.h:
-
-/usr/include/x86_64-linux-gnu/bits/posix2_lim.h:
-
 /usr/include/x86_64-linux-gnu/bits/struct_mutex.h:
 
 /usr/include/c++/11/bits/stl_iterator.h:
 
-/usr/lib/gcc/x86_64-linux-gnu/11/include/stddef.h:
+/usr/include/c++/11/bits/sstream.tcc:
 
-/usr/include/x86_64-linux-gnu/bits/types/struct_FILE.h:
+/usr/include/c++/11/climits:
 
-/usr/include/google/protobuf/stubs/mutex.h:
+/usr/include/x86_64-linux-gnu/sys/epoll.h:
 
-/usr/include/c++/11/iostream:
-
-/usr/include/google/protobuf/port_def.inc:
+/usr/include/c++/11/new:
 
 /usr/include/x86_64-linux-gnu/bits/sigstack.h:
 
@@ -5420,10 +5771,6 @@ CMakeFiles/network.dir/src/server/rpc_service.cc.o: ../src/server/rpc_service.cc
 /usr/include/x86_64-linux-gnu/bits/types/time_t.h:
 
 /usr/include/x86_64-linux-gnu/bits/epoll.h:
-
-../src/network/tcp_client.h:
-
-/usr/include/x86_64-linux-gnu/bits/types/mbstate_t.h:
 
 /usr/include/x86_64-linux-gnu/bits/types/clock_t.h:
 
@@ -5471,6 +5818,8 @@ CMakeFiles/network.dir/src/server/rpc_service.cc.o: ../src/server/rpc_service.cc
 
 /usr/include/x86_64-linux-gnu/bits/types/error_t.h:
 
+/usr/include/x86_64-linux-gnu/bits/mathcalls-helper-functions.h:
+
 /usr/include/c++/11/bits/charconv.h:
 
 /usr/include/c++/11/bits/functional_hash.h:
@@ -5489,7 +5838,7 @@ CMakeFiles/network.dir/src/server/rpc_service.cc.o: ../src/server/rpc_service.cc
 
 /usr/include/c++/11/backward/auto_ptr.h:
 
-../src/protocol/rpc_service.pb.h:
+/usr/include/c++/11/bits/stl_numeric.h:
 
 /usr/include/google/protobuf/map.h:
 
@@ -5501,25 +5850,19 @@ CMakeFiles/network.dir/src/server/rpc_service.cc.o: ../src/server/rpc_service.cc
 
 /usr/include/c++/11/vector:
 
-../src/network/event_loop_thread.h:
+../src/discovery/memory_registry.cc:
 
 /usr/include/c++/11/bits/unique_ptr.h:
 
-/usr/include/c++/11/debug/debug.h:
+/usr/include/x86_64-linux-gnu/bits/types/mbstate_t.h:
 
-/usr/include/features-time64.h:
+../src/network/tcp_client.h:
 
-/usr/lib/gcc/x86_64-linux-gnu/11/include/syslimits.h:
+/usr/include/limits.h:
+
+/usr/include/c++/11/bits/stl_relops.h:
 
 /usr/include/c++/11/array:
-
-/usr/include/c++/11/bits/sstream.tcc:
-
-/usr/include/x86_64-linux-gnu/sys/epoll.h:
-
-/usr/include/c++/11/new:
-
-/usr/include/c++/11/climits:
 
 /usr/include/google/protobuf/generated_message_reflection.h:
 
@@ -5551,9 +5894,9 @@ CMakeFiles/network.dir/src/server/rpc_service.cc.o: ../src/server/rpc_service.cc
 
 /usr/include/c++/11/future:
 
-/usr/include/c++/11/condition_variable:
-
 /usr/include/c++/11/thread:
+
+/usr/include/c++/11/condition_variable:
 
 /usr/include/c++/11/ratio:
 
@@ -5595,10 +5938,6 @@ CMakeFiles/network.dir/src/server/rpc_service.cc.o: ../src/server/rpc_service.cc
 
 /usr/include/c++/11/bits/hashtable_policy.h:
 
-/usr/include/c++/11/bits/basic_ios.tcc:
-
-/usr/include/c++/11/bits/enable_special_members.h:
-
 /usr/include/endian.h:
 
 /usr/include/stdint.h:
@@ -5606,6 +5945,56 @@ CMakeFiles/network.dir/src/server/rpc_service.cc.o: ../src/server/rpc_service.cc
 /usr/include/c++/11/bits/ptr_traits.h:
 
 /usr/include/c++/11/bits/erase_if.h:
+
+/usr/include/c++/11/random:
+
+/usr/include/x86_64-linux-gnu/bits/math-vector.h:
+
+/usr/include/c++/11/bits/stl_algo.h:
+
+/usr/include/c++/11/cassert:
+
+/usr/lib/gcc/x86_64-linux-gnu/11/include/stddef.h:
+
+/usr/include/x86_64-linux-gnu/bits/types/struct_FILE.h:
+
+/usr/include/x86_64-linux-gnu/bits/libm-simd-decl-stubs.h:
+
+/usr/include/x86_64-linux-gnu/bits/flt-eval-method.h:
+
+/usr/include/c++/11/bits/basic_ios.tcc:
+
+/usr/include/c++/11/bits/enable_special_members.h:
+
+/usr/include/x86_64-linux-gnu/c++/11/bits/opt_random.h:
+
+/usr/include/linux/posix_types.h:
+
+/usr/include/x86_64-linux-gnu/bits/fp-logb.h:
+
+/usr/include/google/protobuf/stubs/mutex.h:
+
+/usr/include/c++/11/iostream:
+
+/usr/include/google/protobuf/port_def.inc:
+
+/usr/include/x86_64-linux-gnu/bits/fp-fast.h:
+
+/usr/include/x86_64-linux-gnu/bits/mathcalls.h:
+
+/usr/include/google/protobuf/io/zero_copy_stream.h:
+
+/usr/include/c++/11/bits/random.h:
+
+/usr/include/linux/falloc.h:
+
+/usr/include/x86_64-linux-gnu/bits/in.h:
+
+/usr/include/c++/11/bits/postypes.h:
+
+/usr/include/x86_64-linux-gnu/bits/mathcalls-narrow.h:
+
+/usr/include/x86_64-linux-gnu/bits/iscanonical.h:
 
 /usr/include/x86_64-linux-gnu/bits/types/struct___jmp_buf_tag.h:
 
@@ -5623,17 +6012,9 @@ CMakeFiles/network.dir/src/server/rpc_service.cc.o: ../src/server/rpc_service.cc
 
 /usr/include/x86_64-linux-gnu/bits/types/__FILE.h:
 
+/usr/include/math.h:
+
 /usr/include/x86_64-linux-gnu/asm/sockios.h:
-
-/usr/include/c++/11/bits/stl_algo.h:
-
-/usr/include/c++/11/cassert:
-
-/usr/include/c++/11/bits/algorithmfwd.h:
-
-/usr/include/c++/11/bits/std_abs.h:
-
-/usr/include/c++/11/bits/stl_heap.h:
 
 /usr/include/c++/11/bits/stl_function.h:
 
@@ -5647,8 +6028,6 @@ CMakeFiles/network.dir/src/server/rpc_service.cc.o: ../src/server/rpc_service.cc
 
 /usr/include/x86_64-linux-gnu/bits/socket_type.h:
 
-/usr/include/linux/posix_types.h:
-
 /usr/include/x86_64-linux-gnu/asm/posix_types.h:
 
 /usr/include/x86_64-linux-gnu/bits/types/sigset_t.h:
@@ -5657,26 +6036,18 @@ CMakeFiles/network.dir/src/server/rpc_service.cc.o: ../src/server/rpc_service.cc
 
 /usr/include/asm-generic/bitsperlong.h:
 
-/usr/include/x86_64-linux-gnu/bits/posix1_lim.h:
-
 ../src/network/tcp_server.h:
 
 /usr/include/asm-generic/sockios.h:
+
+/usr/include/c++/11/bits/algorithmfwd.h:
+
+/usr/include/c++/11/bits/std_abs.h:
+
+/usr/include/c++/11/bits/stl_heap.h:
 
 ../src/network/event_loop.h:
 
 /usr/include/x86_64-linux-gnu/gnu/stubs.h:
 
 /usr/include/c++/11/bits/stl_deque.h:
-
-../src/codec/rpc_codec.h:
-
-/usr/include/google/protobuf/message.h:
-
-/usr/include/google/protobuf/port_undef.inc:
-
-/usr/lib/gcc/x86_64-linux-gnu/11/include/limits.h:
-
-/usr/include/c++/11/bits/stl_relops.h:
-
-/usr/include/limits.h:
