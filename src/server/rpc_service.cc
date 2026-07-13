@@ -6,6 +6,8 @@ namespace rpc {
 
 // 注册方法：覆盖同名方法
 void RpcService::registerMethod(const std::string& methodName, MethodHandler handler) {
+    // Issue #10 fix: 空检查
+    if (methodName.empty() || !handler) return;
     methods_[methodName] = std::move(handler);
 }
 

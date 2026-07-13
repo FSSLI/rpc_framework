@@ -14,6 +14,9 @@ constexpr uint32_t kMagic = 0x52504346;  // "RPCF"
 constexpr uint8_t  kVersion = 1;
 constexpr size_t   kFixedHeaderSize = 18;  // 4+1+1+4+8
 constexpr size_t   kChecksumSize = 4;
+constexpr uint32_t kMaxBodyLen = 10 * 1024 * 1024;  // 10MB 上限，防 DoS
+constexpr size_t   kMaxScanBytes = 1024;   // 魔数扫描上限，防 O(n²) 攻击
+constexpr size_t   kMaxBufferSize = 10 * 1024 * 1024;  // Buffer 硬上限
 
 // ==================== 枚举 ====================
 
@@ -43,9 +46,9 @@ enum class Status : uint8_t {
 // 所有消息类型共用此头，body_len 解决粘包，无需外部 Length-Field
 //
 // 协议格式：
-//   [Fixed Header: 16B][Variable Body: body_len B][Checksum: 4B]
+//   [Fixed Header: 18B][Variable Body: body_len B][Checksum: 4B]
 //
-// 总包长度 = 16 + body_len + 4 = 20 + body_len
+// 总包长度 = 18 + body_len + 4 = 22 + body_len
 // ============================================================================
 
 #pragma pack(push, 1)  //一字节对齐
@@ -70,9 +73,10 @@ struct DecodedPacket {
     rpc::RpcResponse rpc_response;
     rpc::Heartbeat heartbeat;
 
-    // 辅助字段（仅 REQUEST 有效）
-    std::string service_name;
-    std::string method_name;
+    // 辅助字段
+    std::string service_name;    // REQUEST 有效
+    std::string method_name;     // REQUEST 有效
+    Status network_status = Status::SUCCESS;  // RESPONSE 网络层状态（与业务 success 分离）
 };
 
 // ==================== Codec ====================
@@ -106,8 +110,8 @@ public:
 private:
     static bool checkMagic(uint32_t magic);
 
-    // 变长字符串编码：2B_len + str_bytes
-    static void appendString(std::string& out, const std::string& str);
+    // 变长字符串编码：2B_len + str_bytes，返回 false 表示长度溢出
+    static bool appendString(std::string& out, const std::string& str);
     static bool readString(const char* data, size_t& pos, size_t totalLen, std::string& out);
 
     // 各类型 body 编解码

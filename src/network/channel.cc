@@ -19,36 +19,39 @@ Channel::Channel(EventLoop* loop, int fd)
 }
 
 Channel::~Channel() {
-    // 确保已经从 EventLoop 中移除
+    // Issue #6 fix: 只要曾注册过就尝试移除，覆盖 index_==2（已标记删除）场景
+    if (index_ != -1) {
+        remove();
+    }
 }
 
-// EPOLLIN	可读	fd 有数据可读
-// EPOLLOUT	可写	fd 发送缓冲区有空闲
-// EPOLLERR	错误	fd 发生错误（如连接重置）
-// EPOLLHUP	挂断	对端关闭连接（写端）
-// EPOLLPRI	紧急数据	带外数据（几乎不用）
-// EPOLLRDHUP	对端关闭读端	Linux 2.6.17+，检测对端 shutdown 读端
+void Channel::handleEvent() {
+    std::cout << "handleEvent revents=" << revents_ << std::endl;
 
+    // EPOLLERR 通常意味着连接出现致命错误，应该关闭
+    if (revents_ & EPOLLERR) {
+        if (errorCallback_) errorCallback_();
+        // ERR 后触发关闭，避免死连接
+        if (closeCallback_) closeCallback_();
+        return;
+    }
 
-void Channel::handleEvent() {  //事件分发器  & 位与
-    std::cout << "handleEvent revents=" << revents_ << std::endl;  // ← 加这行
-    // EPOLLHUP 可能和 EPOLLIN 同时触发（对端发完数据再关闭）。如果有数据可读，先处理读，再处理关闭。避免丢数据。
-    // EPOLLHUP 处理加了 !EPOLLIN 条件，避免和读事件冲突。有数据时优先读，读到 EOF 再关闭；没数据时直接触发关闭回调。这是 Reactor 模式的事件分发顺序设计。
-    if ((revents_ & EPOLLHUP) && !(revents_ & EPOLLIN)) {  //关闭连接
+    if ((revents_ & EPOLLHUP) && !(revents_ & EPOLLIN)) {
         if (closeCallback_) closeCallback_();
     }
-    
-    if (revents_ & EPOLLERR) {  //错误事件
-        if (errorCallback_) errorCallback_();
-    }
-    
-    // 检测对端调用 shutdown(fd, SHUT_RD) 或半关闭。你的代码里把它和 EPOLLIN 放一起：
-    // EPOLLRDHUP 也触发读回调。通常 EPOLLRDHUP 应该触发关闭回调，但这里和读放一起，可能是因为对端半关闭后可能还有数据要读。
-    if (revents_ & (EPOLLIN | EPOLLPRI | EPOLLRDHUP)) {   //可读事件
+
+    if (revents_ & (EPOLLIN | EPOLLPRI)) {
         if (readCallback_) readCallback_();
     }
-    
-    if (revents_ & EPOLLOUT) {  //可写事件
+
+    // EPOLLRDHUP：对端关闭写端，但可能还有数据要读
+    // 先处理读，再处理 RDHUP
+    if (revents_ & EPOLLRDHUP) {
+        if (readCallback_) readCallback_();  // 尝试读剩余数据
+        if (closeCallback_) closeCallback_();
+    }
+
+    if (revents_ & EPOLLOUT) {
         if (writeCallback_) writeCallback_();
     }
 }
@@ -56,7 +59,7 @@ void Channel::handleEvent() {  //事件分发器  & 位与
 void Channel::enableReading() {  
     events_ |= kReadEvent;
     update();
-    std::cout << "enableReading fd=" << fd_ << " events=" << events_ << " index=" << index_ << std::endl;  // ← 加
+    std::cout << "enableReading fd=" << fd_ << " events=" << events_ << " index=" << index_ << std::endl;
 }
 
 void Channel::disableReading() {

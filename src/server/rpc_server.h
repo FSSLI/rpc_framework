@@ -38,6 +38,7 @@ private:
 
     // 服务表：service_name → RpcService
     // 如 "UserService" → UserService 实例
+    // 注意：非线程安全，须在 start() 之前完成注册
     std::unordered_map<std::string, std::shared_ptr<RpcService>> services_;
 };
 

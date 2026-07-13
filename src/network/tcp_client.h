@@ -5,8 +5,9 @@
 #include <functional>
 #include <memory>
 #include <mutex>
+#include <atomic>
 #include <netinet/in.h>  // sockaddr_in
-#include "buffer.h"  // ← 加这行
+#include "buffer.h"
 
 namespace rpc {
 
@@ -31,6 +32,12 @@ public:
     void setMessageCallback(const MessageCallback& cb) { messageCallback_ = cb; }
     void setWriteCompleteCallback(const WriteCompleteCallback& cb) { writeCompleteCallback_ = cb; }
 
+    // 控制断开后是否自动重连（默认 true，连接池场景设为 false）
+    void setRetryOnDisconnect(bool on) { retryOnDisconnect_ = on; }
+
+    // 永久断开：停止重连并关闭连接（连接池回收用）
+    void disconnectPermanently();
+
     std::shared_ptr<TcpConnection> connection() const;
 
 private:
@@ -38,13 +45,15 @@ private:
     void removeConnection(const std::shared_ptr<TcpConnection>& conn);
 
     EventLoop* loop_;
-    std::unique_ptr<Connector> connector_;
+    std::shared_ptr<Connector> connector_;  // shared_ptr 支持 weak_ptr，防止定时器回调 use-after-free
     ConnectionCallback connectionCallback_;
     MessageCallback messageCallback_;
     WriteCompleteCallback writeCompleteCallback_;
 
     mutable std::mutex mutex_;
     std::shared_ptr<TcpConnection> connection_;
+    bool retryOnDisconnect_ = true;  // Issue #1 fix: 断开后是否自动重连
+    std::atomic<bool> disconnecting_{false};  // Issue #2 fix: 防止 disconnect 后自动重连
 };
 
 } // namespace rpc

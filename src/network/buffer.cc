@@ -50,6 +50,10 @@ std::string Buffer::retrieveAllAsString() {
 
 // network/buffer.cc 里加：
 std::string Buffer::retrieveAsString(size_t len) {
+    // Issue #5 fix: 防止越界读取
+    if (len > readableBytes()) {
+        len = readableBytes();
+    }
     std::string result(peek(), len);
     retrieve(len);
     return result;
@@ -74,31 +78,43 @@ void Buffer::ensureWritableBytes(size_t len) {
 ssize_t Buffer::readFd(int fd, int* savedErrno) {
     char extrabuf[65536];
     struct iovec vec[2];
-    
-    const size_t writable = writableBytes();
-    vec[0].iov_base = begin() + writerIndex_;
-    vec[0].iov_len = writable;
-    vec[1].iov_base = extrabuf;
-    vec[1].iov_len = sizeof(extrabuf);
-    
-    const int iovcnt = (writable < sizeof(extrabuf)) ? 2 : 1;
-    const ssize_t n = ::readv(fd, vec, iovcnt);
-    
-    if (n < 0) {
-        *savedErrno = errno;
-    } else if (static_cast<size_t>(n) <= writable) {
-        writerIndex_ += n;
-        std::cout << "writerIndex_=" << writerIndex_ << " readerIndex_=" << readerIndex_ << std::endl;  // ← 加
-    } else {
-        writerIndex_ = buffer_.size();
-        append(extrabuf, n - writable);
+
+    // Issue #6 fix: 用 while 循环替代递归，防止高频信号导致栈溢出
+    while (true) {
+        const size_t writable = writableBytes();
+        vec[0].iov_base = begin() + writerIndex_;
+        vec[0].iov_len = writable;
+        vec[1].iov_base = extrabuf;
+        vec[1].iov_len = sizeof(extrabuf);
+
+        const int iovcnt = (writable < sizeof(extrabuf)) ? 2 : 1;
+        const ssize_t n = ::readv(fd, vec, iovcnt);
+
+        if (n < 0) {
+            if (errno == EINTR) continue;
+            *savedErrno = errno;
+            return n;
+        }
+
+        if (static_cast<size_t>(n) <= writable) {
+            writerIndex_ += n;
+#ifdef RPC_DEBUG
+            std::cout << "writerIndex_=" << writerIndex_ << " readerIndex_=" << readerIndex_ << std::endl;
+#endif
+        } else {
+            writerIndex_ = buffer_.size();
+            append(extrabuf, n - writable);
+        }
+        return n;
     }
-    
-    return n;
 }
 
 ssize_t Buffer::writeFd(int fd, int* savedErrno) {
-    ssize_t n = ::write(fd, peek(), readableBytes());
+    // Issue #7 fix: EINTR 重试
+    ssize_t n;
+    do {
+        n = ::write(fd, peek(), readableBytes());
+    } while (n < 0 && errno == EINTR);
     if (n < 0) {
         *savedErrno = errno;
     }

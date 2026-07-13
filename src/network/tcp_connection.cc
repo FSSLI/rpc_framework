@@ -24,15 +24,15 @@ TcpConnection::TcpConnection(EventLoop* loop,
       channel_(new Channel(loop, sockfd)),
       localAddr_(localAddr),
       peerAddr_(peerAddr),
-      context_(nullptr), 
-      idleTimeoutSeconds_(0),
-      lastActiveTime_(std::chrono::steady_clock::now()) {
-    
+      context_(nullptr),
+      idleTimeoutSeconds_(0) {
+    updateActiveTime();  // 初始化 lastActiveTimeMs_
+
     channel_->setReadCallback(std::bind(&TcpConnection::handleRead, this));
     channel_->setWriteCallback(std::bind(&TcpConnection::handleWrite, this));
     channel_->setCloseCallback(std::bind(&TcpConnection::handleClose, this));
     channel_->setErrorCallback(std::bind(&TcpConnection::handleError, this));
-    
+
     socket_->setKeepAlive(true);
 }
 
@@ -40,32 +40,28 @@ TcpConnection::~TcpConnection() {
     // LOG_DEBUG
 }
 
-// ... 新增方法 ...
 void TcpConnection::setIdleTimeout(int seconds) {
     idleTimeoutSeconds_ = seconds;
     updateActiveTime();
 }
 
+// Issue #2 fix: 改用 atomic<int64_t> 毫秒时间戳，消除多线程读写 time_point 的数据竞争
 void TcpConnection::updateActiveTime() {
-    lastActiveTime_ = std::chrono::steady_clock::now();
+    auto now = std::chrono::steady_clock::now();
+    lastActiveTimeMs_.store(
+        std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count(),
+        std::memory_order_relaxed);
 }
 
 bool TcpConnection::checkIdleTimeout() {
     if (idleTimeoutSeconds_ <= 0) return false;
-    
-    auto now = std::chrono::steady_clock::now();
-    auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(now - lastActiveTime_).count();
 
-    // 调试日志
-    // std::cout << "checkIdleTimeout: " << name_ << " elapsed=" << elapsed 
-    //           << " timeout=" << idleTimeoutSeconds_ << std::endl;
-    
+    auto now = std::chrono::steady_clock::now();
+    auto nowMs = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
+    auto lastMs = lastActiveTimeMs_.load(std::memory_order_relaxed);
+    auto elapsed = (nowMs - lastMs) / 1000;
+
     if (elapsed >= idleTimeoutSeconds_) {
-        // std::cout << "Idle timeout! closing " << name_ << std::endl;
-        // 原来：直接调 handleClose
-        // loop_->runInLoop(std::bind(&TcpConnection::handleClose, shared_from_this()));
-        
-        // 改为：调 forceClose
         forceClose();
         return true;
     }
@@ -74,13 +70,13 @@ bool TcpConnection::checkIdleTimeout() {
 
 void TcpConnection::connectEstablished() {
     loop_->assertInLoopThread();
-    assert(state_ == kConnecting);  // 必须是 Connecting 状态
+    assert(state_ == kConnecting);
     setState(kConnected);
-    channel_->enableReading();  // 注册到 epoll，开始监听可读事件
-    std::cout << "connectEstablished: " << name_ << " fd=" << channel_->fd() << std::endl;  // ← 加
-    
+    channel_->enableReading();
+    std::cout << "connectEstablished: " << name_ << " fd=" << channel_->fd() << std::endl;
+
     if (connectionCallback_) {
-        connectionCallback_(shared_from_this());  // 通知上层
+        connectionCallback_(shared_from_this());
     }
 }
 
@@ -89,7 +85,7 @@ void TcpConnection::connectDestroyed() {
     if (state_ == kConnected) {
         setState(kDisconnected);
         channel_->disableAll();
-        
+
         if (connectionCallback_) {
             connectionCallback_(shared_from_this());
         }
@@ -97,30 +93,55 @@ void TcpConnection::connectDestroyed() {
     channel_->remove();
 }
 
+// ============================================================================
+// send 优化：用 shared_ptr<string> 避免跨线程拷贝
+// ============================================================================
+
 void TcpConnection::send(const std::string& message) {
-    if (state_ == kConnected) {
-        if (loop_->isInLoopThread()) {
-            sendInLoop(message);
-        } else {
-            loop_->runInLoop(std::bind(&TcpConnection::sendInLoop, this, message));
-        }
+    if (state_ != kConnected) {
+        return;
+    }
+
+    if (loop_->isInLoopThread()) {
+        sendInLoop(message);
+    } else {
+        // Issue #1 fix: shared_from_this() 替代裸 this，防止 lambda 执行时对象已析构
+        auto msgPtr = std::make_shared<std::string>(message);
+        loop_->runInLoop([self = shared_from_this(), msgPtr]() {
+            if (self->state_ == kConnected) {
+                self->sendInLoop(*msgPtr);
+            }
+        });
     }
 }
 
 void TcpConnection::send(Buffer* buf) {
-    if (state_ == kConnected) {
-        if (loop_->isInLoopThread()) {
-            sendInLoop(buf->retrieveAllAsString());
-        } else {
-            loop_->runInLoop(std::bind(&TcpConnection::sendInLoop, this, buf->retrieveAllAsString()));
-        }
+    if (state_ != kConnected) {
+        return;
+    }
+
+    if (loop_->isInLoopThread()) {
+        sendInLoop(buf->retrieveAllAsString());
+    } else {
+        // 跨线程：拷贝到 shared_ptr 后清空 buffer（muduo 风格：调用者已转移所有权）
+        // Trade-off: 若 lambda 因连接断开未执行，数据在 msgPtr 中但不会被发送。
+        // 调用者应在发送前检查连接状态。
+        auto msgPtr = std::make_shared<std::string>(buf->peek(), buf->readableBytes());
+        buf->retrieveAll();
+        loop_->runInLoop([self = shared_from_this(), msgPtr]() {
+            if (self->state_ == kConnected) {
+                self->sendInLoop(*msgPtr);
+            }
+        });
     }
 }
 
 void TcpConnection::shutdown() {
     if (state_ == kConnected) {
         setState(kDisconnecting);
-        loop_->runInLoop(std::bind(&TcpConnection::shutdownInLoop, this));
+        loop_->runInLoop([self = shared_from_this()]() {
+            self->shutdownInLoop();
+        });
     }
 }
 
@@ -129,34 +150,52 @@ void TcpConnection::sendInLoop(const std::string& message) {
     ssize_t nwrote = 0;
     size_t remaining = message.size();
     bool faultError = false;
-    
+
     if (state_ == kDisconnected) {
-        // LOG_WARN << "disconnected, give up writing";
         return;
     }
-    
+
     // 如果 outputBuffer_ 为空，直接写
     if (!channel_->isWriting() && outputBuffer_.readableBytes() == 0) {
         nwrote = ::write(channel_->fd(), message.data(), message.size());
         if (nwrote >= 0) {
             remaining = message.size() - nwrote;
-            if (remaining == 0 && writeCompleteCallback_) {  // 全部写完，回调 writeCompleteCallback_
+            if (remaining == 0 && writeCompleteCallback_) {
                 loop_->queueInLoop(std::bind(writeCompleteCallback_, shared_from_this()));
             }
         } else {
             nwrote = 0;
-            if (errno != EWOULDBLOCK) {
-                // LOG_SYSERR << "TcpConnection::sendInLoop";
+            // Issue #8 fix: 可移植的非阻塞写判断
+#if EAGAIN != EWOULDBLOCK
+            if (errno != EAGAIN && errno != EWOULDBLOCK)
+#else
+            if (errno != EAGAIN)
+#endif
+            {
                 if (errno == EPIPE || errno == ECONNRESET) {
                     faultError = true;
                 }
             }
         }
     }
-    
-    if (!faultError && remaining > 0) {
+
+    // Issue #7 fix: 致命错误时主动关闭连接，避免僵尸连接
+    if (faultError) {
+        handleError();
+        return;
+    }
+
+    if (remaining > 0) {
         outputBuffer_.append(message.data() + nwrote, remaining);
-        if (!channel_->isWriting()) {  // 3. 注册可写事件，等 epoll 触发再写
+
+        // FIX: 高水位检测
+        if (highWaterMark_ > 0 && outputBuffer_.readableBytes() > highWaterMark_) {
+            if (highWaterMarkCallback_) {
+                highWaterMarkCallback_(shared_from_this(), outputBuffer_.readableBytes());
+            }
+        }
+
+        if (!channel_->isWriting()) {
             channel_->enableWriting();
         }
     }
@@ -164,73 +203,79 @@ void TcpConnection::sendInLoop(const std::string& message) {
 
 void TcpConnection::shutdownInLoop() {
     loop_->assertInLoopThread();
-    if (!channel_->isWriting()) {  // outputBuffer_ 已空，可以关闭写端
-        socket_->shutdownWrite();  // 发送 FIN
-    } 
-    // 如果 outputBuffer_ 还有数据，等 handleWrite 写完再关
+    if (!channel_->isWriting()) {
+        socket_->shutdownWrite();
+    }
 }
 
 void TcpConnection::handleRead() {
     loop_->assertInLoopThread();
-    updateActiveTime();  // ← 新增
+    updateActiveTime();
 
-    std::cout << "handleRead: " << name_ << std::endl;  // ← 加
+    std::cout << "handleRead: " << name_ << std::endl;
 
     int savedErrno = 0;
-    int64_t receiveTime = 0; // 或用 time(nullptr)
+    int64_t receiveTime = std::chrono::duration_cast<std::chrono::microseconds>(
+        std::chrono::system_clock::now().time_since_epoch()).count();
     ssize_t n = inputBuffer_.readFd(channel_->fd(), &savedErrno);
 
-    std::cout << "readFd n=" << n << " errno=" << savedErrno << std::endl;  // ← 加
+    std::cout << "readFd n=" << n << " errno=" << savedErrno << std::endl;
 
-    if (n > 0) { // 有数据，回调业务层
+    if (n > 0) {
         if (messageCallback_) {
             messageCallback_(shared_from_this(), &inputBuffer_, receiveTime);
+        } else {
+            // Issue #15 fix: 无人消费时丢弃数据，防止 inputBuffer_ 无限增长
+            inputBuffer_.retrieveAll();
         }
-    } else if (n == 0) {  // 对端关闭
+    } else if (n == 0) {
         handleClose();
-    } else {  // 错误
+    } else {
         errno = savedErrno;
-        // LOG_SYSERR << "TcpConnection::handleRead";
         handleError();
     }
 }
 
 void TcpConnection::handleWrite() {
     loop_->assertInLoopThread();
-    updateActiveTime();  // ← 新增
+    updateActiveTime();
 
     if (channel_->isWriting()) {
-        ssize_t n = ::write(channel_->fd(), outputBuffer_.peek(), outputBuffer_.readableBytes()); // outputBuffer_ 有数据，fd 可写了
+        ssize_t n = ::write(channel_->fd(), outputBuffer_.peek(), outputBuffer_.readableBytes());
         if (n > 0) {
             outputBuffer_.retrieve(n);
-            if (outputBuffer_.readableBytes() == 0) {// 全部写完
-                channel_->disableWriting();  // 注销可写事件，避免 busy loop
+            if (outputBuffer_.readableBytes() == 0) {
+                channel_->disableWriting();
                 if (writeCompleteCallback_) {
                     loop_->queueInLoop(std::bind(writeCompleteCallback_, shared_from_this()));
                 }
-                // 如果正在断开，继续关闭
                 if (state_ == kDisconnecting) {
                     shutdownInLoop();
                 }
             }
+        // Issue #6 fix: 区分 EAGAIN 和致命错误，n==0 也当错误处理
         } else {
-            // LOG_SYSERR << "TcpConnection::handleWrite";
+            if (n == 0 || (errno != EAGAIN && errno != EWOULDBLOCK)) {
+                handleError();
+            }
         }
     }
 }
 
 void TcpConnection::handleClose() {
     loop_->assertInLoopThread();
+    // Issue #10 fix: 幂等处理，防止 EPOLLERR→handleError→handleClose→closeCallback_→handleClose 重复崩溃
+    if (state_ == kDisconnected) return;
     assert(state_ == kConnected || state_ == kDisconnecting);
     setState(kDisconnected);
-    channel_->disableAll();   // 注销所有事件
-    
-    TcpConnectionPtr guardThis(shared_from_this());  // 延长生命周期：拷贝 shared_ptr
+    channel_->disableAll();
+
+    TcpConnectionPtr guardThis(shared_from_this());
     if (connectionCallback_) {
-        connectionCallback_(guardThis);   // 通知连接断开
+        connectionCallback_(guardThis);
     }
     if (closeCallback_) {
-        closeCallback_(guardThis);  // 通知 TcpServer 移除
+        closeCallback_(guardThis);
     }
 }
 
@@ -243,18 +288,24 @@ void TcpConnection::handleError() {
     } else {
         err = optval;
     }
-    // LOG_ERROR << "TcpConnection::handleError [" << name_ << "] - SO_ERROR = " << err;
+    // LOG_ERROR
+
+    // 出现错误后关闭连接
+    if (err != 0) {
+        handleClose();
+    }
 }
 
 void TcpConnection::setState(StateE s) {
     state_ = s;
 }
 
-// tcp_connection.cc
 void TcpConnection::forceClose() {
-    if (state_ == kConnected || state_ == kDisconnecting) {
-        setState(kDisconnecting);
-        loop_->queueInLoop(std::bind(&TcpConnection::handleClose, shared_from_this()));
+    // Issue #8 fix: 仅在 kConnected 状态允许转 kDisconnecting，
+    // 防止 forceClose 被多次调用时重复投递 handleClose 导致 assert 崩溃
+    StateE expected = kConnected;
+    if (state_.compare_exchange_strong(expected, kDisconnecting)) {
+        loop_->runInLoop(std::bind(&TcpConnection::handleClose, shared_from_this()));
     }
 }
 

@@ -13,7 +13,7 @@ RpcServer::RpcServer(EventLoop* loop, const struct sockaddr_in& listenAddr)
     server_.setConnectionCallback(
         std::bind(&RpcServer::onConnection, this, std::placeholders::_1));
     server_.setMessageCallback(
-        std::bind(&RpcServer::onMessage, this, 
+        std::bind(&RpcServer::onMessage, this,
             std::placeholders::_1,
             std::placeholders::_2,
             std::placeholders::_3));
@@ -22,6 +22,8 @@ RpcServer::RpcServer(EventLoop* loop, const struct sockaddr_in& listenAddr)
 RpcServer::~RpcServer() = default;
 
 void RpcServer::registerService(std::shared_ptr<RpcService> service) {
+    // Issue #10 fix: 空指针检查
+    if (!service) return;
     services_[service->serviceName()] = service;
 }
 
@@ -37,24 +39,25 @@ void RpcServer::onConnection(const TcpConnectionPtr& conn) {
     }
 }
 
-// ============================================================================
-// onMessage - 消息回调：核心处理逻辑
-// ============================================================================
-// 新协议：Codec::decode 直接从 Buffer 中解码完整包
-// 无需先 decodeWithLength 再 decode
-// ============================================================================
 void RpcServer::onMessage(const TcpConnectionPtr& conn, Buffer* buf, int64_t) {
     DecodedPacket decoded;
 
-    // 循环解码：可能一次收到多个完整包
     while (Codec::decode(*buf, decoded)) {
-        // 1. 只处理 REQUEST 类型
-        if (decoded.msg_type != MsgType::REQUEST) {
-            // TODO: 处理 HEARTBEAT 类型（回复 HEARTBEAT_ACK）
+        // FIX: 处理 HEARTBEAT，回复 HEARTBEAT_ACK
+        if (decoded.msg_type == MsgType::HEARTBEAT) {
+            rpc::Heartbeat ack;
+            ack.set_service_name("server");
+            ack.set_node_id("server_node");
+            ack.set_timestamp(std::time(nullptr));
+            std::string packet = Codec::encodeHeartbeat(ack, decoded.req_id);
+            conn->send(packet);
             continue;
         }
 
-        // 2. 查找服务
+        if (decoded.msg_type != MsgType::REQUEST) {
+            continue;
+        }
+
         auto svcIt = services_.find(decoded.service_name);
         if (svcIt == services_.end()) {
             RpcResponse resp;
@@ -65,16 +68,21 @@ void RpcServer::onMessage(const TcpConnectionPtr& conn, Buffer* buf, int64_t) {
             continue;
         }
 
-        // 3. 调用方法
         RpcResponse resp;
-        bool ok = svcIt->second->callMethod(decoded.method_name, decoded.rpc_request, &resp);
-
-        if (!ok) {
-            // callMethod 已经设置了 error_msg
+        // Issue #9 fix: 捕获用户 handler 抛出的异常，防止 server crash
+        bool ok = false;
+        try {
+            ok = svcIt->second->callMethod(decoded.method_name, decoded.rpc_request, &resp);
+        } catch (const std::exception& e) {
+            resp.set_success(false);
+            resp.set_error_msg(std::string("handler exception: ") + e.what());
+        } catch (...) {
+            resp.set_success(false);
+            resp.set_error_msg("handler unknown exception");
         }
+        (void)ok;
 
-        // 4. 编码并发送响应（直接发送完整包，无需加长度头）
-        std::string response = Codec::encodeResponse(resp, decoded.req_id, 
+        std::string response = Codec::encodeResponse(resp, decoded.req_id,
             resp.success() ? Status::SUCCESS : Status::FAILED);
         conn->send(response);
     }

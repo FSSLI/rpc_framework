@@ -29,8 +29,8 @@ RpcResponse RpcSyncClient::call(const std::string& service_name,
         throw std::runtime_error("not connected");
     }
 
-    // // 2. 底层走异步调用，返回 future
-    auto future = asyncClient_.asyncCall(service_name, method_name, request);
+    // Issue #11 fix: 传递 timeout_ms 给异步调用层
+    auto future = asyncClient_.asyncCall(service_name, method_name, request, timeout_ms);
     // future 包含：异步任务的结果，可能还没完成
 
     // 3. 阻塞等待，带超时

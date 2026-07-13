@@ -5,21 +5,33 @@
 #include "event_loop.h"
 #include "socket.h"
 #include <iostream>
+#include <unistd.h>
 
 namespace rpc {
 
 TcpClient::TcpClient(EventLoop* loop, const struct sockaddr_in& serverAddr)
     : loop_(loop),
-      connector_(new Connector(loop, serverAddr)) {
-    
+      connector_(std::make_shared<Connector>(loop, serverAddr)) {
+
     connector_->setNewConnectionCallback(
         std::bind(&TcpClient::newConnection, this, std::placeholders::_1));
 }
 
 TcpClient::~TcpClient() {
-    // LOG_DEBUG << "TcpClient::~TcpClient";
-    if (connection_) {
-        connection_->connectDestroyed();
+    // Issue #2 fix: 先停止 Connector（取消 pending 定时器），再清理连接
+    connector_->stop();
+
+    std::shared_ptr<TcpConnection> conn;
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        conn = connection_;
+    }
+
+    if (conn) {
+        auto ioLoop = conn->getLoop();
+        ioLoop->runInLoop([conn]() {
+            conn->connectDestroyed();
+        });
     }
 }
 
@@ -28,8 +40,9 @@ void TcpClient::connect() {
 }
 
 void TcpClient::disconnect() {
-    if (connection_) {
-        connection_->shutdown();
+    auto conn = connection();  // 线程安全获取 shared_ptr 副本
+    if (conn) {
+        conn->shutdown();
     }
 }
 
@@ -37,55 +50,63 @@ void TcpClient::stop() {
     connector_->stop();
 }
 
+void TcpClient::disconnectPermanently() {
+    disconnecting_ = true;
+    connector_->stop();  // 先停止重连
+    auto conn = connection();
+    if (conn) {
+        conn->shutdown();
+    }
+}
+
 std::shared_ptr<TcpConnection> TcpClient::connection() const {
     std::lock_guard<std::mutex> lock(mutex_);
     return connection_;
 }
 
-// ============================================================================
-// Connector 成功回调：创建 TcpConnection
-// ============================================================================
-
 void TcpClient::newConnection(int sockfd) {
+    // FIX: 如果用户已请求永久断开，直接关闭 fd，拒绝创建连接
+    if (disconnecting_.load()) {
+        ::close(sockfd);
+        return;
+    }
+
     struct sockaddr_in localAddr = Socket::getLocalAddr(sockfd);
     struct sockaddr_in peerAddr = Socket::getPeerAddr(sockfd);
-    
+
     TcpConnectionPtr conn(new TcpConnection(loop_,
                                               "TcpClient-" + std::to_string(sockfd),
                                               sockfd,
                                               localAddr,
                                               peerAddr));
-    
+
     conn->setConnectionCallback(connectionCallback_);
     conn->setMessageCallback(messageCallback_);
     conn->setWriteCompleteCallback(writeCompleteCallback_);
     conn->setCloseCallback(std::bind(&TcpClient::removeConnection, this, std::placeholders::_1));
-    
+
     {
         std::lock_guard<std::mutex> lock(mutex_);
         connection_ = conn;
     }
-    
+
     conn->connectEstablished();
 }
 
-// ============================================================================
-// TcpConnection 关闭回调：移除连接
-// ============================================================================
-
 void TcpClient::removeConnection(const TcpConnectionPtr& conn) {
     loop_->assertInLoopThread();
-    
+
     {
         std::lock_guard<std::mutex> lock(mutex_);
         assert(connection_ == conn);
         connection_.reset();
     }
-    
-    // 连接断开，触发重连
-    connector_->restart();
-    
-    // 通知用户连接断开
+
+    // Issue #2 fix: 检查 disconnecting_，防止 stop() 后被 restart() 覆盖
+    if (retryOnDisconnect_ && !disconnecting_.load()) {
+        connector_->restart();
+    }
+
     if (connectionCallback_) {
         connectionCallback_(conn);
     }

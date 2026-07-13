@@ -30,27 +30,26 @@ void testEncodeDecodeRequest() {
     // 4. 解码
     Buffer buf;
     buf.append(packet);
-    
+
     DecodedPacket decoded;
-    std::string serviceName, methodName;               // ← 新增：接收 service/method
-    bool success = Codec::decode(buf, decoded, &serviceName, &methodName);
-    
+    bool success = Codec::decode(buf, decoded);
+
     assert(success);
     assert(decoded.msg_type == MsgType::REQUEST);
     assert(decoded.req_id == reqId);
-    assert(serviceName == "EchoService");               // ← 从返回值验证
-    assert(methodName == "Echo");                        // ← 从返回值验证
-    
+    assert(decoded.service_name == "EchoService");
+    assert(decoded.method_name == "Echo");
+
     // 5. 验证业务数据
     const rpc::RpcRequest& decodedReq = decoded.rpc_request;
-    
+
     // 6. 解析 payload 里的 EchoRequest
     rpc::EchoRequest decodedEcho;
     decodedEcho.ParseFromString(decodedReq.payload());
     assert(decodedEcho.message() == "Hello, RPC!");
-    
-    std::cout << "Service: " << serviceName << std::endl;    // ← 从返回值打印
-    std::cout << "Method: " << methodName << std::endl;      // ← 从返回值打印
+
+    std::cout << "Service: " << decoded.service_name << std::endl;
+    std::cout << "Method: " << decoded.method_name << std::endl;
     std::cout << "Echo message: " << decodedEcho.message() << std::endl;
     std::cout << "✓ Request test passed" << std::endl << std::endl;
 }
@@ -157,22 +156,20 @@ void testPartialPacket() {
     
     // 3. 应该能解析出第一个包
     DecodedPacket decoded1;
-    std::string service1, method1;
-    bool success1 = Codec::decode(buf, decoded1, &service1, &method1);
+    bool success1 = Codec::decode(buf, decoded1);
     assert(success1);
     assert(decoded1.req_id == 1);
-    assert(service1 == "Service1");
-    assert(method1 == "Method1");
+    assert(decoded1.service_name == "Service1");
+    assert(decoded1.method_name == "Method1");
     std::cout << "First packet decoded, req_id=" << decoded1.req_id << std::endl;
-    
+
     // 4. 应该能解析出第二个包
     DecodedPacket decoded2;
-    std::string service2, method2;
-    bool success2 = Codec::decode(buf, decoded2, &service2, &method2);
+    bool success2 = Codec::decode(buf, decoded2);
     assert(success2);
     assert(decoded2.req_id == 2);
-    assert(service2 == "Service2");
-    assert(method2 == "Method2");
+    assert(decoded2.service_name == "Service2");
+    assert(decoded2.method_name == "Method2");
     std::cout << "Second packet decoded, req_id=" << decoded2.req_id << std::endl;
     
     // 5. 没有更多数据

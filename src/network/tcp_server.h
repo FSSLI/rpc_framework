@@ -7,6 +7,7 @@
 #include <vector>
 #include <map>
 #include <string>
+#include <cstdint>
 #include <netinet/in.h>
 #include "buffer.h"
 
@@ -52,7 +53,7 @@ private:
     void removeConnectionInLoop(const TcpConnectionPtr& conn);  // ← 加这行  在 EventLoop 线程里安全移除
 
     EventLoop* loop_;  // 主 EventLoop（baseLoop）
-    const std::string name_;  //服务名称
+    std::string name_;  //服务名称（非 const，支持 inet_ntop 构造体赋值）
     std::unique_ptr<Acceptor> acceptor_;  //监听新连接
     std::shared_ptr<EventLoopThreadPool> threadPool_;  //IO 线程池
 
@@ -64,8 +65,8 @@ private:
     int nextConnId_;  //连接 ID 计数器，给每个连接生成唯一名称
     std::map<std::string, TcpConnectionPtr> connections_;  //连接管理表。 记录当前所有活跃连接
 
-    // ... 其他成员 ...
-    int idleTimeoutSeconds_ = 0;  // ← 新增  当前设计是全局的，所有连接用同一个超时时间
+    int idleTimeoutSeconds_ = 0;
+    uint64_t idleTimerId_ = 0;  // Issue #1 fix: 记录 idle 定时器 ID 用于析构取消
 };
 
 } // namespace rpc

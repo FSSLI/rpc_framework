@@ -75,18 +75,18 @@ static const uint32_t kCrc32Table[256] = {
     0xb40bbe37, 0xc30c8ea1, 0x5a05df1b, 0x2d02ef8d
 };
 
-uint32_t Codec::crc32(const char* data, size_t len) {  //CRC32校验
+uint32_t Codec::crc32(const char* data, size_t len) {
     uint32_t crc = 0xFFFFFFFF;
     for (size_t i = 0; i < len; ++i) {
-        crc = kCrc32Table[(crc ^ static_cast<uint8_t>(data[i])) & 0xFF] ^ (crc >> 8);  //逐字符计算
+        crc = kCrc32Table[(crc ^ static_cast<uint8_t>(data[i])) & 0xFF] ^ (crc >> 8);
     }
     return crc ^ 0xFFFFFFFF;
 }
 
 // ==================== 字节序转换 ====================
 
-uint32_t Codec::encodeU32(uint32_t v) { return htonl(v); }  //host -> network
-uint32_t Codec::decodeU32(uint32_t v) { return ntohl(v); }  //network -> host
+uint32_t Codec::encodeU32(uint32_t v) { return htonl(v); }
+uint32_t Codec::decodeU32(uint32_t v) { return ntohl(v); }
 uint64_t Codec::encodeU64(uint64_t v) { return htobe64(v); }
 uint64_t Codec::decodeU64(uint64_t v) { return be64toh(v); }
 uint16_t Codec::encodeU16(uint16_t v) { return htons(v); }
@@ -94,23 +94,30 @@ uint16_t Codec::decodeU16(uint16_t v) { return ntohs(v); }
 
 // ==================== 辅助函数 ====================
 
-bool Codec::checkMagic(uint32_t magic) {  //校验魔术位
+bool Codec::checkMagic(uint32_t magic) {
     return magic == kMagic;
 }
 
-void Codec::appendString(std::string& out, const std::string& str) {  //out里面加str的长度+str
+bool Codec::appendString(std::string& out, const std::string& str) {
+    // Issue #3 fix: 运行时检查替代 assert，防止 Release 模式静默截断
+    if (str.size() > 65535) return false;
     uint16_t len = encodeU16(static_cast<uint16_t>(str.size()));
     out.append(reinterpret_cast<const char*>(&len), sizeof(len));
     out.append(str);
+    return true;
 }
 
-bool Codec::readString(const char* data, size_t& pos, size_t totalLen, std::string& out) {  //从data指向的位置+pos处读数据到out
-    if (pos + sizeof(uint16_t) > totalLen) return false;  //判断是否还够2B的长度
-    uint16_t len = decodeU16(*reinterpret_cast<const uint16_t*>(data + pos));  //从data+pos处开始取2B的内容作为长度，类型uint16_t
-    pos += sizeof(uint16_t);  //移动偏移
-    if (pos + len > totalLen) return false;  //判断是否有len长度的数据
-    out.assign(data + pos, len); //有就加到out里面
-    pos += len;  //移动偏移
+bool Codec::readString(const char* data, size_t& pos, size_t totalLen, std::string& out) {
+    if (pos + sizeof(uint16_t) > totalLen) return false;
+
+    uint16_t len;
+    memcpy(&len, data + pos, sizeof(len));  // FIX: memcpy 替代 reinterpret_cast
+    len = decodeU16(len);
+    pos += sizeof(uint16_t);
+
+    if (pos + len > totalLen) return false;
+    out.assign(data + pos, len);
+    pos += len;
     return true;
 }
 
@@ -120,18 +127,16 @@ std::string Codec::encodeRequestBody(const rpc::RpcRequest& req,
                                      const std::string& service_name,
                                      const std::string& method_name) {
     std::string body;
+    // Issue #3: 检查 appendString 返回值，溢出时返回空 body
+    if (!appendString(body, service_name)) return "";
+    if (!appendString(body, method_name)) return "";
 
-    // service_name (2B_len + str)
-    appendString(body, service_name);
-    // method_name (2B_len + str)
-    appendString(body, method_name);
-    // payload_len (4B) + payload
     std::string payload;
-    if (!req.SerializeToString(&payload)) { //先把req序列化payload
+    if (!req.SerializeToString(&payload)) {
         return "";
     }
-    uint32_t payloadLen = encodeU32(static_cast<uint32_t>(payload.size()));  //4字节payload_len
-    body.append(reinterpret_cast<const char*>(&payloadLen), sizeof(payloadLen));  //为什么一定要转换，而不是直接加呢？
+    uint32_t payloadLen = encodeU32(static_cast<uint32_t>(payload.size()));
+    body.append(reinterpret_cast<const char*>(&payloadLen), sizeof(payloadLen));
     body.append(payload);
 
     return body;
@@ -139,10 +144,8 @@ std::string Codec::encodeRequestBody(const rpc::RpcRequest& req,
 
 std::string Codec::encodeResponseBody(const rpc::RpcResponse& resp, Status status) {
     std::string body;
-
-    // status (1B)
     body.push_back(static_cast<uint8_t>(status));
-    // payload_len (4B) + payload
+
     std::string payload;
     if (!resp.SerializeToString(&payload)) {
         return "";
@@ -156,33 +159,27 @@ std::string Codec::encodeResponseBody(const rpc::RpcResponse& resp, Status statu
 
 std::string Codec::encodeHeartbeatBody(const rpc::Heartbeat& hb) {
     std::string body;
+    if (!appendString(body, hb.service_name())) return "";
+    if (!appendString(body, hb.node_id())) return "";
 
-    // service_name (2B_len + str)
-    appendString(body, hb.service_name());
-    // node_id (2B_len + str)
-    appendString(body, hb.node_id());
-    // timestamp (8B)
     uint64_t timestamp = encodeU64(static_cast<uint64_t>(hb.timestamp()));
     body.append(reinterpret_cast<const char*>(&timestamp), sizeof(timestamp));
-    // extra_count (2B) + extras
+
     uint16_t extraCount = encodeU16(static_cast<uint16_t>(hb.extra_size()));
     body.append(reinterpret_cast<const char*>(&extraCount), sizeof(extraCount));
     for (const auto& pair : hb.extra()) {
-        appendString(body, pair.first);
-        appendString(body, pair.second);
+        if (!appendString(body, pair.first)) return "";
+        if (!appendString(body, pair.second)) return "";
     }
 
     return body;
 }
 
 // ==================== 组装完整包 ====================
-// 格式：[Fixed Header: 18B][Body: body_len B][Checksum: 4B]
-// ============================================================================
 
 std::string Codec::pack(MsgType msg_type, uint64_t req_id, const std::string& body) {
     std::string packet;
 
-    // Fixed Header
     FixedHeader header;
     header.magic = encodeU32(kMagic);
     header.version = kVersion;
@@ -193,7 +190,6 @@ std::string Codec::pack(MsgType msg_type, uint64_t req_id, const std::string& bo
     packet.append(reinterpret_cast<const char*>(&header), sizeof(header));
     packet.append(body);
 
-    // Checksum (header + body)
     uint32_t checksum = crc32(packet.data(), packet.size());
     uint32_t checksumBE = encodeU32(checksum);
     packet.append(reinterpret_cast<const char*>(&checksumBE), sizeof(checksumBE));
@@ -221,6 +217,8 @@ std::string Codec::encodeResponse(const rpc::RpcResponse& resp,
 
 std::string Codec::encodeHeartbeat(const rpc::Heartbeat& hb, uint64_t req_id) {
     std::string body = encodeHeartbeatBody(hb);
+    // Issue #11: body 不可能为空（始终含 service_name + node_id 等字段），
+    // 保留空检查仅为防御性编程，与 encodeRequest/encodeResponse 保持一致
     if (body.empty()) return "";
     return pack(MsgType::HEARTBEAT, req_id, body);
 }
@@ -234,13 +232,15 @@ bool Codec::decodeRequestBody(const char* data, size_t bodyLen, DecodedPacket& p
     if (!readString(data, pos, bodyLen, packet.method_name)) return false;
 
     if (pos + sizeof(uint32_t) > bodyLen) return false;
-    uint32_t payloadLen = decodeU32(*reinterpret_cast<const uint32_t*>(data + pos));
+    uint32_t payloadLen;
+    memcpy(&payloadLen, data + pos, sizeof(payloadLen));  // FIX
+    payloadLen = decodeU32(payloadLen);
     pos += sizeof(uint32_t);
+
     if (pos + payloadLen > bodyLen) return false;
     std::string payload(data + pos, payloadLen);
     pos += payloadLen;
 
-    // 校验：body 应该刚好读完
     if (pos != bodyLen) return false;
 
     if (!packet.rpc_request.ParseFromString(payload)) return false;
@@ -251,22 +251,27 @@ bool Codec::decodeResponseBody(const char* data, size_t bodyLen, DecodedPacket& 
     if (bodyLen < 1) return false;
     size_t pos = 0;
 
-    // status (1B)
     uint8_t status = data[pos++];
 
     if (pos + sizeof(uint32_t) > bodyLen) return false;
-    uint32_t payloadLen = decodeU32(*reinterpret_cast<const uint32_t*>(data + pos));
+    uint32_t payloadLen;
+    memcpy(&payloadLen, data + pos, sizeof(payloadLen));  // FIX
+    payloadLen = decodeU32(payloadLen);
     pos += sizeof(uint32_t);
+
     if (pos + payloadLen > bodyLen) return false;
     std::string payload(data + pos, payloadLen);
     pos += payloadLen;
 
-    // 校验：body 应该刚好读完
     if (pos != bodyLen) return false;
 
     if (!packet.rpc_response.ParseFromString(payload)) return false;
-    packet.rpc_response.set_success(status == 0);
-    // error_msg 已由 ParseFromString 从 payload 中解析
+    // Issue #6 fix: 防止非法 status 值导致未定义行为
+    if (status <= static_cast<uint8_t>(Status::TIMEOUT)) {
+        packet.network_status = static_cast<Status>(status);
+    } else {
+        packet.network_status = Status::FAILED;
+    }
     return true;
 }
 
@@ -278,11 +283,15 @@ bool Codec::decodeHeartbeatBody(const char* data, size_t bodyLen, DecodedPacket&
     if (!readString(data, pos, bodyLen, nodeId)) return false;
 
     if (pos + sizeof(uint64_t) > bodyLen) return false;
-    uint64_t timestamp = decodeU64(*reinterpret_cast<const uint64_t*>(data + pos));
+    uint64_t timestamp;
+    memcpy(&timestamp, data + pos, sizeof(timestamp));  // FIX
+    timestamp = decodeU64(timestamp);
     pos += sizeof(uint64_t);
 
     if (pos + sizeof(uint16_t) > bodyLen) return false;
-    uint16_t extraCount = decodeU16(*reinterpret_cast<const uint16_t*>(data + pos));
+    uint16_t extraCount;
+    memcpy(&extraCount, data + pos, sizeof(extraCount));  // FIX
+    extraCount = decodeU16(extraCount);
     pos += sizeof(uint16_t);
 
     for (uint16_t i = 0; i < extraCount; ++i) {
@@ -301,56 +310,72 @@ bool Codec::decodeHeartbeatBody(const char* data, size_t bodyLen, DecodedPacket&
 }
 
 // ==================== 统一解码入口 ====================
-// 从 Buffer 中尝试解码一个完整包
-// 返回值：true = 解码成功；false = 数据不足或校验失败
-//
-// 流程：
-// 1. 检查可读字节是否 >= 16B（header）
-// 2. 检查 magic、version
-// 3. 根据 body_len 检查是否收到完整包（16 + body_len + 4）
-// 4. 验证 CRC32
-// 5. 根据 msg_type 分发到具体解码
-// 6. 从 Buffer 中消费掉已解码的字节
-// ============================================================================
 
 bool Codec::decode(Buffer& buf, DecodedPacket& packet) {
-    // 1. 检查 header 是否完整
     if (buf.readableBytes() < kFixedHeaderSize) return false;
 
     const char* data = buf.peek();
 
-    // 2. 解析 header（不移动读指针，先检查）
-    uint32_t magic = decodeU32(*reinterpret_cast<const uint32_t*>(data));
+    uint32_t magic;
+    memcpy(&magic, data, sizeof(magic));  // FIX
+    magic = decodeU32(magic);
+
+    // Issue #5 fix: Buffer 硬上限，防止恶意连接撑爆内存
+    if (buf.readableBytes() > kMaxBufferSize) {
+        buf.retrieveAll();
+        return false;
+    }
+
     if (!checkMagic(magic)) {
-        // 魔数错误：可能是数据错乱，丢弃 1 字节尝试重新同步
-        buf.retrieve(1);
+        // Issue #5 fix: 限制扫描范围，防止攻击者逐字节发送造成 O(n²) CPU
+        size_t readable = buf.readableBytes();
+        size_t scanLimit = std::min(readable, kMaxScanBytes);
+        for (size_t i = 1; i + sizeof(uint32_t) <= scanLimit; ++i) {
+            uint32_t candidate;
+            memcpy(&candidate, data + i, sizeof(candidate));
+            if (checkMagic(decodeU32(candidate))) {
+                buf.retrieve(i);
+                return false;
+            }
+        }
+        buf.retrieveAll();  // 扫描范围内无有效魔数，丢弃全部
         return false;
     }
 
     uint8_t version = data[4];
     if (version != kVersion) {
-        buf.retrieve(1);  // 版本不匹配，同样丢弃重同步
+        buf.retrieveAll();  // 版本不匹配 = 协议不兼容，丢弃全部
         return false;
     }
 
     uint8_t msgType = data[5];
-    uint32_t bodyLen = decodeU32(*reinterpret_cast<const uint32_t*>(data + 6));
-    uint64_t reqId = decodeU64(*reinterpret_cast<const uint64_t*>(data + 10));
 
-    // 3. 检查完整包是否到达
+    uint32_t bodyLen;
+    memcpy(&bodyLen, data + 6, sizeof(bodyLen));
+    bodyLen = decodeU32(bodyLen);
+    // Issue #4 fix: 防止恶意超大 body 声明导致内存耗尽
+    if (bodyLen > kMaxBodyLen) {
+        buf.retrieveAll();
+        return false;
+    }
+
+    uint64_t reqId;
+    memcpy(&reqId, data + 10, sizeof(reqId));  // FIX
+    reqId = decodeU64(reqId);
+
     size_t totalLen = kFixedHeaderSize + bodyLen + kChecksumSize;
     if (buf.readableBytes() < totalLen) return false;
 
-    // 4. 验证 CRC32（header + body，不包括 checksum 本身）
-    uint32_t checksum = decodeU32(*reinterpret_cast<const uint32_t*>(data + kFixedHeaderSize + bodyLen));
+    uint32_t checksum;
+    memcpy(&checksum, data + kFixedHeaderSize + bodyLen, sizeof(checksum));  // FIX
+    checksum = decodeU32(checksum);
+
     uint32_t calcCrc = crc32(data, kFixedHeaderSize + bodyLen);
     if (calcCrc != checksum) {
-        // 校验失败：丢弃整个包，尝试从下一个字节重新同步
         buf.retrieve(totalLen);
         return false;
     }
 
-    // 5. 根据 msg_type 解码 body
     const char* bodyData = data + kFixedHeaderSize;
     bool ok = false;
 
@@ -377,7 +402,6 @@ bool Codec::decode(Buffer& buf, DecodedPacket& packet) {
         return false;
     }
 
-    // 6. 消费掉已解码的字节
     packet.req_id = reqId;
     buf.retrieve(totalLen);
     return true;

@@ -5,18 +5,24 @@
 #include "tcp_connection.h"
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <cstring>  // ← 加这行，memset
+#include <cstring>
+#include <cerrno>
+#include <iostream>
 #include "event_loop_thread_pool.h"
+#include <unistd.h>
 
 namespace rpc {
 
 TcpServer::TcpServer(EventLoop* loop, const struct sockaddr_in& listenAddr)
     : loop_(loop),
-      name_(inet_ntoa(listenAddr.sin_addr)),  //inet_ntoa 把 IP 地址转字符串，如 "127.0.0.1"
       acceptor_(new Acceptor(loop, listenAddr)),
-      threadPool_(std::make_shared<EventLoopThreadPool>(loop, name_)),  // ← 用 shared_ptr 或 unique_ptr
-      started_(false),  
-      nextConnId_(1)  {
+      started_(false),
+      nextConnId_(1) {
+    // Issue #7 fix: inet_ntop 替代过时且非线程安全的 inet_ntoa
+    char ipStr[INET_ADDRSTRLEN];
+    inet_ntop(AF_INET, &listenAddr.sin_addr, ipStr, sizeof(ipStr));
+    name_ = ipStr;
+    threadPool_ = std::make_shared<EventLoopThreadPool>(loop, name_);
     
     acceptor_->setNewConnectionCallback(
         std::bind(&TcpServer::newConnection, this, std::placeholders::_1, std::placeholders::_2));  //_1 和 _2 是占位符，表示"用回调时的参数"。
@@ -24,6 +30,10 @@ TcpServer::TcpServer(EventLoop* loop, const struct sockaddr_in& listenAddr)
 
 TcpServer::~TcpServer() {
     loop_->assertInLoopThread();
+    // Issue #1 fix: 先取消 idle 定时器，防止 baseLoop 生命周期长于 TcpServer
+    if (idleTimerId_ != 0) {
+        loop_->cancelTimer(idleTimerId_);
+    }
     for (auto& item : connections_) {
         TcpConnectionPtr conn(item.second);  //拷贝 shared_ptr，引用计数 +1
         item.second.reset(); // map 里的置空，引用计数 -1
@@ -47,7 +57,7 @@ void TcpServer::start() {
 
         // 新增：启动 idle 检测定时器
         if (idleTimeoutSeconds_ > 0) {
-            loop_->runEvery(5.0, [this]() {
+            idleTimerId_ = loop_->runEvery(5.0, [this]() {  // Issue #1 fix: 保存 ID
                 // 每 5 秒检查一次所有连接
                 for (auto& item : connections_) {
                     item.second->checkIdleTimeout();
@@ -74,15 +84,21 @@ void TcpServer::newConnection(int sockfd, const struct sockaddr_in& peerAddr) { 
     struct sockaddr_in localAddr;
     memset(&localAddr, 0, sizeof(localAddr));
     socklen_t addrlen = sizeof(localAddr);
-    if (::getsockname(sockfd, reinterpret_cast<struct sockaddr*>(&localAddr), &addrlen) < 0) {  //getsockname 获取本端地址（bind 时设置的）
-        // sockfd：输入，连接 fd
-        // addr：输出，内核填充本地地址
-        // addrlen：输入输出，输入是缓冲区大小，输出是实际地址大小
-        // LOG_SYSERR << "getsockname";
+    if (::getsockname(sockfd, reinterpret_cast<struct sockaddr*>(&localAddr), &addrlen) < 0) {
+        // Issue #13: 打印警告，但连接仍可正常使用
+        std::cerr << "TcpServer::newConnection getsockname failed, errno=" << errno << std::endl;
     }
 
     // 4. 创建 TcpConnection
-    TcpConnectionPtr conn(new TcpConnection(ioLoop, connName, sockfd, localAddr, peerAddr));
+    // TcpConnectionPtr conn(new TcpConnection(ioLoop, connName, sockfd, localAddr, peerAddr));
+    TcpConnectionPtr conn;
+    try {
+        conn.reset(new TcpConnection(ioLoop, connName, sockfd, localAddr, peerAddr));
+    } catch (const std::exception& e) {
+        std::cerr << "TcpServer::newConnection exception: " << e.what() << std::endl;
+        ::close(sockfd);  // FIX: 必须关闭 fd，否则泄漏
+        return;
+    }
 
     // 新增：设置 idle 超时
     if (idleTimeoutSeconds_ > 0) {

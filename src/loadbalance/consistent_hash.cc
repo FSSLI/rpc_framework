@@ -1,6 +1,7 @@
 // src/loadbalance/consistent_hash.cc
 #include "loadbalance/consistent_hash.h"
 #include <sstream>
+#include <cstring>
 
 namespace rpc {
 
@@ -90,15 +91,17 @@ uint32_t ConsistentHash::defaultHash(const std::string& key) {
     uint32_t h = seed ^ len;
     
     while (len >= 4) {
-        uint32_t k = *(uint32_t*)data;
-        
+        // Issue #9 fix: memcpy 替代强制指针转换，避免未对齐内存访问 UB
+        uint32_t k;
+        memcpy(&k, data, sizeof(k));
+
         k *= m;
         k ^= k >> r;
         k *= m;
-        
+
         h *= m;
         h ^= k;
-        
+
         data += 4;
         len -= 4;
     }

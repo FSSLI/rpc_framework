@@ -22,6 +22,8 @@ public:
     using MessageCallback = std::function<void(const std::shared_ptr<TcpConnection>&, Buffer*, int64_t)>;
     using WriteCompleteCallback = std::function<void(const std::shared_ptr<TcpConnection>&)>;
     using CloseCallback = std::function<void(const std::shared_ptr<TcpConnection>&)>;
+    // 新增：高水位回调类型
+    using HighWaterMarkCallback = std::function<void(const std::shared_ptr<TcpConnection>&, size_t)>;
 
     TcpConnection(EventLoop* loop,
                   const std::string& name,
@@ -37,6 +39,11 @@ public:
     void setMessageCallback(const MessageCallback& cb) { messageCallback_ = cb; }
     void setWriteCompleteCallback(const WriteCompleteCallback& cb) { writeCompleteCallback_ = cb; }
     void setCloseCallback(const CloseCallback& cb) { closeCallback_ = cb; }
+
+    void setHighWaterMarkCallback(const HighWaterMarkCallback& cb, size_t highWaterMark) {
+        highWaterMarkCallback_ = cb;
+        highWaterMark_ = highWaterMark;
+    }
 
     void connectEstablished();  // 连接建立：设置状态、注册 Channel、回调
     void connectDestroyed();  // 连接销毁：注销 Channel、清理资源
@@ -91,9 +98,12 @@ private:
 
     void* context_;  // 用户上下文，绑定任意数据
     
-    // 新增：idle 超时
+    // 新增：idle 超时（atomic int64 防止 ioLoop/baseLoop 跨线程数据竞争）
     int idleTimeoutSeconds_ = 0;
-    std::chrono::steady_clock::time_point lastActiveTime_;
+    std::atomic<int64_t> lastActiveTimeMs_{0};
+
+    size_t highWaterMark_ = 0;                      // 高水位阈值，0 表示不检测
+    HighWaterMarkCallback highWaterMarkCallback_;   // 超过阈值时的回调
 };
 
 using TcpConnectionPtr = std::shared_ptr<TcpConnection>;

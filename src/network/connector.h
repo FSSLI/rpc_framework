@@ -16,6 +16,8 @@ class Connector : public std::enable_shared_from_this<Connector> {
 public:
     using NewConnectionCallback = std::function<void(int sockfd)>;
 
+    // 注意：Connector 必须由 shared_ptr 管理，因为 retry() 定时器通过
+    // shared_from_this() → weak_ptr 防止 use-after-free。用裸指针或 unique_ptr 会崩溃。
     Connector(EventLoop* loop, const struct sockaddr_in& serverAddr);
     ~Connector();
 
