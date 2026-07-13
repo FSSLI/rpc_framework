@@ -2,6 +2,7 @@
 #include "client/rpc_async_client.h"
 #include "discovery/service_registry.h"
 #include "circuit_breaker/circuit_breaker.h"
+#include "rate_limiter/token_bucket.h"
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <unistd.h>
@@ -345,6 +346,16 @@ RpcAsyncClient::ResponseFuture RpcAsyncClient::asyncCall(
         return promise.get_future();
     }
 
+    // 限流检查
+    if (rateLimiter_ && !rateLimiter_->allow()) {
+        RpcResponse errorResp;
+        errorResp.set_success(false);
+        errorResp.set_error_msg("rate limit exceeded");
+        ResponsePromise promise;
+        promise.set_value(errorResp);
+        return promise.get_future();
+    }
+
     uint64_t reqId = nextReqId_.fetch_add(1);
 
     ResponsePromise promise;
@@ -391,6 +402,15 @@ void RpcAsyncClient::asyncCall(
         RpcResponse errorResp;
         errorResp.set_success(false);
         errorResp.set_error_msg("circuit breaker open");
+        cb(errorResp);
+        return;
+    }
+
+    // 限流检查
+    if (rateLimiter_ && !rateLimiter_->allow()) {
+        RpcResponse errorResp;
+        errorResp.set_success(false);
+        errorResp.set_error_msg("rate limit exceeded");
         cb(errorResp);
         return;
     }

@@ -9,5 +9,6 @@
 /home/machao/projects/rpc_framework/build/CMakeFiles/test_connection_pool.dir
 /home/machao/projects/rpc_framework/build/CMakeFiles/test_load_balance.dir
 /home/machao/projects/rpc_framework/build/CMakeFiles/test_circuit_breaker.dir
+/home/machao/projects/rpc_framework/build/CMakeFiles/test_token_bucket.dir
 /home/machao/projects/rpc_framework/build/CMakeFiles/edit_cache.dir
 /home/machao/projects/rpc_framework/build/CMakeFiles/rebuild_cache.dir

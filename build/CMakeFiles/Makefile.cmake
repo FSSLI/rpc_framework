@@ -54,4 +54,5 @@ set(CMAKE_DEPEND_INFO_FILES
   "CMakeFiles/test_connection_pool.dir/DependInfo.cmake"
   "CMakeFiles/test_load_balance.dir/DependInfo.cmake"
   "CMakeFiles/test_circuit_breaker.dir/DependInfo.cmake"
+  "CMakeFiles/test_token_bucket.dir/DependInfo.cmake"
   )

@@ -259,6 +259,19 @@ test_circuit_breaker/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_circuit_breaker.dir/build.make CMakeFiles/test_circuit_breaker.dir/build
 .PHONY : test_circuit_breaker/fast
 
+#=============================================================================
+# Target rules for targets named test_token_bucket
+
+# Build rule for target.
+test_token_bucket: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 test_token_bucket
+.PHONY : test_token_bucket
+
+# fast build rule for target.
+test_token_bucket/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_token_bucket.dir/build.make CMakeFiles/test_token_bucket.dir/build
+.PHONY : test_token_bucket/fast
+
 examples/rpc/echo_service.o: examples/rpc/echo_service.cc.o
 .PHONY : examples/rpc/echo_service.o
 
@@ -811,6 +824,30 @@ src/protocol/rpc_service.pb.cc.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/network.dir/build.make CMakeFiles/network.dir/src/protocol/rpc_service.pb.cc.s
 .PHONY : src/protocol/rpc_service.pb.cc.s
 
+src/rate_limiter/token_bucket.o: src/rate_limiter/token_bucket.cc.o
+.PHONY : src/rate_limiter/token_bucket.o
+
+# target to build an object file
+src/rate_limiter/token_bucket.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/network.dir/build.make CMakeFiles/network.dir/src/rate_limiter/token_bucket.cc.o
+.PHONY : src/rate_limiter/token_bucket.cc.o
+
+src/rate_limiter/token_bucket.i: src/rate_limiter/token_bucket.cc.i
+.PHONY : src/rate_limiter/token_bucket.i
+
+# target to preprocess a source file
+src/rate_limiter/token_bucket.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/network.dir/build.make CMakeFiles/network.dir/src/rate_limiter/token_bucket.cc.i
+.PHONY : src/rate_limiter/token_bucket.cc.i
+
+src/rate_limiter/token_bucket.s: src/rate_limiter/token_bucket.cc.s
+.PHONY : src/rate_limiter/token_bucket.s
+
+# target to generate assembly for a file
+src/rate_limiter/token_bucket.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/network.dir/build.make CMakeFiles/network.dir/src/rate_limiter/token_bucket.cc.s
+.PHONY : src/rate_limiter/token_bucket.cc.s
+
 src/server/rpc_server.o: src/server/rpc_server.cc.o
 .PHONY : src/server/rpc_server.o
 
@@ -1027,6 +1064,30 @@ tests/test_service_discovery_e2e.cc.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_service_discovery_e2e.dir/build.make CMakeFiles/test_service_discovery_e2e.dir/tests/test_service_discovery_e2e.cc.s
 .PHONY : tests/test_service_discovery_e2e.cc.s
 
+tests/test_token_bucket.o: tests/test_token_bucket.cc.o
+.PHONY : tests/test_token_bucket.o
+
+# target to build an object file
+tests/test_token_bucket.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_token_bucket.dir/build.make CMakeFiles/test_token_bucket.dir/tests/test_token_bucket.cc.o
+.PHONY : tests/test_token_bucket.cc.o
+
+tests/test_token_bucket.i: tests/test_token_bucket.cc.i
+.PHONY : tests/test_token_bucket.i
+
+# target to preprocess a source file
+tests/test_token_bucket.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_token_bucket.dir/build.make CMakeFiles/test_token_bucket.dir/tests/test_token_bucket.cc.i
+.PHONY : tests/test_token_bucket.cc.i
+
+tests/test_token_bucket.s: tests/test_token_bucket.cc.s
+.PHONY : tests/test_token_bucket.s
+
+# target to generate assembly for a file
+tests/test_token_bucket.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_token_bucket.dir/build.make CMakeFiles/test_token_bucket.dir/tests/test_token_bucket.cc.s
+.PHONY : tests/test_token_bucket.cc.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -1046,6 +1107,7 @@ help:
 	@echo "... test_load_balance"
 	@echo "... test_memory_registry"
 	@echo "... test_service_discovery_e2e"
+	@echo "... test_token_bucket"
 	@echo "... examples/rpc/echo_service.o"
 	@echo "... examples/rpc/echo_service.i"
 	@echo "... examples/rpc/echo_service.s"
@@ -1115,6 +1177,9 @@ help:
 	@echo "... src/protocol/rpc_service.pb.o"
 	@echo "... src/protocol/rpc_service.pb.i"
 	@echo "... src/protocol/rpc_service.pb.s"
+	@echo "... src/rate_limiter/token_bucket.o"
+	@echo "... src/rate_limiter/token_bucket.i"
+	@echo "... src/rate_limiter/token_bucket.s"
 	@echo "... src/server/rpc_server.o"
 	@echo "... src/server/rpc_server.i"
 	@echo "... src/server/rpc_server.s"
@@ -1142,6 +1207,9 @@ help:
 	@echo "... tests/test_service_discovery_e2e.o"
 	@echo "... tests/test_service_discovery_e2e.i"
 	@echo "... tests/test_service_discovery_e2e.s"
+	@echo "... tests/test_token_bucket.o"
+	@echo "... tests/test_token_bucket.i"
+	@echo "... tests/test_token_bucket.s"
 .PHONY : help
 
 

@@ -55,7 +55,11 @@ set(CIRCUIT_BREAKER_SRCS
     src/circuit_breaker/circuit_breaker.cc
 )
 
-add_library(network ${NETWORK_SRCS} ${CODEC_SRCS} ${PROTO_SRCS} ${CLIENT_SRCS} ${SERVER_SRCS} ${LOADBALANCE_SRCS} ${DISCOVERY_SRCS} ${POOL_SRCS} ${CIRCUIT_BREAKER_SRCS})
+set(RATE_LIMITER_SRCS
+    src/rate_limiter/token_bucket.cc
+)
+
+add_library(network ${NETWORK_SRCS} ${CODEC_SRCS} ${PROTO_SRCS} ${CLIENT_SRCS} ${SERVER_SRCS} ${LOADBALANCE_SRCS} ${DISCOVERY_SRCS} ${POOL_SRCS} ${CIRCUIT_BREAKER_SRCS} ${RATE_LIMITER_SRCS})
 target_link_libraries(network protobuf pthread)
 
 # 示例程序
@@ -89,3 +93,6 @@ target_link_libraries(test_load_balance network)
 
 add_executable(test_circuit_breaker tests/test_circuit_breaker.cc)
 target_link_libraries(test_circuit_breaker network)
+
+add_executable(test_token_bucket tests/test_token_bucket.cc)
+target_link_libraries(test_token_bucket network)

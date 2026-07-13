@@ -23,6 +23,7 @@ namespace rpc {
 
 class ServiceRegistry;
 class CircuitBreaker;
+class TokenBucket;
 
 class RpcAsyncClient {
 public:
@@ -56,8 +57,10 @@ public:
     void startHeartbeat(double intervalSeconds = 30.0);
     void stopHeartbeat();
 
-    // 熔断器（可选，不设置则不启用）
+    // 熔断器（可选）
     void setCircuitBreaker(CircuitBreaker* cb) { circuitBreaker_ = cb; }
+    // 限流器（可选）
+    void setRateLimiter(TokenBucket* limiter) { rateLimiter_ = limiter; }
 
 private:
     void onConnection(const TcpConnectionPtr& conn);
@@ -107,8 +110,9 @@ private:
     std::atomic<bool> heartbeatRunning_{false};
     uint64_t heartbeatTimerId_ = 0;  // FIX: 记录定时器ID用于取消
 
-    // 熔断器（不拥有所有权，由调用方管理生命周期）
+    // 熔断器 + 限流器（不拥有所有权，由调用方管理生命周期）
     CircuitBreaker* circuitBreaker_ = nullptr;
+    TokenBucket* rateLimiter_ = nullptr;
 };
 
 } // namespace rpc
