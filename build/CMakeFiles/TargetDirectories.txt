@@ -7,5 +7,6 @@
 /home/machao/projects/rpc_framework/build/CMakeFiles/test_memory_registry.dir
 /home/machao/projects/rpc_framework/build/CMakeFiles/test_service_discovery_e2e.dir
 /home/machao/projects/rpc_framework/build/CMakeFiles/test_connection_pool.dir
+/home/machao/projects/rpc_framework/build/CMakeFiles/test_load_balance.dir
 /home/machao/projects/rpc_framework/build/CMakeFiles/edit_cache.dir
 /home/machao/projects/rpc_framework/build/CMakeFiles/rebuild_cache.dir

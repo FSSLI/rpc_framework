@@ -72,6 +72,7 @@ all: CMakeFiles/test_connector.dir/all
 all: CMakeFiles/test_memory_registry.dir/all
 all: CMakeFiles/test_service_discovery_e2e.dir/all
 all: CMakeFiles/test_connection_pool.dir/all
+all: CMakeFiles/test_load_balance.dir/all
 .PHONY : all
 
 # The main recursive "preinstall" target.
@@ -88,6 +89,7 @@ clean: CMakeFiles/test_connector.dir/clean
 clean: CMakeFiles/test_memory_registry.dir/clean
 clean: CMakeFiles/test_service_discovery_e2e.dir/clean
 clean: CMakeFiles/test_connection_pool.dir/clean
+clean: CMakeFiles/test_load_balance.dir/clean
 .PHONY : clean
 
 #=============================================================================
@@ -253,7 +255,7 @@ CMakeFiles/test_connector.dir/clean:
 CMakeFiles/test_memory_registry.dir/all: CMakeFiles/network.dir/all
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_memory_registry.dir/build.make CMakeFiles/test_memory_registry.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_memory_registry.dir/build.make CMakeFiles/test_memory_registry.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/machao/projects/rpc_framework/build/CMakeFiles --progress-num=35,36 "Built target test_memory_registry"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/machao/projects/rpc_framework/build/CMakeFiles --progress-num=37,38 "Built target test_memory_registry"
 .PHONY : CMakeFiles/test_memory_registry.dir/all
 
 # Build rule for subdir invocation for target.
@@ -279,7 +281,7 @@ CMakeFiles/test_memory_registry.dir/clean:
 CMakeFiles/test_service_discovery_e2e.dir/all: CMakeFiles/network.dir/all
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_service_discovery_e2e.dir/build.make CMakeFiles/test_service_discovery_e2e.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_service_discovery_e2e.dir/build.make CMakeFiles/test_service_discovery_e2e.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/machao/projects/rpc_framework/build/CMakeFiles --progress-num=37,38 "Built target test_service_discovery_e2e"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/machao/projects/rpc_framework/build/CMakeFiles --progress-num=39,40 "Built target test_service_discovery_e2e"
 .PHONY : CMakeFiles/test_service_discovery_e2e.dir/all
 
 # Build rule for subdir invocation for target.
@@ -323,6 +325,32 @@ test_connection_pool: CMakeFiles/test_connection_pool.dir/rule
 CMakeFiles/test_connection_pool.dir/clean:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_pool.dir/build.make CMakeFiles/test_connection_pool.dir/clean
 .PHONY : CMakeFiles/test_connection_pool.dir/clean
+
+#=============================================================================
+# Target rules for target CMakeFiles/test_load_balance.dir
+
+# All Build rule for target.
+CMakeFiles/test_load_balance.dir/all: CMakeFiles/network.dir/all
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_load_balance.dir/build.make CMakeFiles/test_load_balance.dir/depend
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_load_balance.dir/build.make CMakeFiles/test_load_balance.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/machao/projects/rpc_framework/build/CMakeFiles --progress-num=35,36 "Built target test_load_balance"
+.PHONY : CMakeFiles/test_load_balance.dir/all
+
+# Build rule for subdir invocation for target.
+CMakeFiles/test_load_balance.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/machao/projects/rpc_framework/build/CMakeFiles 23
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/test_load_balance.dir/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/machao/projects/rpc_framework/build/CMakeFiles 0
+.PHONY : CMakeFiles/test_load_balance.dir/rule
+
+# Convenience name for target.
+test_load_balance: CMakeFiles/test_load_balance.dir/rule
+.PHONY : test_load_balance
+
+# clean rule for target.
+CMakeFiles/test_load_balance.dir/clean:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_load_balance.dir/build.make CMakeFiles/test_load_balance.dir/clean
+.PHONY : CMakeFiles/test_load_balance.dir/clean
 
 #=============================================================================
 # Special targets to cleanup operation of make.

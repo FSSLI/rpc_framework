@@ -233,6 +233,19 @@ test_connection_pool/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_pool.dir/build.make CMakeFiles/test_connection_pool.dir/build
 .PHONY : test_connection_pool/fast
 
+#=============================================================================
+# Target rules for targets named test_load_balance
+
+# Build rule for target.
+test_load_balance: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 test_load_balance
+.PHONY : test_load_balance
+
+# fast build rule for target.
+test_load_balance/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_load_balance.dir/build.make CMakeFiles/test_load_balance.dir/build
+.PHONY : test_load_balance/fast
+
 examples/rpc/echo_service.o: examples/rpc/echo_service.cc.o
 .PHONY : examples/rpc/echo_service.o
 
@@ -881,6 +894,30 @@ tests/test_consistent_hash.cc.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_consistent_hash.dir/build.make CMakeFiles/test_consistent_hash.dir/tests/test_consistent_hash.cc.s
 .PHONY : tests/test_consistent_hash.cc.s
 
+tests/test_load_balance.o: tests/test_load_balance.cc.o
+.PHONY : tests/test_load_balance.o
+
+# target to build an object file
+tests/test_load_balance.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_load_balance.dir/build.make CMakeFiles/test_load_balance.dir/tests/test_load_balance.cc.o
+.PHONY : tests/test_load_balance.cc.o
+
+tests/test_load_balance.i: tests/test_load_balance.cc.i
+.PHONY : tests/test_load_balance.i
+
+# target to preprocess a source file
+tests/test_load_balance.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_load_balance.dir/build.make CMakeFiles/test_load_balance.dir/tests/test_load_balance.cc.i
+.PHONY : tests/test_load_balance.cc.i
+
+tests/test_load_balance.s: tests/test_load_balance.cc.s
+.PHONY : tests/test_load_balance.s
+
+# target to generate assembly for a file
+tests/test_load_balance.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_load_balance.dir/build.make CMakeFiles/test_load_balance.dir/tests/test_load_balance.cc.s
+.PHONY : tests/test_load_balance.cc.s
+
 tests/test_memory_registry.o: tests/test_memory_registry.cc.o
 .PHONY : tests/test_memory_registry.o
 
@@ -944,6 +981,7 @@ help:
 	@echo "... test_connection_pool"
 	@echo "... test_connector"
 	@echo "... test_consistent_hash"
+	@echo "... test_load_balance"
 	@echo "... test_memory_registry"
 	@echo "... test_service_discovery_e2e"
 	@echo "... examples/rpc/echo_service.o"
@@ -1027,6 +1065,9 @@ help:
 	@echo "... tests/test_consistent_hash.o"
 	@echo "... tests/test_consistent_hash.i"
 	@echo "... tests/test_consistent_hash.s"
+	@echo "... tests/test_load_balance.o"
+	@echo "... tests/test_load_balance.i"
+	@echo "... tests/test_load_balance.s"
 	@echo "... tests/test_memory_registry.o"
 	@echo "... tests/test_memory_registry.i"
 	@echo "... tests/test_memory_registry.s"

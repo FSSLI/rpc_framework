@@ -123,26 +123,81 @@ bool RpcAsyncClient::connectViaRegistry() {
         return false;
     }
 
-    // 随机打乱节点顺序，避免所有客户端同时连同一个节点（thundering herd）
-    static thread_local std::random_device rd;
-    static thread_local std::mt19937 gen(rd());
-    std::shuffle(nodes.begin(), nodes.end(), gen);
-
+    // 连接所有节点（轮询负载均衡需要全部节点可用）
+    int connected = 0;
     for (const auto& node : nodes) {
-        host_ = node.host;
-        port_ = node.port;
-        std::cout << "RpcAsyncClient: trying " << serviceName_
-                  << " -> " << host_ << ":" << port_ << std::endl;
+        std::cout << "RpcAsyncClient: connecting to " << serviceName_
+                  << " -> " << node.host << ":" << node.port << std::endl;
 
-        if (connectDirect()) {
-            return true;
+        Endpoint ep;
+        ep.host = node.host;
+        ep.port = node.port;
+        ep.loopThread = std::make_unique<EventLoopThread>();
+        EventLoop* epLoop = ep.loopThread->startLoop();
+
+        struct sockaddr_in serverAddr;
+        memset(&serverAddr, 0, sizeof(serverAddr));
+        serverAddr.sin_family = AF_INET;
+        serverAddr.sin_port = htons(ep.port);
+        if (inet_pton(AF_INET, ep.host.c_str(), &serverAddr.sin_addr) <= 0) {
+            std::cerr << "RpcAsyncClient: invalid IP " << ep.host << std::endl;
+            ep.loopThread->stop();
+            continue;
         }
-        // connectDirect() 失败时已自行清理 tcpClient_ 和 loopThread_，此处重置状态即可
-        connected_ = false;
+
+        ep.tcpClient = std::make_shared<TcpClient>(epLoop, serverAddr);
+        ep.tcpClient->setRetryOnDisconnect(true);
+
+        // 等待连接
+        auto promisePtr = std::make_shared<std::promise<bool>>();
+        auto promiseSetPtr = std::make_shared<std::atomic<bool>>(false);
+        auto future = promisePtr->get_future();
+
+        ep.tcpClient->setConnectionCallback(
+            [promisePtr, promiseSetPtr](const TcpConnectionPtr& conn) {
+                bool expected = false;
+                if (promiseSetPtr->compare_exchange_strong(expected, true)) {
+                    promisePtr->set_value(conn->connected());
+                }
+            });
+
+        ep.tcpClient->connect();
+
+        auto status = future.wait_for(std::chrono::milliseconds(3000));
+        if (status != std::future_status::timeout && future.get()) {
+            // 连接成功，设置消息回调
+            auto msgCb = std::bind(&RpcAsyncClient::onMessage, this,
+                                   std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+            ep.tcpClient->setMessageCallback(msgCb);
+            // 也设置到已有连接上
+            auto conn = ep.tcpClient->connection();
+            if (conn) {
+                conn->setMessageCallback(msgCb);
+            }
+            // 连接回调：更新全局连接状态
+            ep.tcpClient->setConnectionCallback(
+                [this](const TcpConnectionPtr& c) { connected_ = c->connected(); });
+
+            endpoints_.push_back(std::move(ep));
+            ++connected;
+            std::cout << "RpcAsyncClient: connected to " << node.host << ":" << node.port << std::endl;
+        } else {
+            // 超时或失败，跳过此节点
+            ep.tcpClient->stop();
+            ep.loopThread->stop();
+            std::cerr << "RpcAsyncClient: failed to connect to " << node.host << ":" << node.port << std::endl;
+        }
     }
 
-    std::cerr << "RpcAsyncClient: all nodes exhausted for " << serviceName_ << std::endl;
-    return false;
+    if (connected == 0) {
+        std::cerr << "RpcAsyncClient: all " << nodes.size() << " nodes unreachable" << std::endl;
+        return false;
+    }
+
+    connected_ = true;
+    std::cout << "RpcAsyncClient: " << connected << "/" << nodes.size()
+              << " nodes connected for " << serviceName_ << std::endl;
+    return true;
 }
 
 bool RpcAsyncClient::resolveEndpoint() {
@@ -244,11 +299,23 @@ bool RpcAsyncClient::connectDirect() {
 void RpcAsyncClient::disconnect() {
     // Issue #2 fix: 先设置标志，阻止新请求进入
     disconnecting_ = true;
+
+    // 清理多节点
+    for (auto& ep : endpoints_) {
+        if (ep.tcpClient) {
+            ep.tcpClient->stop();
+        }
+        if (ep.loopThread) {
+            ep.loopThread->stop();
+        }
+    }
+    endpoints_.clear();
+
+    // 清理单节点
     if (tcpClient_) {
-        tcpClient_->disconnectPermanently();  // 停止重连 + 关闭连接
+        tcpClient_->disconnectPermanently();
         tcpClient_.reset();
     }
-    // 池模式不拥有线程，只清理引用
     if (ownsLoopThread_ && loopThread_) {
         loopThread_->stop();
         loopThread_.reset();
@@ -277,9 +344,15 @@ RpcAsyncClient::ResponseFuture RpcAsyncClient::asyncCall(
         pendingPromises_[reqId] = std::move(promise);
     }
 
-    // FIX: 注册超时定时器
-    if (timeout_ms > 0 && loop_) {
-        loop_->runAfter(timeout_ms / 1000.0, [this, reqId]() {
+    // 注册超时定时器（多节点模式用首节点 loop，单节点用 loop_）
+    EventLoop* timeoutLoop = loop_;
+    if (!endpoints_.empty() && !endpoints_[0].tcpClient) {
+        // should not happen, but guard
+    } else if (!endpoints_.empty()) {
+        timeoutLoop = endpoints_[0].tcpClient->getLoop();
+    }
+    if (timeout_ms > 0 && timeoutLoop) {
+        timeoutLoop->runAfter(timeout_ms / 1000.0, [this, reqId]() {
             handleTimeout(reqId);
         });
     }
@@ -309,9 +382,13 @@ void RpcAsyncClient::asyncCall(
         pendingCallbacks_[reqId] = std::move(cb);
     }
 
-    // FIX: 注册超时定时器
-    if (timeout_ms > 0 && loop_) {
-        loop_->runAfter(timeout_ms / 1000.0, [this, reqId]() {
+    // 注册超时定时器（多节点模式用首节点 loop，单节点用 loop_）
+    EventLoop* timeoutLoop = loop_;
+    if (!endpoints_.empty() && endpoints_[0].tcpClient) {
+        timeoutLoop = endpoints_[0].tcpClient->getLoop();
+    }
+    if (timeout_ms > 0 && timeoutLoop) {
+        timeoutLoop->runAfter(timeout_ms / 1000.0, [this, reqId]() {
             handleTimeout(reqId);
         });
     }
@@ -325,10 +402,19 @@ void RpcAsyncClient::asyncCall(
     }
 }
 
+std::shared_ptr<TcpClient> RpcAsyncClient::getTcpClient() {
+    // 多节点模式：轮询选择节点
+    if (!endpoints_.empty()) {
+        size_t idx = rrIndex_.fetch_add(1, std::memory_order_relaxed) % endpoints_.size();
+        return endpoints_[idx].tcpClient;
+    }
+    // 单节点/池模式
+    return tcpClient_;
+}
+
 void RpcAsyncClient::sendRequest(uint64_t req_id, const std::string& packet) {
-    // Issue #8 fix: 先捕获 shared_ptr 副本，消除 TOCTOU 数据竞争
-    auto client = tcpClient_;
-    if (disconnecting_.load() || !loop_ || !client) {
+    auto client = getTcpClient();
+    if (disconnecting_.load() || !client) {
         handleTimeout(req_id);
         return;
     }
@@ -337,23 +423,8 @@ void RpcAsyncClient::sendRequest(uint64_t req_id, const std::string& packet) {
         handleTimeout(req_id);
         return;
     }
-
-    // FIX: 用 shared_ptr 避免跨线程拷贝
-    auto packetPtr = std::make_shared<std::string>(packet);
-
-    if (loop_->isInLoopThread()) {
-        conn = client->connection();
-        if (conn) {
-            conn->send(*packetPtr);
-        }
-    } else {
-        loop_->runInLoop([packetPtr, client]() {
-            auto conn = client->connection();
-            if (conn) {
-                conn->send(*packetPtr);
-            }
-        });
-    }
+    // TcpConnection::send() 内部处理跨线程调度（runInLoop + shared_from_this）
+    conn->send(packet);
 }
 
 // ============================================================================
@@ -449,6 +520,14 @@ void RpcAsyncClient::onWriteComplete(const TcpConnectionPtr& conn) {
 // ============================================================================
 
 bool RpcAsyncClient::connected() const {
+    if (!endpoints_.empty()) {
+        // 多节点模式：任一节点连接即视为就绪
+        for (auto& ep : endpoints_) {
+            auto conn = ep.tcpClient ? ep.tcpClient->connection() : nullptr;
+            if (conn && conn->connected()) return true;
+        }
+        return false;
+    }
     return connected_;
 }
 

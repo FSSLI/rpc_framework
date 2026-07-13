@@ -61,6 +61,7 @@ private:
     void onWriteComplete(const TcpConnectionPtr& conn);
 
     void sendRequest(uint64_t req_id, const std::string& packet);
+    std::shared_ptr<TcpClient> getTcpClient();  // 单节点直取，多节点轮询
     void handleResponse(const DecodedPacket& packet);
     void handleTimeout(uint64_t req_id);  // FIX: 超时处理
 
@@ -75,11 +76,21 @@ private:
     std::shared_ptr<ServiceRegistry> registry_;
     std::string serviceName_;
 
-    EventLoop* loop_;
+    // 多节点负载均衡：每个节点独立 EventLoopThread + TcpClient
+    struct Endpoint {
+        std::string host;
+        uint16_t port;
+        std::shared_ptr<TcpClient> tcpClient;
+        std::unique_ptr<EventLoopThread> loopThread;
+    };
+    std::vector<Endpoint> endpoints_;
+    std::atomic<size_t> rrIndex_{0};  // 轮询索引
+
+    EventLoop* loop_;  // 单节点模式使用；多节点模式置 nullptr
     std::unique_ptr<EventLoopThread> loopThread_;
-    bool ownsLoopThread_ = true;  // 直接模式拥有线程，池模式不拥有
+    bool ownsLoopThread_ = true;  // 直接模式拥有线程，池/多节点模式不拥有
     // Issue #8 fix: shared_ptr 支持 sendRequest 安全捕获副本，消除数据竞争
-    std::shared_ptr<TcpClient> tcpClient_;
+    std::shared_ptr<TcpClient> tcpClient_;  // 单节点/池模式使用
     std::atomic<bool> connected_;
     std::atomic<bool> disconnecting_{false};  // Issue #2 fix: 防止 sendRequest 与 disconnect 数据竞争
 

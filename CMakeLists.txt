@@ -79,3 +79,6 @@ target_link_libraries(test_service_discovery_e2e network)
 
 add_executable(test_connection_pool tests/test_connection_pool.cc)
 target_link_libraries(test_connection_pool network)
+
+add_executable(test_load_balance tests/test_load_balance.cc)
+target_link_libraries(test_load_balance network)
