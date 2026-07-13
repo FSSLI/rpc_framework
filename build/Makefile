@@ -220,6 +220,19 @@ test_service_discovery_e2e/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_service_discovery_e2e.dir/build.make CMakeFiles/test_service_discovery_e2e.dir/build
 .PHONY : test_service_discovery_e2e/fast
 
+#=============================================================================
+# Target rules for targets named test_connection_pool
+
+# Build rule for target.
+test_connection_pool: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 test_connection_pool
+.PHONY : test_connection_pool
+
+# fast build rule for target.
+test_connection_pool/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_pool.dir/build.make CMakeFiles/test_connection_pool.dir/build
+.PHONY : test_connection_pool/fast
+
 examples/rpc/echo_service.o: examples/rpc/echo_service.cc.o
 .PHONY : examples/rpc/echo_service.o
 
@@ -700,6 +713,30 @@ src/network/tcp_server.cc.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/network.dir/build.make CMakeFiles/network.dir/src/network/tcp_server.cc.s
 .PHONY : src/network/tcp_server.cc.s
 
+src/pool/connection_pool.o: src/pool/connection_pool.cc.o
+.PHONY : src/pool/connection_pool.o
+
+# target to build an object file
+src/pool/connection_pool.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/network.dir/build.make CMakeFiles/network.dir/src/pool/connection_pool.cc.o
+.PHONY : src/pool/connection_pool.cc.o
+
+src/pool/connection_pool.i: src/pool/connection_pool.cc.i
+.PHONY : src/pool/connection_pool.i
+
+# target to preprocess a source file
+src/pool/connection_pool.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/network.dir/build.make CMakeFiles/network.dir/src/pool/connection_pool.cc.i
+.PHONY : src/pool/connection_pool.cc.i
+
+src/pool/connection_pool.s: src/pool/connection_pool.cc.s
+.PHONY : src/pool/connection_pool.s
+
+# target to generate assembly for a file
+src/pool/connection_pool.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/network.dir/build.make CMakeFiles/network.dir/src/pool/connection_pool.cc.s
+.PHONY : src/pool/connection_pool.cc.s
+
 src/protocol/rpc_service.pb.o: src/protocol/rpc_service.pb.cc.o
 .PHONY : src/protocol/rpc_service.pb.o
 
@@ -771,6 +808,30 @@ src/server/rpc_service.s: src/server/rpc_service.cc.s
 src/server/rpc_service.cc.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/network.dir/build.make CMakeFiles/network.dir/src/server/rpc_service.cc.s
 .PHONY : src/server/rpc_service.cc.s
+
+tests/test_connection_pool.o: tests/test_connection_pool.cc.o
+.PHONY : tests/test_connection_pool.o
+
+# target to build an object file
+tests/test_connection_pool.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_pool.dir/build.make CMakeFiles/test_connection_pool.dir/tests/test_connection_pool.cc.o
+.PHONY : tests/test_connection_pool.cc.o
+
+tests/test_connection_pool.i: tests/test_connection_pool.cc.i
+.PHONY : tests/test_connection_pool.i
+
+# target to preprocess a source file
+tests/test_connection_pool.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_pool.dir/build.make CMakeFiles/test_connection_pool.dir/tests/test_connection_pool.cc.i
+.PHONY : tests/test_connection_pool.cc.i
+
+tests/test_connection_pool.s: tests/test_connection_pool.cc.s
+.PHONY : tests/test_connection_pool.s
+
+# target to generate assembly for a file
+tests/test_connection_pool.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connection_pool.dir/build.make CMakeFiles/test_connection_pool.dir/tests/test_connection_pool.cc.s
+.PHONY : tests/test_connection_pool.cc.s
 
 tests/test_connector.o: tests/test_connector.cc.o
 .PHONY : tests/test_connector.o
@@ -880,6 +941,7 @@ help:
 	@echo "... rpc_async_test"
 	@echo "... rpc_server"
 	@echo "... rpc_sync_test"
+	@echo "... test_connection_pool"
 	@echo "... test_connector"
 	@echo "... test_consistent_hash"
 	@echo "... test_memory_registry"
@@ -944,6 +1006,9 @@ help:
 	@echo "... src/network/tcp_server.o"
 	@echo "... src/network/tcp_server.i"
 	@echo "... src/network/tcp_server.s"
+	@echo "... src/pool/connection_pool.o"
+	@echo "... src/pool/connection_pool.i"
+	@echo "... src/pool/connection_pool.s"
 	@echo "... src/protocol/rpc_service.pb.o"
 	@echo "... src/protocol/rpc_service.pb.i"
 	@echo "... src/protocol/rpc_service.pb.s"
@@ -953,6 +1018,9 @@ help:
 	@echo "... src/server/rpc_service.o"
 	@echo "... src/server/rpc_service.i"
 	@echo "... src/server/rpc_service.s"
+	@echo "... tests/test_connection_pool.o"
+	@echo "... tests/test_connection_pool.i"
+	@echo "... tests/test_connection_pool.s"
 	@echo "... tests/test_connector.o"
 	@echo "... tests/test_connector.i"
 	@echo "... tests/test_connector.s"

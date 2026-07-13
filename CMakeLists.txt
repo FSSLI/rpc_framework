@@ -47,7 +47,11 @@ set(DISCOVERY_SRCS
     src/discovery/memory_registry.cc
 )
 
-add_library(network ${NETWORK_SRCS} ${CODEC_SRCS} ${PROTO_SRCS} ${CLIENT_SRCS} ${SERVER_SRCS} ${LOADBALANCE_SRCS} ${DISCOVERY_SRCS})
+set(POOL_SRCS
+    src/pool/connection_pool.cc
+)
+
+add_library(network ${NETWORK_SRCS} ${CODEC_SRCS} ${PROTO_SRCS} ${CLIENT_SRCS} ${SERVER_SRCS} ${LOADBALANCE_SRCS} ${DISCOVERY_SRCS} ${POOL_SRCS})
 target_link_libraries(network protobuf pthread)
 
 # 示例程序
@@ -72,3 +76,6 @@ target_link_libraries(test_memory_registry network)
 
 add_executable(test_service_discovery_e2e tests/test_service_discovery_e2e.cc)
 target_link_libraries(test_service_discovery_e2e network)
+
+add_executable(test_connection_pool tests/test_connection_pool.cc)
+target_link_libraries(test_connection_pool network)

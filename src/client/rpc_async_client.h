@@ -32,6 +32,8 @@ public:
     RpcAsyncClient(const std::string& host, uint16_t port);
     RpcAsyncClient(std::shared_ptr<ServiceRegistry> registry,
                    const std::string& serviceName);
+    // 连接池模式：使用预建的 TcpClient（EventLoop 生命周期由池管理）
+    explicit RpcAsyncClient(std::shared_ptr<TcpClient> tcpClient);
     ~RpcAsyncClient();
 
     bool connect();
@@ -62,6 +64,7 @@ private:
     void handleResponse(const DecodedPacket& packet);
     void handleTimeout(uint64_t req_id);  // FIX: 超时处理
 
+    void setupCallbacks();  // 提取公共回调设置（直接模式 + 池模式共用）
     bool resolveEndpoint();
     bool connectDirect();
     bool connectViaRegistry();
@@ -74,6 +77,7 @@ private:
 
     EventLoop* loop_;
     std::unique_ptr<EventLoopThread> loopThread_;
+    bool ownsLoopThread_ = true;  // 直接模式拥有线程，池模式不拥有
     // Issue #8 fix: shared_ptr 支持 sendRequest 安全捕获副本，消除数据竞争
     std::shared_ptr<TcpClient> tcpClient_;
     std::atomic<bool> connected_;

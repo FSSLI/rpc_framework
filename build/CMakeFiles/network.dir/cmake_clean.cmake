@@ -31,6 +31,8 @@ file(REMOVE_RECURSE
   "CMakeFiles/network.dir/src/network/tcp_connection.cc.o.d"
   "CMakeFiles/network.dir/src/network/tcp_server.cc.o"
   "CMakeFiles/network.dir/src/network/tcp_server.cc.o.d"
+  "CMakeFiles/network.dir/src/pool/connection_pool.cc.o"
+  "CMakeFiles/network.dir/src/pool/connection_pool.cc.o.d"
   "CMakeFiles/network.dir/src/protocol/rpc_service.pb.cc.o"
   "CMakeFiles/network.dir/src/protocol/rpc_service.pb.cc.o.d"
   "CMakeFiles/network.dir/src/server/rpc_server.cc.o"

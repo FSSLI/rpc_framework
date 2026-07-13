@@ -35,6 +35,9 @@ public:
     // 控制断开后是否自动重连（默认 true，连接池场景设为 false）
     void setRetryOnDisconnect(bool on) { retryOnDisconnect_ = on; }
 
+    // 获取底层 EventLoop 指针（连接池注入用）
+    EventLoop* getLoop() const { return loop_; }
+
     // 永久断开：停止重连并关闭连接（连接池回收用）
     void disconnectPermanently();
 

@@ -26,12 +26,23 @@ RpcAsyncClient::RpcAsyncClient(std::shared_ptr<ServiceRegistry> registry,
       host_(), port_(0), loop_(nullptr), connected_(false), nextReqId_(1) {
 }
 
+RpcAsyncClient::RpcAsyncClient(std::shared_ptr<TcpClient> tcpClient)
+    : host_(), port_(0),
+      loop_(tcpClient ? tcpClient->getLoop() : nullptr),
+      ownsLoopThread_(false),
+      tcpClient_(std::move(tcpClient)),
+      connected_(false),
+      nextReqId_(1) {
+    if (tcpClient_) {
+        setupCallbacks();
+        // 检查连接是否已建立
+        auto conn = tcpClient_->connection();
+        connected_ = (conn != nullptr && conn->connected());
+    }
+}
+
 RpcAsyncClient::~RpcAsyncClient() {
     // Issue #1 fix: 先停心跳定时器，再清理资源
-    // 注意：disconnect() 必须在 lock_guard 之前调用。
-    // disconnect() 内部会 join ioLoop 线程，如果 ioLoop 里有回调（如 handleResponse）
-    // 正在等 pendingMutex_，先加锁再 join 会导致死锁。
-    // 先 disconnect() 确保 ioLoop 已停止，再安全清理 pending 请求。
     stopHeartbeat();
     disconnect();
 
@@ -62,10 +73,43 @@ RpcAsyncClient::~RpcAsyncClient() {
 }
 
 // ============================================================================
+// 公共回调设置（直接模式 + 池模式共用）
+// ============================================================================
+
+void RpcAsyncClient::setupCallbacks() {
+    if (!tcpClient_) return;
+
+    // 设置 TcpClient 级别回调（新连接自动继承）
+    auto connCb = [this](const TcpConnectionPtr& conn) {
+        connected_ = conn->connected();
+    };
+    tcpClient_->setConnectionCallback(connCb);
+
+    auto msgCb = std::bind(&RpcAsyncClient::onMessage, this,
+                           std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+    tcpClient_->setMessageCallback(msgCb);
+
+    auto writeCb = std::bind(&RpcAsyncClient::onWriteComplete, this, std::placeholders::_1);
+    tcpClient_->setWriteCompleteCallback(writeCb);
+
+    // 如果已有活跃连接，也直接设置回调（池模式下连接已建立）
+    auto conn = tcpClient_->connection();
+    if (conn) {
+        conn->setConnectionCallback(connCb);
+        conn->setMessageCallback(msgCb);
+        conn->setWriteCompleteCallback(writeCb);
+    }
+}
+
+// ============================================================================
 // 连接
 // ============================================================================
 
 bool RpcAsyncClient::connect() {
+    // 池模式：TcpClient 已由池预建，直接返回连接状态
+    if (!ownsLoopThread_) {
+        return connected_.load();
+    }
     if (registry_ && !serviceName_.empty()) {
         return connectViaRegistry();
     }
@@ -94,8 +138,6 @@ bool RpcAsyncClient::connectViaRegistry() {
             return true;
         }
         // connectDirect() 失败时已自行清理 tcpClient_ 和 loopThread_，此处重置状态即可
-        // FIX: 连接失败必须彻底清理，防止旧 Connector 后台重连
-        disconnect();
         connected_ = false;
     }
 
@@ -148,30 +190,21 @@ bool RpcAsyncClient::connectDirect() {
     auto promiseSetPtr = std::make_shared<std::atomic<bool>>(false);
     auto connectFuture = promisePtr->get_future();
 
+    // 先用基回调设置连接状态
+    setupCallbacks();
+
+    // 再覆盖连接回调加入 promise 通知（仅用于首次等待连接结果）
+    auto baseConnCb = [this](const TcpConnectionPtr& conn) {
+        connected_ = conn->connected();
+    };
     tcpClient_->setConnectionCallback(
-        [this, promisePtr, promiseSetPtr](const TcpConnectionPtr& conn) {
-            if (conn->connected()) {
-                connected_ = true;
-                bool expected = false;
-                if (promiseSetPtr->compare_exchange_strong(expected, true)) {
-                    promisePtr->set_value(true);
-                }
-            } else {
-                // Issue #1 fix: 连接断开时也通知 promise（如连接建立后立即断开）
-                connected_ = false;
-                bool expected = false;
-                if (promiseSetPtr->compare_exchange_strong(expected, true)) {
-                    promisePtr->set_value(false);
-                }
+        [baseConnCb, promisePtr, promiseSetPtr](const TcpConnectionPtr& conn) {
+            baseConnCb(conn);
+            bool expected = false;
+            if (promiseSetPtr->compare_exchange_strong(expected, true)) {
+                promisePtr->set_value(conn->connected());
             }
         });
-
-    tcpClient_->setMessageCallback(
-        std::bind(&RpcAsyncClient::onMessage, this,
-                  std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
-
-    tcpClient_->setWriteCompleteCallback(
-        std::bind(&RpcAsyncClient::onWriteComplete, this, std::placeholders::_1));
 
     // 启动连接（Connector 异步 connect + 自动重连）
     tcpClient_->connect();
@@ -203,6 +236,8 @@ bool RpcAsyncClient::connectDirect() {
         loop_ = nullptr;
         return false;
     }
+    // 连接成功后恢复纯净回调，释放 promise 相关 shared_ptr
+    setupCallbacks();
     return true;
 }
 
@@ -213,7 +248,8 @@ void RpcAsyncClient::disconnect() {
         tcpClient_->disconnectPermanently();  // 停止重连 + 关闭连接
         tcpClient_.reset();
     }
-    if (loopThread_) {
+    // 池模式不拥有线程，只清理引用
+    if (ownsLoopThread_ && loopThread_) {
         loopThread_->stop();
         loopThread_.reset();
     }
@@ -230,10 +266,7 @@ RpcAsyncClient::ResponseFuture RpcAsyncClient::asyncCall(
     const std::string& method_name,
     const RpcRequest& request,
     int timeout_ms) {
-    
-    // FIX: 非法值用默认值兜底，防止 future 永久阻塞
-    if (timeout_ms <= 0) timeout_ms = 5000;
-    
+
     uint64_t reqId = nextReqId_.fetch_add(1);
 
     ResponsePromise promise;
@@ -269,9 +302,6 @@ void RpcAsyncClient::asyncCall(
     ResponseCallback cb,
     int timeout_ms) {
 
-    // FIX: 非法值用默认值兜底
-    if (timeout_ms <= 0) timeout_ms = 5000;
-
     uint64_t reqId = nextReqId_.fetch_add(1);
 
     {
@@ -302,8 +332,8 @@ void RpcAsyncClient::sendRequest(uint64_t req_id, const std::string& packet) {
         handleTimeout(req_id);
         return;
     }
-    auto conn = client ? client->connection() : nullptr;
-    if (!conn || disconnecting_.load()) {
+    auto conn = client->connection();
+    if (!conn) {
         handleTimeout(req_id);
         return;
     }
@@ -312,22 +342,15 @@ void RpcAsyncClient::sendRequest(uint64_t req_id, const std::string& packet) {
     auto packetPtr = std::make_shared<std::string>(packet);
 
     if (loop_->isInLoopThread()) {
-         // 重新获取一次，确保最新状态
         conn = client->connection();
         if (conn) {
             conn->send(*packetPtr);
-        }else {
-            // FIX: 同线程下连接也可能刚断开
-            handleTimeout(req_id);
         }
     } else {
-        // FIX: 捕获 req_id 和 this，投递后连接断开可立即失败
-        loop_->runInLoop([this, req_id, packetPtr, client]() {
+        loop_->runInLoop([packetPtr, client]() {
             auto conn = client->connection();
             if (conn) {
                 conn->send(*packetPtr);
-            } else {
-                handleTimeout(req_id);  // 立即失败，不等超时定时器
             }
         });
     }
