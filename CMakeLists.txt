@@ -51,7 +51,11 @@ set(POOL_SRCS
     src/pool/connection_pool.cc
 )
 
-add_library(network ${NETWORK_SRCS} ${CODEC_SRCS} ${PROTO_SRCS} ${CLIENT_SRCS} ${SERVER_SRCS} ${LOADBALANCE_SRCS} ${DISCOVERY_SRCS} ${POOL_SRCS})
+set(CIRCUIT_BREAKER_SRCS
+    src/circuit_breaker/circuit_breaker.cc
+)
+
+add_library(network ${NETWORK_SRCS} ${CODEC_SRCS} ${PROTO_SRCS} ${CLIENT_SRCS} ${SERVER_SRCS} ${LOADBALANCE_SRCS} ${DISCOVERY_SRCS} ${POOL_SRCS} ${CIRCUIT_BREAKER_SRCS})
 target_link_libraries(network protobuf pthread)
 
 # 示例程序
@@ -82,3 +86,6 @@ target_link_libraries(test_connection_pool network)
 
 add_executable(test_load_balance tests/test_load_balance.cc)
 target_link_libraries(test_load_balance network)
+
+add_executable(test_circuit_breaker tests/test_circuit_breaker.cc)
+target_link_libraries(test_circuit_breaker network)

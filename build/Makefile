@@ -246,6 +246,19 @@ test_load_balance/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_load_balance.dir/build.make CMakeFiles/test_load_balance.dir/build
 .PHONY : test_load_balance/fast
 
+#=============================================================================
+# Target rules for targets named test_circuit_breaker
+
+# Build rule for target.
+test_circuit_breaker: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 test_circuit_breaker
+.PHONY : test_circuit_breaker
+
+# fast build rule for target.
+test_circuit_breaker/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_circuit_breaker.dir/build.make CMakeFiles/test_circuit_breaker.dir/build
+.PHONY : test_circuit_breaker/fast
+
 examples/rpc/echo_service.o: examples/rpc/echo_service.cc.o
 .PHONY : examples/rpc/echo_service.o
 
@@ -341,6 +354,30 @@ examples/rpc/rpc_sync_test.s: examples/rpc/rpc_sync_test.cc.s
 examples/rpc/rpc_sync_test.cc.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/rpc_sync_test.dir/build.make CMakeFiles/rpc_sync_test.dir/examples/rpc/rpc_sync_test.cc.s
 .PHONY : examples/rpc/rpc_sync_test.cc.s
+
+src/circuit_breaker/circuit_breaker.o: src/circuit_breaker/circuit_breaker.cc.o
+.PHONY : src/circuit_breaker/circuit_breaker.o
+
+# target to build an object file
+src/circuit_breaker/circuit_breaker.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/network.dir/build.make CMakeFiles/network.dir/src/circuit_breaker/circuit_breaker.cc.o
+.PHONY : src/circuit_breaker/circuit_breaker.cc.o
+
+src/circuit_breaker/circuit_breaker.i: src/circuit_breaker/circuit_breaker.cc.i
+.PHONY : src/circuit_breaker/circuit_breaker.i
+
+# target to preprocess a source file
+src/circuit_breaker/circuit_breaker.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/network.dir/build.make CMakeFiles/network.dir/src/circuit_breaker/circuit_breaker.cc.i
+.PHONY : src/circuit_breaker/circuit_breaker.cc.i
+
+src/circuit_breaker/circuit_breaker.s: src/circuit_breaker/circuit_breaker.cc.s
+.PHONY : src/circuit_breaker/circuit_breaker.s
+
+# target to generate assembly for a file
+src/circuit_breaker/circuit_breaker.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/network.dir/build.make CMakeFiles/network.dir/src/circuit_breaker/circuit_breaker.cc.s
+.PHONY : src/circuit_breaker/circuit_breaker.cc.s
 
 src/client/rpc_async_client.o: src/client/rpc_async_client.cc.o
 .PHONY : src/client/rpc_async_client.o
@@ -822,6 +859,30 @@ src/server/rpc_service.cc.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/network.dir/build.make CMakeFiles/network.dir/src/server/rpc_service.cc.s
 .PHONY : src/server/rpc_service.cc.s
 
+tests/test_circuit_breaker.o: tests/test_circuit_breaker.cc.o
+.PHONY : tests/test_circuit_breaker.o
+
+# target to build an object file
+tests/test_circuit_breaker.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_circuit_breaker.dir/build.make CMakeFiles/test_circuit_breaker.dir/tests/test_circuit_breaker.cc.o
+.PHONY : tests/test_circuit_breaker.cc.o
+
+tests/test_circuit_breaker.i: tests/test_circuit_breaker.cc.i
+.PHONY : tests/test_circuit_breaker.i
+
+# target to preprocess a source file
+tests/test_circuit_breaker.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_circuit_breaker.dir/build.make CMakeFiles/test_circuit_breaker.dir/tests/test_circuit_breaker.cc.i
+.PHONY : tests/test_circuit_breaker.cc.i
+
+tests/test_circuit_breaker.s: tests/test_circuit_breaker.cc.s
+.PHONY : tests/test_circuit_breaker.s
+
+# target to generate assembly for a file
+tests/test_circuit_breaker.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_circuit_breaker.dir/build.make CMakeFiles/test_circuit_breaker.dir/tests/test_circuit_breaker.cc.s
+.PHONY : tests/test_circuit_breaker.cc.s
+
 tests/test_connection_pool.o: tests/test_connection_pool.cc.o
 .PHONY : tests/test_connection_pool.o
 
@@ -978,6 +1039,7 @@ help:
 	@echo "... rpc_async_test"
 	@echo "... rpc_server"
 	@echo "... rpc_sync_test"
+	@echo "... test_circuit_breaker"
 	@echo "... test_connection_pool"
 	@echo "... test_connector"
 	@echo "... test_consistent_hash"
@@ -996,6 +1058,9 @@ help:
 	@echo "... examples/rpc/rpc_sync_test.o"
 	@echo "... examples/rpc/rpc_sync_test.i"
 	@echo "... examples/rpc/rpc_sync_test.s"
+	@echo "... src/circuit_breaker/circuit_breaker.o"
+	@echo "... src/circuit_breaker/circuit_breaker.i"
+	@echo "... src/circuit_breaker/circuit_breaker.s"
 	@echo "... src/client/rpc_async_client.o"
 	@echo "... src/client/rpc_async_client.i"
 	@echo "... src/client/rpc_async_client.s"
@@ -1056,6 +1121,9 @@ help:
 	@echo "... src/server/rpc_service.o"
 	@echo "... src/server/rpc_service.i"
 	@echo "... src/server/rpc_service.s"
+	@echo "... tests/test_circuit_breaker.o"
+	@echo "... tests/test_circuit_breaker.i"
+	@echo "... tests/test_circuit_breaker.s"
 	@echo "... tests/test_connection_pool.o"
 	@echo "... tests/test_connection_pool.i"
 	@echo "... tests/test_connection_pool.s"

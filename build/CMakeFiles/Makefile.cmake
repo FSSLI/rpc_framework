@@ -53,4 +53,5 @@ set(CMAKE_DEPEND_INFO_FILES
   "CMakeFiles/test_service_discovery_e2e.dir/DependInfo.cmake"
   "CMakeFiles/test_connection_pool.dir/DependInfo.cmake"
   "CMakeFiles/test_load_balance.dir/DependInfo.cmake"
+  "CMakeFiles/test_circuit_breaker.dir/DependInfo.cmake"
   )

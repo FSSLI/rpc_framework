@@ -1,4 +1,6 @@
 file(REMOVE_RECURSE
+  "CMakeFiles/network.dir/src/circuit_breaker/circuit_breaker.cc.o"
+  "CMakeFiles/network.dir/src/circuit_breaker/circuit_breaker.cc.o.d"
   "CMakeFiles/network.dir/src/client/rpc_async_client.cc.o"
   "CMakeFiles/network.dir/src/client/rpc_async_client.cc.o.d"
   "CMakeFiles/network.dir/src/client/rpc_sync_client.cc.o"

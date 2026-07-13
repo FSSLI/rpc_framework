@@ -22,6 +22,7 @@
 namespace rpc {
 
 class ServiceRegistry;
+class CircuitBreaker;
 
 class RpcAsyncClient {
 public:
@@ -54,6 +55,9 @@ public:
     bool connected() const;
     void startHeartbeat(double intervalSeconds = 30.0);
     void stopHeartbeat();
+
+    // 熔断器（可选，不设置则不启用）
+    void setCircuitBreaker(CircuitBreaker* cb) { circuitBreaker_ = cb; }
 
 private:
     void onConnection(const TcpConnectionPtr& conn);
@@ -102,6 +106,9 @@ private:
 
     std::atomic<bool> heartbeatRunning_{false};
     uint64_t heartbeatTimerId_ = 0;  // FIX: 记录定时器ID用于取消
+
+    // 熔断器（不拥有所有权，由调用方管理生命周期）
+    CircuitBreaker* circuitBreaker_ = nullptr;
 };
 
 } // namespace rpc

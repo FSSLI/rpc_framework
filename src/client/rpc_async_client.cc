@@ -1,6 +1,7 @@
 // src/client/rpc_async_client.cc
 #include "client/rpc_async_client.h"
 #include "discovery/service_registry.h"
+#include "circuit_breaker/circuit_breaker.h"
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <unistd.h>
@@ -334,6 +335,16 @@ RpcAsyncClient::ResponseFuture RpcAsyncClient::asyncCall(
     const RpcRequest& request,
     int timeout_ms) {
 
+    // 熔断检查
+    if (circuitBreaker_ && !circuitBreaker_->allowRequest()) {
+        RpcResponse errorResp;
+        errorResp.set_success(false);
+        errorResp.set_error_msg("circuit breaker open");
+        ResponsePromise promise;
+        promise.set_value(errorResp);
+        return promise.get_future();
+    }
+
     uint64_t reqId = nextReqId_.fetch_add(1);
 
     ResponsePromise promise;
@@ -374,6 +385,15 @@ void RpcAsyncClient::asyncCall(
     const RpcRequest& request,
     ResponseCallback cb,
     int timeout_ms) {
+
+    // 熔断检查
+    if (circuitBreaker_ && !circuitBreaker_->allowRequest()) {
+        RpcResponse errorResp;
+        errorResp.set_success(false);
+        errorResp.set_error_msg("circuit breaker open");
+        cb(errorResp);
+        return;
+    }
 
     uint64_t reqId = nextReqId_.fetch_add(1);
 
@@ -432,6 +452,11 @@ void RpcAsyncClient::sendRequest(uint64_t req_id, const std::string& packet) {
 // ============================================================================
 
 void RpcAsyncClient::handleTimeout(uint64_t req_id) {
+    // 超时 = 失败，通知熔断器
+    if (circuitBreaker_) {
+        circuitBreaker_->recordFailure();
+    }
+
     std::lock_guard<std::mutex> lock(pendingMutex_);
 
     auto promiseIt = pendingPromises_.find(req_id);
@@ -483,9 +508,17 @@ void RpcAsyncClient::onMessage(const TcpConnectionPtr& conn, Buffer* buf, int64_
 void RpcAsyncClient::handleResponse(const DecodedPacket& packet) {
     uint64_t reqId = packet.req_id;
 
+    // 通知熔断器
+    if (circuitBreaker_) {
+        if (packet.rpc_response.success() || packet.network_status == Status::SUCCESS) {
+            circuitBreaker_->recordSuccess();
+        } else {
+            circuitBreaker_->recordFailure();
+        }
+    }
+
     std::lock_guard<std::mutex> lock(pendingMutex_);
 
-    // FIX: 先 erase 再 set_value，异常安全
     auto promiseIt = pendingPromises_.find(reqId);
     if (promiseIt != pendingPromises_.end()) {
         auto promise = std::move(promiseIt->second);
@@ -493,9 +526,7 @@ void RpcAsyncClient::handleResponse(const DecodedPacket& packet) {
 
         try {
             promise.set_value(packet.rpc_response);
-        } catch (...) {
-            // promise 可能已经被设置过（比如超时先触发了）
-        }
+        } catch (...) {}
         return;
     }
 
@@ -506,9 +537,7 @@ void RpcAsyncClient::handleResponse(const DecodedPacket& packet) {
 
         try {
             cb(packet.rpc_response);
-        } catch (...) {
-            // 回调异常，忽略
-        }
+        } catch (...) {}
     }
 }
 
