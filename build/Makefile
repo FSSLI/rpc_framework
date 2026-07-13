@@ -181,6 +181,19 @@ test_consistent_hash/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_consistent_hash.dir/build.make CMakeFiles/test_consistent_hash.dir/build
 .PHONY : test_consistent_hash/fast
 
+#=============================================================================
+# Target rules for targets named test_connector
+
+# Build rule for target.
+test_connector: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 test_connector
+.PHONY : test_connector
+
+# fast build rule for target.
+test_connector/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connector.dir/build.make CMakeFiles/test_connector.dir/build
+.PHONY : test_connector/fast
+
 examples/rpc/echo_service.o: examples/rpc/echo_service.cc.o
 .PHONY : examples/rpc/echo_service.o
 
@@ -445,6 +458,30 @@ src/network/channel.cc.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/network.dir/build.make CMakeFiles/network.dir/src/network/channel.cc.s
 .PHONY : src/network/channel.cc.s
 
+src/network/connector.o: src/network/connector.cc.o
+.PHONY : src/network/connector.o
+
+# target to build an object file
+src/network/connector.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/network.dir/build.make CMakeFiles/network.dir/src/network/connector.cc.o
+.PHONY : src/network/connector.cc.o
+
+src/network/connector.i: src/network/connector.cc.i
+.PHONY : src/network/connector.i
+
+# target to preprocess a source file
+src/network/connector.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/network.dir/build.make CMakeFiles/network.dir/src/network/connector.cc.i
+.PHONY : src/network/connector.cc.i
+
+src/network/connector.s: src/network/connector.cc.s
+.PHONY : src/network/connector.s
+
+# target to generate assembly for a file
+src/network/connector.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/network.dir/build.make CMakeFiles/network.dir/src/network/connector.cc.s
+.PHONY : src/network/connector.cc.s
+
 src/network/event_loop.o: src/network/event_loop.cc.o
 .PHONY : src/network/event_loop.o
 
@@ -540,6 +577,30 @@ src/network/socket.s: src/network/socket.cc.s
 src/network/socket.cc.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/network.dir/build.make CMakeFiles/network.dir/src/network/socket.cc.s
 .PHONY : src/network/socket.cc.s
+
+src/network/tcp_client.o: src/network/tcp_client.cc.o
+.PHONY : src/network/tcp_client.o
+
+# target to build an object file
+src/network/tcp_client.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/network.dir/build.make CMakeFiles/network.dir/src/network/tcp_client.cc.o
+.PHONY : src/network/tcp_client.cc.o
+
+src/network/tcp_client.i: src/network/tcp_client.cc.i
+.PHONY : src/network/tcp_client.i
+
+# target to preprocess a source file
+src/network/tcp_client.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/network.dir/build.make CMakeFiles/network.dir/src/network/tcp_client.cc.i
+.PHONY : src/network/tcp_client.cc.i
+
+src/network/tcp_client.s: src/network/tcp_client.cc.s
+.PHONY : src/network/tcp_client.s
+
+# target to generate assembly for a file
+src/network/tcp_client.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/network.dir/build.make CMakeFiles/network.dir/src/network/tcp_client.cc.s
+.PHONY : src/network/tcp_client.cc.s
 
 src/network/tcp_connection.o: src/network/tcp_connection.cc.o
 .PHONY : src/network/tcp_connection.o
@@ -661,6 +722,30 @@ src/server/rpc_service.cc.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/network.dir/build.make CMakeFiles/network.dir/src/server/rpc_service.cc.s
 .PHONY : src/server/rpc_service.cc.s
 
+tests/test_connector.o: tests/test_connector.cc.o
+.PHONY : tests/test_connector.o
+
+# target to build an object file
+tests/test_connector.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connector.dir/build.make CMakeFiles/test_connector.dir/tests/test_connector.cc.o
+.PHONY : tests/test_connector.cc.o
+
+tests/test_connector.i: tests/test_connector.cc.i
+.PHONY : tests/test_connector.i
+
+# target to preprocess a source file
+tests/test_connector.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connector.dir/build.make CMakeFiles/test_connector.dir/tests/test_connector.cc.i
+.PHONY : tests/test_connector.cc.i
+
+tests/test_connector.s: tests/test_connector.cc.s
+.PHONY : tests/test_connector.s
+
+# target to generate assembly for a file
+tests/test_connector.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_connector.dir/build.make CMakeFiles/test_connector.dir/tests/test_connector.cc.s
+.PHONY : tests/test_connector.cc.s
+
 tests/test_consistent_hash.o: tests/test_consistent_hash.cc.o
 .PHONY : tests/test_consistent_hash.o
 
@@ -697,6 +782,7 @@ help:
 	@echo "... rpc_async_test"
 	@echo "... rpc_server"
 	@echo "... rpc_sync_test"
+	@echo "... test_connector"
 	@echo "... test_consistent_hash"
 	@echo "... examples/rpc/echo_service.o"
 	@echo "... examples/rpc/echo_service.i"
@@ -731,6 +817,9 @@ help:
 	@echo "... src/network/channel.o"
 	@echo "... src/network/channel.i"
 	@echo "... src/network/channel.s"
+	@echo "... src/network/connector.o"
+	@echo "... src/network/connector.i"
+	@echo "... src/network/connector.s"
 	@echo "... src/network/event_loop.o"
 	@echo "... src/network/event_loop.i"
 	@echo "... src/network/event_loop.s"
@@ -743,6 +832,9 @@ help:
 	@echo "... src/network/socket.o"
 	@echo "... src/network/socket.i"
 	@echo "... src/network/socket.s"
+	@echo "... src/network/tcp_client.o"
+	@echo "... src/network/tcp_client.i"
+	@echo "... src/network/tcp_client.s"
 	@echo "... src/network/tcp_connection.o"
 	@echo "... src/network/tcp_connection.i"
 	@echo "... src/network/tcp_connection.s"
@@ -758,6 +850,9 @@ help:
 	@echo "... src/server/rpc_service.o"
 	@echo "... src/server/rpc_service.i"
 	@echo "... src/server/rpc_service.s"
+	@echo "... tests/test_connector.o"
+	@echo "... tests/test_connector.i"
+	@echo "... tests/test_connector.s"
 	@echo "... tests/test_consistent_hash.o"
 	@echo "... tests/test_consistent_hash.i"
 	@echo "... tests/test_consistent_hash.s"

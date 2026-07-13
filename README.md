@@ -10,18 +10,19 @@
 - [x] epoll/Reactor 网络模型（主从 Reactor + one loop per thread）
 - [x] 多 IO 线程（EventLoopThreadPool 轮询分发连接）
 - [x] 同步 RPC 客户端（底层复用异步，future.wait_for 超时控制）
-- [x] 异步 RPC 客户端（Future/Promise + Callback 双模式，当前直接操作 socket，Week 2 重构为基于 TcpClient）
+- [x] 异步 RPC 客户端（Future/Promise + Callback 双模式）
+- [x] **非阻塞 Connector + 自动重连（指数退避）**
+- [x] **TcpClient 客户端底座（基于 Connector）**
 - [x] 服务端服务注册 + 方法分发（RpcServer）
 - [x] 连接 idle 超时检测（服务端主动断开不活跃连接）
 - [x] 一致性哈希负载均衡（MurmurHash + 虚拟节点）
 - [ ] 服务注册发现（etcd）
+- [ ] 连接池（基于 TcpClient）
 - [ ] 熔断降级
 - [ ] 限流（令牌桶）
 - [ ] 接入 MySQL/Redis/MQ
 
 ## 项目结构
-
-```
 rpc_framework/
 ├── CMakeLists.txt              # 构建配置
 ├── README.md                   # 项目说明
@@ -34,16 +35,17 @@ rpc_framework/
 │   │   ├── event_loop_thread_pool.h/cc  # IO线程池轮询
 │   │   ├── channel.h/cc        # fd + 事件回调封装
 │   │   ├── buffer.h/cc         # 网络缓冲区（自动扩容）
-│   │   ├── socket.h/cc         # socket 封装
+│   │   ├── socket.h/cc         # socket 封装（新增静态工具方法）
 │   │   ├── acceptor.h/cc       # 监听新连接
+│   │   ├── connector.h/cc      # 非阻塞 connect + 指数退避重连（7.13 新增）
 │   │   ├── tcp_connection.h/cc # 连接管理（状态机）
 │   │   ├── tcp_server.h/cc     # 服务端（Acceptor + ThreadPool）
-│   │   └── tcp_client.h        # 客户端骨架（待实现，Week 2）
+│   │   └── tcp_client.h/cc     # 客户端（Connector + TcpConnection，7.13 实现）
 │   ├── codec/                  # 编解码器
-│   │   └── rpc_codec.h/cc      # 统一协议：Fixed Header(16B) + Protobuf + CRC32
+│   │   └── rpc_codec.h/cc      # 统一协议：Fixed Header(18B) + Protobuf + CRC32
 │   ├── client/                 # RPC 客户端
 │   │   ├── rpc_sync_client.h/cc    # 同步阻塞调用 + 超时
-│   │   └── rpc_async_client.h/cc   # 异步 Future/Callback（Week 2 重构）
+│   │   └── rpc_async_client.h/cc   # 异步 Future/Callback（Week 2 重构为基于 TcpClient）
 │   ├── server/                 # RPC 服务端
 │   │   ├── rpc_service.h/cc    # 服务基类 + 方法注册
 │   │   └── rpc_server.h/cc     # 服务注册 + 请求分发
@@ -61,20 +63,19 @@ rpc_framework/
 │       ├── rpc_sync_test.cc    # 同步客户端测试
 │       └── rpc_async_test.cc   # 异步客户端测试
 ├── tests/
-│   └── test_consistent_hash.cc # 一致性哈希测试
+│   ├── test_consistent_hash.cc # 一致性哈希测试
+│   └── test_connector.cc       # Connector 连接测试（7.13 新增）
 └── build/                      # 编译输出
-```
+plain
 
 ## 协议设计
 
 ### 统一二进制协议格式
-
-```
 ┌─────────────────┬─────────────────┬─────────────────┐
 │  Fixed Header   │  Variable Body  │    Checksum     │
 │     18 Bytes    │   body_len B    │     4 Bytes     │
 └─────────────────┴─────────────────┴─────────────────┘
-```
+plain
 
 ### Fixed Header（18B）
 
@@ -83,8 +84,10 @@ rpc_framework/
 | magic | uint32_t | 4B | 魔数 "RPCF" = 0x52504346 |
 | version | uint8_t | 1B | 协议版本 = 1 |
 | msg_type | uint8_t | 1B | 0=REQUEST, 1=RESPONSE, 2=HEARTBEAT |
-| body_len | uint16_t | 4B | 变长体长度（网络字节序，解决粘包） |
+| body_len | uint32_t | 4B | 变长体长度（网络字节序，解决粘包） |
 | req_id | uint64_t | 8B | 请求ID |
+
+> **修正**：7.12 协议统一化重构后，header 从 16B 调整为 **18B**（body_len 从 uint16_t 扩为 uint32_t）。
 
 ### 消息类型
 
@@ -100,34 +103,108 @@ rpc_framework/
 
 ## 核心数据流
 
-```
+### 服务端
 ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│  RpcAsync    │────▶│ Fixed Header │────▶│  TcpConnection │
-│  Client      │     │ + Protobuf   │     │  (EventLoop)    │
-│  (Future/CB) │◀────│ + CRC32      │◀────│  (epoll LT)     │
-└─────────────┘     └─────────────┘     └─────────────┘
-                                              │
-┌─────────────┐     ┌─────────────┐     ┌─────────────┘
 │  EchoService  │◀────│  RpcServer   │◀────│  Acceptor      │
 │  (业务逻辑)   │     │  (方法分发)   │     │  (监听8888)    │
 └─────────────┘     └─────────────┘     └─────────────┘
-```
+│
+┌─────────────┐     ┌─────────────┐     ┌─────────────┘
+│  RpcCodec    │◀────│ Fixed Header │◀────│  TcpConnection │
+│  (编解码)    │     │ + Protobuf   │     │  (EventLoop)    │
+└─────────────┘     │ + CRC32      │     │  (epoll LT)     │
+└─────────────┘     └─────────────┘
+plain
+
+### 客户端（7.13 重构后）
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│  RpcAsync    │────▶│  TcpClient   │────▶│  Connector    │────▶│  Socket      │
+│  Client      │     │  (连接管理)   │     │  (非阻塞connect│     │  (fd)        │
+│  (Future/CB) │◀────│              │◀────│  + 自动重连)  │     │              │
+└─────────────┘     └─────────────┘     └─────────────┘     └─────────────┘
+│                                            │
+└────────────┐                    ┌──────────┘
+▼                    ▼
+┌─────────────┐     ┌─────────────┐
+│  TcpConnection│◀───│  连接成功后   │
+│  (读写数据)   │     │  回调创建     │
+└─────────────┘     └─────────────┘
+plain
+
+## 网络层架构
+
+### 服务端：Acceptor 模式
+MainReactor (Acceptor) ──accept()──► SubReactor Pool (EventLoopThreadPool)
+│
+▼
+TcpConnection (读写)
+plain
+
+### 客户端：Connector 模式（7.13 新增）
+RpcAsyncClient ──► TcpClient ──► Connector ──► Socket
+│              │
+│         指数退避重连
+▼
+TcpConnection (建立后)
+plain
+
+## Connector 状态机
+plain
+                ┌─────────┐
+     ┌─────────│  STOP   │◄────────┐
+     │         │ (初始)   │         │
+     │         └────┬────┘         │
+     │              │ start()      │
+     │              ▼              │
+     │         ┌─────────┐         │
+     │    ┌────│CONNECTING│◄───┐   │
+     │    │    │(非阻塞connect)│   │   重连定时器触发
+     │    │    └────┬────┘    │   │
+     │    │         │         │   │
+     │    │    可写/出错      │   │
+     │    │         │         │   │
+     │    │    ┌────┴────┐    │   │
+     │    └───►│CONNECTED │    │   │
+     │         │(连接成功) │    │   │
+     │         └────┬────┘    │   │
+     │              │ close()  │   │
+     │              ▼          │   │
+     │         ┌─────────┐     │   │
+     └────────►│DISCONNECTED│───┘   │
+               │(连接断开)  │────────┘
+               └─────────┘
+                       
+     重连策略：500ms → 1s → 2s → 4s → 8s → max 30s
+plain
 
 ## 已完成 vs 待完成
 
 | 模块 | 完成度 | 状态 |
 |------|--------|------|
 | 网络层骨架 | 100% | ✅ |
-| 统一二进制协议 | 100% | ✅（7.11 重构，去掉 Length-Field） |
+| 统一二进制协议 | 100% | ✅（7.12 重构，header 18B） |
 | 同步/异步客户端 | 90% | ✅（异步客户端 Week 2 重构为基于 TcpClient） |
+| **Connector + 自动重连** | **100%** | **✅（7.13 新增）** |
+| **TcpClient 底座** | **100%** | **✅（7.13 新增）** |
 | 服务端注册分发 | 100% | ✅ |
 | 一致性哈希 | 100% | ✅ |
 | 服务发现（etcd） | 0% | 🔲 Week 2 |
-| 连接池 + 自动重连 | 0% | 🔲 Week 2 |
+| 连接池 | 0% | 🔲 Week 2 |
 | 熔断降级 | 0% | 🔲 Week 2 |
 | 限流（令牌桶） | 0% | 🔲 Week 2 |
 | 接入 MySQL/Redis | 0% | 🔲 Week 3 |
 | 压测优化 | 0% | 🔲 Week 3 |
+
+## 测试覆盖
+
+| 测试项 | 状态 | 说明 |
+|--------|------|------|
+| 同步 RPC 调用 | ✅ | `rpc_sync_test` |
+| 异步 RPC 调用（Future） | ✅ | `rpc_async_test` |
+| 异步 RPC 调用（Callback） | ✅ | `rpc_async_test` |
+| 一致性哈希 | ✅ | `test_consistent_hash` |
+| Connector 连接成功 | ✅ | `test_connector` Test 1 |
+| Connector 自动重连 | 🔲 | 待补：需 `EventLoop::cancelTimer` 或 `shared_ptr` 管理 Connector |
 
 ## 踩坑记录
 
@@ -153,7 +230,11 @@ rpc_framework/
 
 ### 6. 协议不统一导致维护困难
 **问题：** Request/Response/Heartbeat 三种消息结构不一致，外部又包了一层 Length-Field，编解码逻辑三套。  
-**解决：** 统一为 Fixed Header(16B) + Variable Body + Checksum 的三段式结构，header 中的 `body_len` 自描述解决粘包，去掉冗余的 `encodeWithLength`/`decodeWithLength`。
+**解决：** 统一为 Fixed Header(18B) + Variable Body + Checksum 的三段式结构，header 中的 `body_len` 自描述解决粘包，去掉冗余的 `encodeWithLength`/`decodeWithLength`。
+
+### 7. 非阻塞 connect 结果判断
+**问题：** `connect()` 返回 -1 且 `errno == EINPROGRESS` 时，需要通过 epoll 监听可写事件，再用 `getsockopt(SO_ERROR)` 获取真实错误码。  
+**解决：** Connector 封装非阻塞 connect 全流程：socket() → connect() → epoll 监听可写 → SO_ERROR 判断 → 成功回调 / 失败重连。
 
 ## 快速开始
 
@@ -175,15 +256,14 @@ make
 
 # 运行异步客户端测试
 ./rpc_async_test
-```
 
-## 技术要点
-
-- **网络模型**：epoll LT + one loop per thread
-- **协议格式**：Fixed Header(16B) + Protobuf Payload + CRC32（自描述，无需外部 Length-Field）
-- **线程安全**：`std::future/promise` 实现同步调用超时控制
-- **异步模式**：Future/Promise + Callback 双模式，req_id 关联请求-响应
-
-## 作者
-
+# 运行 Connector 测试
+./test_connector
+技术要点
+网络模型：epoll LT + one loop per thread
+协议格式：Fixed Header(18B) + Protobuf Payload + CRC32（自描述，无需外部 Length-Field）
+线程安全：std::future/promise 实现同步调用超时控制
+异步模式：Future/Promise + Callback 双模式，req_id 关联请求-响应
+连接管理：Connector 非阻塞 connect + 指数退避重连（500ms → 1s → 2s → 4s → max 30s）
+作者
 马超 - 西北大学计算机硕士

@@ -34,6 +34,11 @@ public:
     void setReusePort(bool on);  // 设置SO_REUSEPORT，允许多进程绑定同一端口
     void setKeepAlive(bool on);  // 启用TCP保活探测，检测死连接
 
+    // 新增：静态工具方法
+    static int getSocketError(int sockfd);
+    static struct sockaddr_in getPeerAddr(int sockfd);
+    static struct sockaddr_in getLocalAddr(int sockfd);
+
 private:
     const int sockfd_;  // 文件描述符，构造后不可变
 };

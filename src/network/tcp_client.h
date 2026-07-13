@@ -43,7 +43,7 @@ private:
     MessageCallback messageCallback_;
     WriteCompleteCallback writeCompleteCallback_;
 
-    std::mutex mutex_;
+    mutable std::mutex mutex_;
     std::shared_ptr<TcpConnection> connection_;
 };
 

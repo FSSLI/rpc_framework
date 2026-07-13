@@ -5,6 +5,8 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <cstring>
+
 
 // sockaddr 是 POSIX 标准定义的通用套接字地址结构体
 // 用来统一表示各种网络地址（IPv4、IPv6、Unix域等）
@@ -116,6 +118,39 @@ void Socket::setReusePort(bool on) {
 void Socket::setKeepAlive(bool on) {
     int optval = on ? 1 : 0;
     ::setsockopt(sockfd_, SOL_SOCKET, SO_KEEPALIVE, &optval, sizeof(optval));
+}
+
+// ============================================================================
+// 新增静态方法
+// ============================================================================
+
+int Socket::getSocketError(int sockfd) {
+    int optval;
+    socklen_t optlen = sizeof(optval);
+    if (::getsockopt(sockfd, SOL_SOCKET, SO_ERROR, &optval, &optlen) < 0) {
+        return errno;
+    }
+    return optval;
+}
+
+struct sockaddr_in Socket::getPeerAddr(int sockfd) {
+    struct sockaddr_in peeraddr;
+    memset(&peeraddr, 0, sizeof(peeraddr));
+    socklen_t addrlen = sizeof(peeraddr);
+    if (::getpeername(sockfd, reinterpret_cast<struct sockaddr*>(&peeraddr), &addrlen) < 0) {
+        // LOG_SYSERR << "getPeerName";
+    }
+    return peeraddr;
+}
+
+struct sockaddr_in Socket::getLocalAddr(int sockfd) {
+    struct sockaddr_in localaddr;
+    memset(&localaddr, 0, sizeof(localaddr));
+    socklen_t addrlen = sizeof(localaddr);
+    if (::getsockname(sockfd, reinterpret_cast<struct sockaddr*>(&localaddr), &addrlen) < 0) {
+        // LOG_SYSERR << "getSockName";
+    }
+    return localaddr;
 }
 
 } // namespace rpc
