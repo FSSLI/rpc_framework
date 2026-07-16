@@ -26,6 +26,7 @@
 - [x] 压测（单机 43,000 QPS，P99 840 μs，1→8线程 3.7× 扩展）
 
 ## 项目结构
+```text
 rpc_framework/
 ├── CMakeLists.txt              # 构建配置
 ├── README.md                   # 项目说明
@@ -90,16 +91,17 @@ rpc_framework/
 │   ├── test_integration.cc         # 全模块串联
 │   └── test_benchmark.cc           # 压测
 └── build/                          # 编译输出
-plain
+```
 
 ## 协议设计
 
 ### 统一二进制协议格式
+```text
 ┌─────────────────┬─────────────────┬─────────────────┐
 │  Fixed Header   │  Variable Body  │    Checksum     │
 │     18 Bytes    │   body_len B    │     4 Bytes     │
 └─────────────────┴─────────────────┴─────────────────┘
-plain
+```
 
 ### Fixed Header（18B）
 
@@ -128,6 +130,7 @@ plain
 ## 核心数据流
 
 ### 服务端
+```text
 ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
 │  EchoService  │◀────│  RpcServer   │◀────│  Acceptor      │
 │  (业务逻辑)   │     │  (方法分发)   │     │  (监听8888)    │
@@ -138,9 +141,10 @@ plain
 │  (编解码)    │     │ + Protobuf   │     │  (EventLoop)    │
 └─────────────┘     │ + CRC32      │     │  (epoll LT)     │
 └─────────────┘     └─────────────┘
-plain
+```
 
 ### 客户端（7.13 重构后）
+```text
 ┌─────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
 │  RpcAsync    │────▶│  TcpClient   │────▶│  Connector    │────▶│  Socket      │
 │  Client      │     │  (连接管理)   │     │  (非阻塞connect│     │  (fd)        │
@@ -153,27 +157,29 @@ plain
 │  TcpConnection│◀───│  连接成功后   │
 │  (读写数据)   │     │  回调创建     │
 └─────────────┘     └─────────────┘
-plain
+```
 
 ## 网络层架构
 
 ### 服务端：Acceptor 模式
+```text
 MainReactor (Acceptor) ──accept()──► SubReactor Pool (EventLoopThreadPool)
 │
 ▼
 TcpConnection (读写)
-plain
+```
 
 ### 客户端：Connector 模式（7.13 新增）
+```text
 RpcAsyncClient ──► TcpClient ──► Connector ──► Socket
 │              │
 │         指数退避重连
 ▼
 TcpConnection (建立后)
-plain
+```
 
 ## Connector 状态机
-plain
+```text
                 ┌─────────┐
      ┌─────────│  STOP   │◄────────┐
      │         │ (初始)   │         │
@@ -199,7 +205,7 @@ plain
                └─────────┘
                        
      重连策略：500ms → 1s → 2s → 4s → 8s → max 30s
-plain
+```
 
 ## 已完成 vs 待完成
 
