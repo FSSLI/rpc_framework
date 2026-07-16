@@ -12,16 +12,20 @@
 namespace rpc {
 
 ConnectionPool::~ConnectionPool() {
-    // 先停止所有 TcpClient，再停止 EventLoopThread
-    // unique_ptr 自动处理析构顺序
+    // 依赖 EndpointPool 成员析构顺序（reverse decl order）:
+    // nextIndex → clients → loops
+    // TcpClient 析构时 EventLoopThread 仍存活，~TcpClient() 可安全调用
+    // connector_->stop() → queueInLoop 到仍在运行的 EventLoop
     for (auto& pair : pools_) {
         auto& ep = pair.second;
         for (auto& client : ep->clients) {
             if (client) {
-                client->stop();
+                client->stop();  // 仅停止 Connector 自动重连
             }
         }
-        // EventLoopThread 由 unique_ptr 在 EndpointPool 析构时自动清理
+        // clients 和 loops 由 EndpointPool 自然析构:
+        // clients 先释放 → ~TcpClient() 安全（loops 仍存活）
+        // loops 后释放 → ~EventLoopThread() stop+join
     }
 }
 
@@ -52,26 +56,22 @@ bool ConnectionPool::createPool(const std::string& host, uint16_t port, int pool
     ep->loops.reserve(poolSize);
 
     for (int i = 0; i < poolSize; ++i) {
-        // 1. 创建独立的 EventLoopThread
         auto loopThread = std::make_unique<EventLoopThread>();
         EventLoop* loop = loopThread->startLoop();
 
-        // 2. 创建 TcpClient
         auto client = std::make_shared<TcpClient>(loop, serverAddr);
-        client->setRetryOnDisconnect(true);  // 断开自动重连
+        client->setRetryOnDisconnect(true);
 
-        // 3. 等待连接建立
-        std::promise<bool> connectPromise;
-        auto connectFuture = connectPromise.get_future();
-        std::atomic<bool> promiseSet{false};
+        // Issue #2 fix: shared_ptr 管理，防止栈变量被回调悬空引用
+        auto promisePtr = std::make_shared<std::promise<bool>>();
+        auto promiseSetPtr = std::make_shared<std::atomic<bool>>(false);
+        auto connectFuture = promisePtr->get_future();
 
         client->setConnectionCallback(
-            [&connectPromise, &promiseSet](const TcpConnectionPtr& conn) {
-                if (conn->connected()) {
-                    bool expected = false;
-                    if (promiseSet.compare_exchange_strong(expected, true)) {
-                        connectPromise.set_value(true);
-                    }
+            [promisePtr, promiseSetPtr](const TcpConnectionPtr& conn) {
+                bool expected = false;
+                if (promiseSetPtr->compare_exchange_strong(expected, true)) {
+                    promisePtr->set_value(conn->connected());
                 }
             });
 
@@ -80,8 +80,8 @@ bool ConnectionPool::createPool(const std::string& host, uint16_t port, int pool
         auto status = connectFuture.wait_for(std::chrono::milliseconds(3000));
         if (status == std::future_status::timeout) {
             bool expected = false;
-            if (promiseSet.compare_exchange_strong(expected, true)) {
-                connectPromise.set_value(false);
+            if (promiseSetPtr->compare_exchange_strong(expected, true)) {
+                promisePtr->set_value(false);
             }
             std::cerr << "ConnectionPool: connection " << i
                       << " to " << key << " timed out, aborting pool creation" << std::endl;
@@ -99,6 +99,8 @@ bool ConnectionPool::createPool(const std::string& host, uint16_t port, int pool
             return false;
         }
 
+        // 清除 pool 创建时的 promise 回调，防止后续断连时访问已释放的 shared_ptr
+        client->setConnectionCallback({});
         ep->clients.push_back(std::move(client));
         ep->loops.push_back(std::move(loopThread));
     }
@@ -120,6 +122,15 @@ ConnectionPool::TcpClientPtr ConnectionPool::acquire(const std::string& host, ui
     }
 
     auto& ep = it->second;
+    // 轮询查找健康连接（最多尝试全部连接一次）
+    for (size_t attempt = 0; attempt < ep->clients.size(); ++attempt) {
+        size_t idx = ep->nextIndex.fetch_add(1, std::memory_order_relaxed) % ep->clients.size();
+        auto conn = ep->clients[idx]->connection();
+        if (conn && conn->connected()) {
+            return ep->clients[idx];
+        }
+    }
+    // 所有连接都不健康，返回轮询到的那个（让它自动重连）
     size_t idx = ep->nextIndex.fetch_add(1, std::memory_order_relaxed) % ep->clients.size();
     return ep->clients[idx];
 }

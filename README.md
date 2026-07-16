@@ -16,11 +16,14 @@
 - [x] 服务端服务注册 + 方法分发（RpcServer）
 - [x] 连接 idle 超时检测（服务端主动断开不活跃连接）
 - [x] 一致性哈希负载均衡（MurmurHash + 虚拟节点）
-- [ ] 服务注册发现（etcd）
-- [ ] 连接池（基于 TcpClient）
-- [ ] 熔断降级
-- [ ] 限流（令牌桶）
-- [ ] 接入 MySQL/Redis/MQ
+- [x] 轮询负载均衡（多节点自动 failover）
+- [x] 服务注册发现（MemoryRegistry 内存 + EtcdRegistry 支持 etcd v3 lease/Watch）
+- [x] 连接池（固定大小 + 轮询 + 健康检查，吞吐量 2×）
+- [x] 熔断降级（CLOSED→OPEN→HALF_OPEN 三态，半开单探测）
+- [x] 限流（本地令牌桶 + Redis 分布式令牌桶 Lua 原子脚本）
+- [x] TraceID 透传（metadata 自动注入，服务端提取日志）
+- [x] 8 轮代码审查修复 60+ 线程安全/内存/协议问题
+- [x] 压测（单机 43,000 QPS，P99 840 μs，1→8线程 3.7× 扩展）
 
 ## 项目结构
 rpc_framework/
@@ -51,8 +54,17 @@ rpc_framework/
 │   │   └── rpc_server.h/cc     # 服务注册 + 请求分发
 │   ├── loadbalance/            # 负载均衡
 │   │   └── consistent_hash.h/cc    # 一致性哈希 + 虚拟节点
-│   ├── common/                 # 公共工具（空，Week 3 TraceId/Metrics）
-│   └── discovery/              # 服务发现（空，Week 2 etcd）
+│   ├── pool/                   # 连接池
+│   │   └── connection_pool.h/cc    # 固定大小 + 健康检查
+│   ├── circuit_breaker/        # 熔断器
+│   │   └── circuit_breaker.h/cc    # 三态状态机
+│   ├── rate_limiter/           # 限流
+│   │   ├── token_bucket.h/cc       # 本地令牌桶
+│   │   └── redis_token_bucket.h/cc # Redis 分布式（需 -DWITH_REDIS=ON）
+│   └── discovery/              # 服务发现
+│       ├── service_registry.h       # 抽象接口
+│       ├── memory_registry.h/cc     # 内存实现
+│       └── etcd_registry.h/cc       # etcd 实现（需 -DWITH_ETCD=ON）
 ├── examples/
 │   ├── echo/                   # 裸TCP echo测试（旧协议，已废弃）
 │   │   ├── echo_server.cc
@@ -63,9 +75,21 @@ rpc_framework/
 │       ├── rpc_sync_test.cc    # 同步客户端测试
 │       └── rpc_async_test.cc   # 异步客户端测试
 ├── tests/
-│   ├── test_consistent_hash.cc # 一致性哈希测试
-│   └── test_connector.cc       # Connector 连接测试（7.13 新增）
-└── build/                      # 编译输出
+│   ├── test_consistent_hash.cc     # 一致性哈希分布
+│   ├── test_consistent_hash_lb.cc  # CH 负载均衡集成
+│   ├── test_connector.cc           # Connector 连接/重连/析构
+│   ├── test_memory_registry.cc     # 内存注册中心
+│   ├── test_service_discovery_e2e.cc  # 服务发现端到端
+│   ├── test_connection_pool.cc     # 连接池
+│   ├── test_load_balance.cc        # 轮询负载均衡+failover
+│   ├── test_circuit_breaker.cc     # 熔断器状态机
+│   ├── test_token_bucket.cc        # 本地令牌桶
+│   ├── test_redis_token_bucket.cc  # Redis 分布式令牌桶
+│   ├── test_etcd_registry.cc       # etcd 注册/发现/Watch
+│   ├── test_trace_id.cc            # TraceID 透传
+│   ├── test_integration.cc         # 全模块串联
+│   └── test_benchmark.cc           # 压测
+└── build/                          # 编译输出
 plain
 
 ## 协议设计
@@ -179,32 +203,41 @@ plain
 
 ## 已完成 vs 待完成
 
-| 模块 | 完成度 | 状态 |
-|------|--------|------|
-| 网络层骨架 | 100% | ✅ |
-| 统一二进制协议 | 100% | ✅（7.12 重构，header 18B） |
-| 同步/异步客户端 | 90% | ✅（异步客户端 Week 2 重构为基于 TcpClient） |
-| **Connector + 自动重连** | **100%** | **✅（7.13 新增）** |
-| **TcpClient 底座** | **100%** | **✅（7.13 新增）** |
-| 服务端注册分发 | 100% | ✅ |
-| 一致性哈希 | 100% | ✅ |
-| 服务发现（etcd） | 0% | 🔲 Week 2 |
-| 连接池 | 0% | 🔲 Week 2 |
-| 熔断降级 | 0% | 🔲 Week 2 |
-| 限流（令牌桶） | 0% | 🔲 Week 2 |
-| 接入 MySQL/Redis | 0% | 🔲 Week 3 |
-| 压测优化 | 0% | 🔲 Week 3 |
+| 模块 | 状态 |
+|------|------|
+| 网络层（epoll + Reactor + one loop per thread） | ✅ |
+| 统一二进制协议（18B Header + Protobuf + CRC32） | ✅ |
+| 同步/异步客户端（Future/Callback 双模式） | ✅ |
+| Connector 非阻塞 connect + 指数退避重连 | ✅ |
+| TcpClient 客户端底座 | ✅ |
+| 服务端注册分发 | ✅ |
+| 一致性哈希负载均衡 | ✅ |
+| 轮询负载均衡（多节点 failover） | ✅ |
+| 服务发现（MemoryRegistry + EtcdRegistry） | ✅ |
+| 连接池（固定大小 + 健康检查） | ✅ |
+| 熔断器（CLOSED→OPEN→HALF_OPEN） | ✅ |
+| 限流（本地令牌桶 + Redis 双层） | ✅ |
+| TraceID 透传 | ✅ |
+| 压测（43K QPS / P99 840μs） | ✅ |
 
 ## 测试覆盖
 
-| 测试项 | 状态 | 说明 |
-|--------|------|------|
-| 同步 RPC 调用 | ✅ | `rpc_sync_test` |
-| 异步 RPC 调用（Future） | ✅ | `rpc_async_test` |
-| 异步 RPC 调用（Callback） | ✅ | `rpc_async_test` |
-| 一致性哈希 | ✅ | `test_consistent_hash` |
-| Connector 连接成功 | ✅ | `test_connector` Test 1 |
-| Connector 自动重连 | 🔲 | 待补：需 `EventLoop::cancelTimer` 或 `shared_ptr` 管理 Connector |
+| 测试 | 说明 |
+|------|------|
+| `test_connector` | Connector 连接成功 / 重连 / 析构安全 |
+| `test_consistent_hash` | 一致性哈希分布 + 节点删除迁移 |
+| `test_consistent_hash_lb` | 一致性哈希负载均衡集成 |
+| `test_memory_registry` | 内存注册中心 CRUD |
+| `test_service_discovery_e2e` | 服务发现端到端 |
+| `test_connection_pool` | 连接池创建 / acquire / 轮询分布 |
+| `test_load_balance` | 多节点轮询 + failover |
+| `test_circuit_breaker` | 熔断器状态机 + RPC 集成 |
+| `test_token_bucket` | 本地令牌桶 + 动态速率 |
+| `test_redis_token_bucket` | Redis 分布式限流 + 降级（需 `-DWITH_REDIS=ON`） |
+| `test_etcd_registry` | etcd 注册/发现/Watch（需 `-DWITH_ETCD=ON`） |
+| `test_trace_id` | TraceID 注入 + 提取 |
+| `test_integration` | 全模块串联（LB + 熔断 + 限流 + 故障恢复） |
+| `test_benchmark` | 压测（可指定请求数和线程数） |
 
 ## 踩坑记录
 
@@ -239,31 +272,38 @@ plain
 ## 快速开始
 
 ```bash
-# 克隆
 git clone https://github.com/FSSLI/rpc_framework.git
 cd rpc_framework
-
-# 编译
 mkdir build && cd build
-cmake ..
-make
+cmake .. && make -j$(nproc)
 
-# 运行 RPC Server
-./rpc_server
+# 运行全部测试
+./test_connector && ./test_connection_pool && ./test_load_balance && \
+./test_consistent_hash_lb && ./test_circuit_breaker && ./test_token_bucket && \
+./test_trace_id && ./test_integration
 
-# 运行同步客户端测试
-./rpc_sync_test
+# 压测（可指定请求数和线程数）
+./test_benchmark 10000 4
 
-# 运行异步客户端测试
-./rpc_async_test
+# 可选：Redis 令牌桶
+docker run -d --name redis-test -p 6379:6379 redis:7-alpine
+cmake .. -DWITH_REDIS=ON && make -j$(nproc) && ./test_redis_token_bucket
 
-# 运行 Connector 测试
-./test_connector
-技术要点
-网络模型：epoll LT + one loop per thread
-协议格式：Fixed Header(18B) + Protobuf Payload + CRC32（自描述，无需外部 Length-Field）
-线程安全：std::future/promise 实现同步调用超时控制
-异步模式：Future/Promise + Callback 双模式，req_id 关联请求-响应
-连接管理：Connector 非阻塞 connect + 指数退避重连（500ms → 1s → 2s → 4s → max 30s）
-作者
+# 可选：etcd 服务发现
+docker run -d --name etcd-test -p 2379:2379 bitnami/etcd:3.5
+cmake .. -DWITH_ETCD=ON && make -j$(nproc) && ./test_etcd_registry
+```
+
+## 性能
+
+| 指标 | 数据 |
+|------|------|
+| 单连接 QPS | 12,000 /s |
+| 连接池 QPS | 24,500 /s（2×） |
+| 8 线程 QPS | 43,000 /s（3.7× 扩展） |
+| P50 延迟 | 131 μs |
+| P99 延迟 | 840 μs |
+
+## 作者
+
 马超 - 西北大学计算机硕士

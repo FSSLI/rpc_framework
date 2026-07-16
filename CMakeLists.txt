@@ -47,6 +47,16 @@ set(DISCOVERY_SRCS
     src/discovery/memory_registry.cc
 )
 
+# etcd 服务发现（可选，需要 etcd-cpp-apiv3 + nlohmann-json）
+option(WITH_ETCD "Build with etcd service discovery" OFF)
+if(WITH_ETCD)
+    add_definitions(-DHAS_ETCD)
+    list(APPEND DISCOVERY_SRCS src/discovery/etcd_registry.cc)
+
+    # 加上这一行，让 CMake 能找到 etcd-cpp-apiv3 的 cmake config
+    find_package(etcd-cpp-api REQUIRED)
+endif()
+
 set(POOL_SRCS
     src/pool/connection_pool.cc
 )
@@ -59,8 +69,23 @@ set(RATE_LIMITER_SRCS
     src/rate_limiter/token_bucket.cc
 )
 
+# Redis 令牌桶（可选，需要 hiredis）
+option(WITH_REDIS "Build with Redis token bucket" OFF)
+if(WITH_REDIS)
+    add_definitions(-DHAS_REDIS)
+    list(APPEND RATE_LIMITER_SRCS src/rate_limiter/redis_token_bucket.cc)
+endif()
+
 add_library(network ${NETWORK_SRCS} ${CODEC_SRCS} ${PROTO_SRCS} ${CLIENT_SRCS} ${SERVER_SRCS} ${LOADBALANCE_SRCS} ${DISCOVERY_SRCS} ${POOL_SRCS} ${CIRCUIT_BREAKER_SRCS} ${RATE_LIMITER_SRCS})
 target_link_libraries(network protobuf pthread)
+
+if(WITH_ETCD)
+    target_link_libraries(network etcd-cpp-api)
+endif()
+
+if(WITH_REDIS)
+    target_link_libraries(network hiredis)
+endif()
 
 # 示例程序
 add_executable(rpc_sync_test examples/rpc/rpc_sync_test.cc)
@@ -96,3 +121,27 @@ target_link_libraries(test_circuit_breaker network)
 
 add_executable(test_token_bucket tests/test_token_bucket.cc)
 target_link_libraries(test_token_bucket network)
+
+add_executable(test_integration tests/test_integration.cc)
+target_link_libraries(test_integration network)
+
+add_executable(test_consistent_hash_lb tests/test_consistent_hash_lb.cc)
+target_link_libraries(test_consistent_hash_lb network)
+
+add_executable(test_trace_id tests/test_trace_id.cc)
+target_link_libraries(test_trace_id network)
+
+add_executable(test_benchmark tests/test_benchmark.cc)
+target_link_libraries(test_benchmark network)
+
+# etcd 测试（需 WITH_ETCD=ON + Docker 运行 etcd）
+if(WITH_ETCD)
+    add_executable(test_etcd_registry tests/test_etcd_registry.cc)
+    target_link_libraries(test_etcd_registry network)
+endif()
+
+# Redis 测试（需 WITH_REDIS=ON + Docker 运行 Redis）
+if(WITH_REDIS)
+    add_executable(test_redis_token_bucket tests/test_redis_token_bucket.cc)
+    target_link_libraries(test_redis_token_bucket network)
+endif()

@@ -9,7 +9,6 @@
 #include <cerrno>
 #include <iostream>
 #include "event_loop_thread_pool.h"
-#include <unistd.h>
 
 namespace rpc {
 
@@ -90,15 +89,7 @@ void TcpServer::newConnection(int sockfd, const struct sockaddr_in& peerAddr) { 
     }
 
     // 4. 创建 TcpConnection
-    // TcpConnectionPtr conn(new TcpConnection(ioLoop, connName, sockfd, localAddr, peerAddr));
-    TcpConnectionPtr conn;
-    try {
-        conn.reset(new TcpConnection(ioLoop, connName, sockfd, localAddr, peerAddr));
-    } catch (const std::exception& e) {
-        std::cerr << "TcpServer::newConnection exception: " << e.what() << std::endl;
-        ::close(sockfd);  // FIX: 必须关闭 fd，否则泄漏
-        return;
-    }
+    TcpConnectionPtr conn(new TcpConnection(ioLoop, connName, sockfd, localAddr, peerAddr));
 
     // 新增：设置 idle 超时
     if (idleTimeoutSeconds_ > 0) {
@@ -130,9 +121,10 @@ void TcpServer::removeConnectionInLoop(const TcpConnectionPtr& conn) {
     // map::erase 返回被移除的元素个数：
     // 找到并移除 → 返回 1
     // 没找到 → 返回 0
-    size_t n = connections_.erase(conn->name());  // 1. 从 map 移除
-    (void)n;  // 消除未使用变量警告
-    assert(n == 1);  // 断言：必须移除成功，且只移除 1 个
+    size_t n = connections_.erase(conn->name());
+    // EPOLLRDHUP/EPOLLERR 可能导致 handleRead→handleClose→closeCallback_ 和
+    // Channel::handleEvent→closeCallback_ 双重调用。ignore duplicate removal.
+    if (n == 0) return;
     
     EventLoop* ioLoop = conn->getLoop();  // 2. 在 ioLoop 线程执行 connectDestroyed
     // 用 shared_ptr 拷贝延长生命周期

@@ -187,7 +187,9 @@ void Connector::retry(int sockfd) {
     setState(State::kDisconnected);
 
     if (connect_) {
+#ifndef RPC_SILENT
         std::cout << "Connector::retry - Retry connecting in " << retryDelayMs_ << " ms" << std::endl;
+#endif
 
         // 使用 weak_ptr 防止 Connector 析构后定时器回调访问悬空指针
         std::weak_ptr<Connector> weakThis = shared_from_this();

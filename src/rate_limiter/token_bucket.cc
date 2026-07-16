@@ -25,17 +25,17 @@ void TokenBucket::setRate(double rate, double capacity) {
     std::lock_guard<std::mutex> lock(mutex_);
     refill();
     rate_ = rate;
-    if (capacity > 0) capacity_ = capacity;
+    if (capacity >= 0) capacity_ = capacity;  // Issue #9: 允许设为 0
     if (tokens_ > capacity_) tokens_ = capacity_;
 }
 
 double TokenBucket::availableTokens() const {
     std::lock_guard<std::mutex> lock(mutex_);
-    const_cast<TokenBucket*>(this)->refill();
+    refill();  // refill 是 const 方法
     return tokens_;
 }
 
-void TokenBucket::refill() {
+void TokenBucket::refill() const {
     auto now = std::chrono::steady_clock::now();
     double elapsed = std::chrono::duration<double>(now - lastRefillTime_).count();
     tokens_ += elapsed * rate_;

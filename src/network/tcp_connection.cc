@@ -73,7 +73,9 @@ void TcpConnection::connectEstablished() {
     assert(state_ == kConnecting);
     setState(kConnected);
     channel_->enableReading();
+#ifndef RPC_SILENT
     std::cout << "connectEstablished: " << name_ << " fd=" << channel_->fd() << std::endl;
+#endif
 
     if (connectionCallback_) {
         connectionCallback_(shared_from_this());
@@ -187,14 +189,6 @@ void TcpConnection::sendInLoop(const std::string& message) {
 
     if (remaining > 0) {
         outputBuffer_.append(message.data() + nwrote, remaining);
-
-        // FIX: 高水位检测
-        if (highWaterMark_ > 0 && outputBuffer_.readableBytes() > highWaterMark_) {
-            if (highWaterMarkCallback_) {
-                highWaterMarkCallback_(shared_from_this(), outputBuffer_.readableBytes());
-            }
-        }
-
         if (!channel_->isWriting()) {
             channel_->enableWriting();
         }
@@ -212,14 +206,18 @@ void TcpConnection::handleRead() {
     loop_->assertInLoopThread();
     updateActiveTime();
 
+#ifndef RPC_SILENT
     std::cout << "handleRead: " << name_ << std::endl;
+#endif
 
     int savedErrno = 0;
     int64_t receiveTime = std::chrono::duration_cast<std::chrono::microseconds>(
         std::chrono::system_clock::now().time_since_epoch()).count();
     ssize_t n = inputBuffer_.readFd(channel_->fd(), &savedErrno);
 
+#ifndef RPC_SILENT
     std::cout << "readFd n=" << n << " errno=" << savedErrno << std::endl;
+#endif
 
     if (n > 0) {
         if (messageCallback_) {

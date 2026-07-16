@@ -18,12 +18,15 @@
 #include "codec/rpc_codec.h"
 #include "protocol/rpc_service.pb.h"
 #include "discovery/service_registry.h"
+#include "loadbalance/consistent_hash.h"
 
 namespace rpc {
 
 class ServiceRegistry;
 class CircuitBreaker;
 class TokenBucket;
+
+enum class LBPolicy { RR, CONSISTENT_HASH };
 
 class RpcAsyncClient {
 public:
@@ -61,14 +64,16 @@ public:
     void setCircuitBreaker(CircuitBreaker* cb) { circuitBreaker_ = cb; }
     // 限流器（可选）
     void setRateLimiter(TokenBucket* limiter) { rateLimiter_ = limiter; }
+    // 负载均衡策略（默认轮询）
+    void setLBPolicy(LBPolicy p, int virtualNodes = 150);
 
 private:
     void onConnection(const TcpConnectionPtr& conn);
     void onMessage(const TcpConnectionPtr& conn, Buffer* buf, int64_t);
     void onWriteComplete(const TcpConnectionPtr& conn);
 
-    void sendRequest(uint64_t req_id, const std::string& packet);
-    std::shared_ptr<TcpClient> getTcpClient();  // 单节点直取，多节点轮询
+    void sendRequest(uint64_t req_id, const std::string& packet, const std::string& hashKey = "");
+    std::shared_ptr<TcpClient> getTcpClient(const std::string& hashKey = "");
     void handleResponse(const DecodedPacket& packet);
     void handleTimeout(uint64_t req_id);  // FIX: 超时处理
 
@@ -91,7 +96,9 @@ private:
         std::unique_ptr<EventLoopThread> loopThread;
     };
     std::vector<Endpoint> endpoints_;
-    std::atomic<size_t> rrIndex_{0};  // 轮询索引
+    std::atomic<size_t> rrIndex_{0};  // RR 索引
+    LBPolicy lbPolicy_ = LBPolicy::RR;
+    std::unique_ptr<ConsistentHash> consistentHash_;  // unique_ptr（含 mutex 不可拷贝）
 
     EventLoop* loop_;  // 单节点模式使用；多节点模式置 nullptr
     std::unique_ptr<EventLoopThread> loopThread_;
@@ -100,6 +107,7 @@ private:
     std::shared_ptr<TcpClient> tcpClient_;  // 单节点/池模式使用
     std::atomic<bool> connected_;
     std::atomic<bool> disconnecting_{false};  // Issue #2 fix: 防止 sendRequest 与 disconnect 数据竞争
+    std::atomic<bool> destroyed_{false};   // Issue #4 fix: 防止析构后定时器回调 UAF
 
     std::atomic<uint64_t> nextReqId_;
 
@@ -108,7 +116,8 @@ private:
     std::unordered_map<uint64_t, ResponseCallback> pendingCallbacks_;
 
     std::atomic<bool> heartbeatRunning_{false};
-    uint64_t heartbeatTimerId_ = 0;  // FIX: 记录定时器ID用于取消
+    uint64_t heartbeatTimerId_ = 0;
+    EventLoop* heartbeatLoop_ = nullptr;  // 心跳注册的 loop（可能与 loop_ 不同）
 
     // 熔断器 + 限流器（不拥有所有权，由调用方管理生命周期）
     CircuitBreaker* circuitBreaker_ = nullptr;

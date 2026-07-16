@@ -328,6 +328,7 @@ CMakeFiles/test_circuit_breaker.dir/tests/test_circuit_breaker.cc.o: \
  /usr/include/google/protobuf/map_field_inl.h \
  /usr/include/google/protobuf/map_field.h \
  /home/machao/projects/rpc_framework/src/discovery/service_registry.h \
+ /home/machao/projects/rpc_framework/src/loadbalance/consistent_hash.h \
  /home/machao/projects/rpc_framework/src/server/rpc_server.h \
  /home/machao/projects/rpc_framework/src/network/tcp_server.h \
  /home/machao/projects/rpc_framework/src/server/rpc_service.h

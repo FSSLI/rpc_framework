@@ -11,6 +11,7 @@
 #include <ctime>
 #include <random>
 #include <algorithm>  // std::shuffle
+#include <thread>     // std::hash<std::thread::id>
 
 namespace rpc {
 
@@ -44,7 +45,8 @@ RpcAsyncClient::RpcAsyncClient(std::shared_ptr<TcpClient> tcpClient)
 }
 
 RpcAsyncClient::~RpcAsyncClient() {
-    // Issue #1 fix: 先停心跳定时器，再清理资源
+    // Issue #4 fix: 先设析构标志，防止外部 loop 的 pending 定时器回调 UAF
+    destroyed_ = true;
     stopHeartbeat();
     disconnect();
 
@@ -182,6 +184,9 @@ bool RpcAsyncClient::connectViaRegistry() {
 
             endpoints_.push_back(std::move(ep));
             ++connected;
+            if (lbPolicy_ == LBPolicy::CONSISTENT_HASH && consistentHash_) {
+                consistentHash_->addNode(node.host + ":" + std::to_string(node.port));
+            }
             std::cout << "RpcAsyncClient: connected to " << node.host << ":" << node.port << std::endl;
         } else {
             // 超时或失败，跳过此节点
@@ -299,22 +304,40 @@ bool RpcAsyncClient::connectDirect() {
 }
 
 void RpcAsyncClient::disconnect() {
-    // Issue #2 fix: 先设置标志，阻止新请求进入
     disconnecting_ = true;
 
-    // 清理多节点
+    // 清理多节点：先 reset TcpClient（loop 存活时 ~TcpClient 才安全）
+    // 再 stop EventLoopThread
+    std::vector<std::unique_ptr<EventLoopThread>> savedLoops;
     for (auto& ep : endpoints_) {
+        if (lbPolicy_ == LBPolicy::CONSISTENT_HASH && consistentHash_) {
+            consistentHash_->removeNode(ep.host + ":" + std::to_string(ep.port));
+        }
         if (ep.tcpClient) {
+            ep.tcpClient->setConnectionCallback({});
+            ep.tcpClient->setMessageCallback({});
             ep.tcpClient->stop();
+            ep.tcpClient.reset();
         }
-        if (ep.loopThread) {
-            ep.loopThread->stop();
-        }
+        savedLoops.push_back(std::move(ep.loopThread));
     }
     endpoints_.clear();
+    for (auto& lt : savedLoops) {
+        if (lt) lt->stop();
+    }
 
-    // 清理单节点
+    // 清理单节点 — 先清除回调防止 pool 模式下 TcpConnection 回调 UAF
     if (tcpClient_) {
+        tcpClient_->setConnectionCallback({});
+        tcpClient_->setMessageCallback({});
+        tcpClient_->setWriteCompleteCallback({});
+        // 同样清除已活跃连接上的回调（setupCallbacks 会同时设 TcpClient 和 TcpConnection）
+        auto conn = tcpClient_->connection();
+        if (conn) {
+            conn->setConnectionCallback({});
+            conn->setMessageCallback({});
+            conn->setWriteCompleteCallback({});
+        }
         tcpClient_->disconnectPermanently();
         tcpClient_.reset();
     }
@@ -358,6 +381,13 @@ RpcAsyncClient::ResponseFuture RpcAsyncClient::asyncCall(
 
     uint64_t reqId = nextReqId_.fetch_add(1);
 
+    // TraceID 注入：reqId + 时间戳 + 线程 ID
+    RpcRequest tracedReq = request;
+    std::string traceId = std::to_string(reqId) + "-"
+                        + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()) + "-"
+                        + std::to_string(std::hash<std::thread::id>{}(std::this_thread::get_id()));
+    (*tracedReq.mutable_metadata())["trace-id"] = traceId;
+
     ResponsePromise promise;
     ResponseFuture future = promise.get_future();
 
@@ -369,7 +399,6 @@ RpcAsyncClient::ResponseFuture RpcAsyncClient::asyncCall(
     // 注册超时定时器（多节点模式用首节点 loop，单节点用 loop_）
     EventLoop* timeoutLoop = loop_;
     if (!endpoints_.empty() && !endpoints_[0].tcpClient) {
-        // should not happen, but guard
     } else if (!endpoints_.empty()) {
         timeoutLoop = endpoints_[0].tcpClient->getLoop();
     }
@@ -379,12 +408,11 @@ RpcAsyncClient::ResponseFuture RpcAsyncClient::asyncCall(
         });
     }
 
-    std::string packet = Codec::encodeRequest(request, reqId, service_name, method_name);
-    // Issue #9 fix: 序列化失败时立即通知调用者
+    std::string packet = Codec::encodeRequest(tracedReq, reqId, service_name, method_name);
     if (packet.empty()) {
         handleTimeout(reqId);
     } else {
-        sendRequest(reqId, packet);
+        sendRequest(reqId, packet, service_name + "/" + method_name);
     }
 
     return future;
@@ -417,12 +445,17 @@ void RpcAsyncClient::asyncCall(
 
     uint64_t reqId = nextReqId_.fetch_add(1);
 
+    RpcRequest tracedReq = request;
+    std::string traceId = std::to_string(reqId) + "-"
+                        + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()) + "-"
+                        + std::to_string(std::hash<std::thread::id>{}(std::this_thread::get_id()));
+    (*tracedReq.mutable_metadata())["trace-id"] = traceId;
+
     {
         std::lock_guard<std::mutex> lock(pendingMutex_);
         pendingCallbacks_[reqId] = std::move(cb);
     }
 
-    // 注册超时定时器（多节点模式用首节点 loop，单节点用 loop_）
     EventLoop* timeoutLoop = loop_;
     if (!endpoints_.empty() && endpoints_[0].tcpClient) {
         timeoutLoop = endpoints_[0].tcpClient->getLoop();
@@ -433,27 +466,46 @@ void RpcAsyncClient::asyncCall(
         });
     }
 
-    std::string packet = Codec::encodeRequest(request, reqId, service_name, method_name);
-    // Issue #9 fix: 序列化失败时立即通知调用者
+    std::string packet = Codec::encodeRequest(tracedReq, reqId, service_name, method_name);
     if (packet.empty()) {
         handleTimeout(reqId);
     } else {
-        sendRequest(reqId, packet);
+        sendRequest(reqId, packet, service_name + "/" + method_name);
     }
 }
 
-std::shared_ptr<TcpClient> RpcAsyncClient::getTcpClient() {
-    // 多节点模式：轮询选择节点
-    if (!endpoints_.empty()) {
-        size_t idx = rrIndex_.fetch_add(1, std::memory_order_relaxed) % endpoints_.size();
-        return endpoints_[idx].tcpClient;
+void RpcAsyncClient::setLBPolicy(LBPolicy p, int virtualNodes) {
+    lbPolicy_ = p;
+    if (p == LBPolicy::CONSISTENT_HASH) {
+        consistentHash_ = std::make_unique<ConsistentHash>(virtualNodes);
+        for (auto& ep : endpoints_) {
+            consistentHash_->addNode(ep.host + ":" + std::to_string(ep.port));
+        }
+    } else {
+        consistentHash_.reset();
     }
-    // 单节点/池模式
-    return tcpClient_;
 }
 
-void RpcAsyncClient::sendRequest(uint64_t req_id, const std::string& packet) {
-    auto client = getTcpClient();
+std::shared_ptr<TcpClient> RpcAsyncClient::getTcpClient(const std::string& hashKey) {
+    size_t sz = endpoints_.size();
+    if (sz == 0) return tcpClient_;
+
+    if (lbPolicy_ == LBPolicy::CONSISTENT_HASH && consistentHash_ && !hashKey.empty()) {
+        std::string node = consistentHash_->getNode(hashKey);
+        for (auto& ep : endpoints_) {
+            if (ep.host + ":" + std::to_string(ep.port) == node) {
+                return ep.tcpClient;
+            }
+        }
+        // 哈希环未命中，fallback 轮询
+    }
+    // 默认轮询
+    size_t idx = rrIndex_.fetch_add(1, std::memory_order_relaxed) % sz;
+    return endpoints_[idx].tcpClient;
+}
+
+void RpcAsyncClient::sendRequest(uint64_t req_id, const std::string& packet, const std::string& hashKey) {
+    auto client = getTcpClient(hashKey);
     if (disconnecting_.load() || !client) {
         handleTimeout(req_id);
         return;
@@ -463,7 +515,6 @@ void RpcAsyncClient::sendRequest(uint64_t req_id, const std::string& packet) {
         handleTimeout(req_id);
         return;
     }
-    // TcpConnection::send() 内部处理跨线程调度（runInLoop + shared_from_this）
     conn->send(packet);
 }
 
@@ -472,6 +523,9 @@ void RpcAsyncClient::sendRequest(uint64_t req_id, const std::string& packet) {
 // ============================================================================
 
 void RpcAsyncClient::handleTimeout(uint64_t req_id) {
+    // Issue #4 fix: 对象已析构则直接返回，防止访问已销毁成员
+    if (destroyed_.load()) return;
+
     // 超时 = 失败，通知熔断器
     if (circuitBreaker_) {
         circuitBreaker_->recordFailure();
@@ -528,9 +582,9 @@ void RpcAsyncClient::onMessage(const TcpConnectionPtr& conn, Buffer* buf, int64_
 void RpcAsyncClient::handleResponse(const DecodedPacket& packet) {
     uint64_t reqId = packet.req_id;
 
-    // 通知熔断器
+    // Issue #7 fix: 熔断只计网络/系统级失败，业务 error 不触发
     if (circuitBreaker_) {
-        if (packet.rpc_response.success() || packet.network_status == Status::SUCCESS) {
+        if (packet.network_status == Status::SUCCESS) {
             circuitBreaker_->recordSuccess();
         } else {
             circuitBreaker_->recordFailure();
@@ -581,9 +635,15 @@ bool RpcAsyncClient::connected() const {
 }
 
 void RpcAsyncClient::startHeartbeat(double intervalSeconds) {
-    if (loop_ && !heartbeatRunning_.exchange(true)) {
-        auto client = tcpClient_;  // shared_ptr 副本
-        heartbeatTimerId_ = loop_->runEvery(intervalSeconds, [this, client]() {
+    // 确定心跳注册的目标 EventLoop
+    EventLoop* hbLoop = loop_;
+    if (!endpoints_.empty() && endpoints_[0].tcpClient) {
+        hbLoop = endpoints_[0].tcpClient->getLoop();
+    }
+    if (hbLoop && !heartbeatRunning_.exchange(true)) {
+        heartbeatLoop_ = hbLoop;  // track which loop the timer is on
+        auto client = tcpClient_;
+        heartbeatTimerId_ = hbLoop->runEvery(intervalSeconds, [this, client]() {
             auto conn = client ? client->connection() : nullptr;
             if (connected_ && conn) {
                 rpc::Heartbeat hb;
@@ -599,8 +659,9 @@ void RpcAsyncClient::startHeartbeat(double intervalSeconds) {
 }
 
 void RpcAsyncClient::stopHeartbeat() {
-    if (heartbeatRunning_.exchange(false) && loop_) {
-        loop_->cancelTimer(heartbeatTimerId_);
+    if (heartbeatRunning_.exchange(false) && heartbeatLoop_) {
+        heartbeatLoop_->cancelTimer(heartbeatTimerId_);
+        heartbeatLoop_ = nullptr;
     }
 }
 

@@ -59,6 +59,14 @@ void RpcServer::onMessage(const TcpConnectionPtr& conn, Buffer* buf, int64_t) {
         }
 
         auto svcIt = services_.find(decoded.service_name);
+
+        // TraceID 提取（从 metadata 中读取）
+        auto traceIt = decoded.rpc_request.metadata().find("trace-id");
+        std::string traceId = (traceIt != decoded.rpc_request.metadata().end()) ? traceIt->second : "";
+        if (!traceId.empty()) {
+            std::cout << "[trace:" << traceId << "] " << decoded.service_name << "." << decoded.method_name << std::endl;
+        }
+
         if (svcIt == services_.end()) {
             RpcResponse resp;
             resp.set_success(false);

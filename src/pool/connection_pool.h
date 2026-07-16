@@ -36,9 +36,11 @@ public:
     int poolSize(const std::string& host, uint16_t port) const;
 
 private:
+    // 析构顺序（reverse decl order）: nextIndex → clients → loops
+    // clients 先析构（~TcpClient 需访问 EventLoop），loops 后析构（~EventLoopThread）
     struct EndpointPool {
-        std::vector<TcpClientPtr> clients;
         std::vector<std::unique_ptr<EventLoopThread>> loops;
+        std::vector<TcpClientPtr> clients;
         std::atomic<size_t> nextIndex{0};
     };
 

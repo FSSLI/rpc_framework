@@ -5,7 +5,6 @@
 #include "event_loop.h"
 #include "socket.h"
 #include <iostream>
-#include <unistd.h>
 
 namespace rpc {
 
@@ -18,20 +17,36 @@ TcpClient::TcpClient(EventLoop* loop, const struct sockaddr_in& serverAddr)
 }
 
 TcpClient::~TcpClient() {
-    // Issue #2 fix: 先停止 Connector（取消 pending 定时器），再清理连接
-    connector_->stop();
+    // ~TcpClient() must run in the loop thread because:
+    // - Connector::~Connector() calls assertInLoopThread()
+    // - removeConnection callback may fire during connection cleanup
+    // The caller (ConnectionPool) must dispatch shared_ptr<TcpClient> to
+    // the loop thread before releasing it, or call ~TcpClient from loop.
+    // If destructor is called from non-loop thread, post to loop:
+    if (connector_ && loop_ && !loop_->isInLoopThread()) {
+        auto c = std::move(connector_);
+        std::shared_ptr<TcpConnection> conn;
+        {
+            std::lock_guard<std::mutex> lock(mutex_);
+            conn = std::move(connection_);
+        }
+        loop_->runInLoop([c = std::move(c), conn = std::move(conn)]() {
+            if (conn) conn->connectDestroyed();
+            // ~Connector() runs when c goes out of scope (in loop thread)
+        });
+        return;
+    }
+    // In loop thread: safe to destroy directly
+    if (connector_) connector_->stop();
 
     std::shared_ptr<TcpConnection> conn;
     {
         std::lock_guard<std::mutex> lock(mutex_);
         conn = connection_;
     }
-
     if (conn) {
         auto ioLoop = conn->getLoop();
-        ioLoop->runInLoop([conn]() {
-            conn->connectDestroyed();
-        });
+        ioLoop->runInLoop([conn]() { conn->connectDestroyed(); });
     }
 }
 
@@ -65,12 +80,6 @@ std::shared_ptr<TcpConnection> TcpClient::connection() const {
 }
 
 void TcpClient::newConnection(int sockfd) {
-    // FIX: 如果用户已请求永久断开，直接关闭 fd，拒绝创建连接
-    if (disconnecting_.load()) {
-        ::close(sockfd);
-        return;
-    }
-
     struct sockaddr_in localAddr = Socket::getLocalAddr(sockfd);
     struct sockaddr_in peerAddr = Socket::getPeerAddr(sockfd);
 

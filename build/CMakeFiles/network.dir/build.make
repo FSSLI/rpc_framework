@@ -335,10 +335,24 @@ CMakeFiles/network.dir/src/discovery/memory_registry.cc.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/network.dir/src/discovery/memory_registry.cc.s"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/machao/projects/rpc_framework/src/discovery/memory_registry.cc -o CMakeFiles/network.dir/src/discovery/memory_registry.cc.s
 
+CMakeFiles/network.dir/src/discovery/etcd_registry.cc.o: CMakeFiles/network.dir/flags.make
+CMakeFiles/network.dir/src/discovery/etcd_registry.cc.o: ../src/discovery/etcd_registry.cc
+CMakeFiles/network.dir/src/discovery/etcd_registry.cc.o: CMakeFiles/network.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/machao/projects/rpc_framework/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_20) "Building CXX object CMakeFiles/network.dir/src/discovery/etcd_registry.cc.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/network.dir/src/discovery/etcd_registry.cc.o -MF CMakeFiles/network.dir/src/discovery/etcd_registry.cc.o.d -o CMakeFiles/network.dir/src/discovery/etcd_registry.cc.o -c /home/machao/projects/rpc_framework/src/discovery/etcd_registry.cc
+
+CMakeFiles/network.dir/src/discovery/etcd_registry.cc.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/network.dir/src/discovery/etcd_registry.cc.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/machao/projects/rpc_framework/src/discovery/etcd_registry.cc > CMakeFiles/network.dir/src/discovery/etcd_registry.cc.i
+
+CMakeFiles/network.dir/src/discovery/etcd_registry.cc.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/network.dir/src/discovery/etcd_registry.cc.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/machao/projects/rpc_framework/src/discovery/etcd_registry.cc -o CMakeFiles/network.dir/src/discovery/etcd_registry.cc.s
+
 CMakeFiles/network.dir/src/pool/connection_pool.cc.o: CMakeFiles/network.dir/flags.make
 CMakeFiles/network.dir/src/pool/connection_pool.cc.o: ../src/pool/connection_pool.cc
 CMakeFiles/network.dir/src/pool/connection_pool.cc.o: CMakeFiles/network.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/machao/projects/rpc_framework/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_20) "Building CXX object CMakeFiles/network.dir/src/pool/connection_pool.cc.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/machao/projects/rpc_framework/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_21) "Building CXX object CMakeFiles/network.dir/src/pool/connection_pool.cc.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/network.dir/src/pool/connection_pool.cc.o -MF CMakeFiles/network.dir/src/pool/connection_pool.cc.o.d -o CMakeFiles/network.dir/src/pool/connection_pool.cc.o -c /home/machao/projects/rpc_framework/src/pool/connection_pool.cc
 
 CMakeFiles/network.dir/src/pool/connection_pool.cc.i: cmake_force
@@ -352,7 +366,7 @@ CMakeFiles/network.dir/src/pool/connection_pool.cc.s: cmake_force
 CMakeFiles/network.dir/src/circuit_breaker/circuit_breaker.cc.o: CMakeFiles/network.dir/flags.make
 CMakeFiles/network.dir/src/circuit_breaker/circuit_breaker.cc.o: ../src/circuit_breaker/circuit_breaker.cc
 CMakeFiles/network.dir/src/circuit_breaker/circuit_breaker.cc.o: CMakeFiles/network.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/machao/projects/rpc_framework/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_21) "Building CXX object CMakeFiles/network.dir/src/circuit_breaker/circuit_breaker.cc.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/machao/projects/rpc_framework/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_22) "Building CXX object CMakeFiles/network.dir/src/circuit_breaker/circuit_breaker.cc.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/network.dir/src/circuit_breaker/circuit_breaker.cc.o -MF CMakeFiles/network.dir/src/circuit_breaker/circuit_breaker.cc.o.d -o CMakeFiles/network.dir/src/circuit_breaker/circuit_breaker.cc.o -c /home/machao/projects/rpc_framework/src/circuit_breaker/circuit_breaker.cc
 
 CMakeFiles/network.dir/src/circuit_breaker/circuit_breaker.cc.i: cmake_force
@@ -366,7 +380,7 @@ CMakeFiles/network.dir/src/circuit_breaker/circuit_breaker.cc.s: cmake_force
 CMakeFiles/network.dir/src/rate_limiter/token_bucket.cc.o: CMakeFiles/network.dir/flags.make
 CMakeFiles/network.dir/src/rate_limiter/token_bucket.cc.o: ../src/rate_limiter/token_bucket.cc
 CMakeFiles/network.dir/src/rate_limiter/token_bucket.cc.o: CMakeFiles/network.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/machao/projects/rpc_framework/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_22) "Building CXX object CMakeFiles/network.dir/src/rate_limiter/token_bucket.cc.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/machao/projects/rpc_framework/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_23) "Building CXX object CMakeFiles/network.dir/src/rate_limiter/token_bucket.cc.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/network.dir/src/rate_limiter/token_bucket.cc.o -MF CMakeFiles/network.dir/src/rate_limiter/token_bucket.cc.o.d -o CMakeFiles/network.dir/src/rate_limiter/token_bucket.cc.o -c /home/machao/projects/rpc_framework/src/rate_limiter/token_bucket.cc
 
 CMakeFiles/network.dir/src/rate_limiter/token_bucket.cc.i: cmake_force
@@ -376,6 +390,20 @@ CMakeFiles/network.dir/src/rate_limiter/token_bucket.cc.i: cmake_force
 CMakeFiles/network.dir/src/rate_limiter/token_bucket.cc.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/network.dir/src/rate_limiter/token_bucket.cc.s"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/machao/projects/rpc_framework/src/rate_limiter/token_bucket.cc -o CMakeFiles/network.dir/src/rate_limiter/token_bucket.cc.s
+
+CMakeFiles/network.dir/src/rate_limiter/redis_token_bucket.cc.o: CMakeFiles/network.dir/flags.make
+CMakeFiles/network.dir/src/rate_limiter/redis_token_bucket.cc.o: ../src/rate_limiter/redis_token_bucket.cc
+CMakeFiles/network.dir/src/rate_limiter/redis_token_bucket.cc.o: CMakeFiles/network.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/machao/projects/rpc_framework/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_24) "Building CXX object CMakeFiles/network.dir/src/rate_limiter/redis_token_bucket.cc.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/network.dir/src/rate_limiter/redis_token_bucket.cc.o -MF CMakeFiles/network.dir/src/rate_limiter/redis_token_bucket.cc.o.d -o CMakeFiles/network.dir/src/rate_limiter/redis_token_bucket.cc.o -c /home/machao/projects/rpc_framework/src/rate_limiter/redis_token_bucket.cc
+
+CMakeFiles/network.dir/src/rate_limiter/redis_token_bucket.cc.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/network.dir/src/rate_limiter/redis_token_bucket.cc.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/machao/projects/rpc_framework/src/rate_limiter/redis_token_bucket.cc > CMakeFiles/network.dir/src/rate_limiter/redis_token_bucket.cc.i
+
+CMakeFiles/network.dir/src/rate_limiter/redis_token_bucket.cc.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/network.dir/src/rate_limiter/redis_token_bucket.cc.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/machao/projects/rpc_framework/src/rate_limiter/redis_token_bucket.cc -o CMakeFiles/network.dir/src/rate_limiter/redis_token_bucket.cc.s
 
 # Object files for target network
 network_OBJECTS = \
@@ -398,9 +426,11 @@ network_OBJECTS = \
 "CMakeFiles/network.dir/src/server/rpc_server.cc.o" \
 "CMakeFiles/network.dir/src/loadbalance/consistent_hash.cc.o" \
 "CMakeFiles/network.dir/src/discovery/memory_registry.cc.o" \
+"CMakeFiles/network.dir/src/discovery/etcd_registry.cc.o" \
 "CMakeFiles/network.dir/src/pool/connection_pool.cc.o" \
 "CMakeFiles/network.dir/src/circuit_breaker/circuit_breaker.cc.o" \
-"CMakeFiles/network.dir/src/rate_limiter/token_bucket.cc.o"
+"CMakeFiles/network.dir/src/rate_limiter/token_bucket.cc.o" \
+"CMakeFiles/network.dir/src/rate_limiter/redis_token_bucket.cc.o"
 
 # External object files for target network
 network_EXTERNAL_OBJECTS =
@@ -424,12 +454,14 @@ libnetwork.a: CMakeFiles/network.dir/src/server/rpc_service.cc.o
 libnetwork.a: CMakeFiles/network.dir/src/server/rpc_server.cc.o
 libnetwork.a: CMakeFiles/network.dir/src/loadbalance/consistent_hash.cc.o
 libnetwork.a: CMakeFiles/network.dir/src/discovery/memory_registry.cc.o
+libnetwork.a: CMakeFiles/network.dir/src/discovery/etcd_registry.cc.o
 libnetwork.a: CMakeFiles/network.dir/src/pool/connection_pool.cc.o
 libnetwork.a: CMakeFiles/network.dir/src/circuit_breaker/circuit_breaker.cc.o
 libnetwork.a: CMakeFiles/network.dir/src/rate_limiter/token_bucket.cc.o
+libnetwork.a: CMakeFiles/network.dir/src/rate_limiter/redis_token_bucket.cc.o
 libnetwork.a: CMakeFiles/network.dir/build.make
 libnetwork.a: CMakeFiles/network.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/machao/projects/rpc_framework/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_23) "Linking CXX static library libnetwork.a"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/machao/projects/rpc_framework/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_25) "Linking CXX static library libnetwork.a"
 	$(CMAKE_COMMAND) -P CMakeFiles/network.dir/cmake_clean_target.cmake
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/network.dir/link.txt --verbose=$(VERBOSE)
 

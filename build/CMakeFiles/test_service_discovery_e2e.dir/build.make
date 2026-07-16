@@ -93,6 +93,14 @@ test_service_discovery_e2e_EXTERNAL_OBJECTS =
 test_service_discovery_e2e: CMakeFiles/test_service_discovery_e2e.dir/tests/test_service_discovery_e2e.cc.o
 test_service_discovery_e2e: CMakeFiles/test_service_discovery_e2e.dir/build.make
 test_service_discovery_e2e: libnetwork.a
+test_service_discovery_e2e: /usr/local/lib/libetcd-cpp-api.so
+test_service_discovery_e2e: /usr/lib/x86_64-linux-gnu/libcpprest.so.2.10
+test_service_discovery_e2e: /usr/lib/x86_64-linux-gnu/libssl.so
+test_service_discovery_e2e: /usr/lib/x86_64-linux-gnu/libcrypto.so
+test_service_discovery_e2e: /usr/lib/x86_64-linux-gnu/libgpr.so
+test_service_discovery_e2e: /usr/lib/x86_64-linux-gnu/libgrpc.so
+test_service_discovery_e2e: /usr/lib/x86_64-linux-gnu/libgrpc++.so
+test_service_discovery_e2e: /usr/lib/x86_64-linux-gnu/libprotobuf.so
 test_service_discovery_e2e: CMakeFiles/test_service_discovery_e2e.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/machao/projects/rpc_framework/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking CXX executable test_service_discovery_e2e"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/test_service_discovery_e2e.dir/link.txt --verbose=$(VERBOSE)

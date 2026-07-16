@@ -26,7 +26,9 @@ Channel::~Channel() {
 }
 
 void Channel::handleEvent() {
+#ifndef RPC_SILENT
     std::cout << "handleEvent revents=" << revents_ << std::endl;
+#endif
 
     // EPOLLERR 通常意味着连接出现致命错误，应该关闭
     if (revents_ & EPOLLERR) {
@@ -59,7 +61,9 @@ void Channel::handleEvent() {
 void Channel::enableReading() {  
     events_ |= kReadEvent;
     update();
+#ifndef RPC_SILENT
     std::cout << "enableReading fd=" << fd_ << " events=" << events_ << " index=" << index_ << std::endl;
+#endif
 }
 
 void Channel::disableReading() {

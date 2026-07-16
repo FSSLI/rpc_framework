@@ -39,6 +39,8 @@ private:
     // 保护 OPEN → HALF_OPEN 的转换
     std::mutex mutex_;
     std::chrono::steady_clock::time_point openedAt_;
+    std::atomic<int> halfOpenRequests_{0};  // 半开状态只允许 1 个探测
+    std::chrono::milliseconds halfOpenTimeout_{5000};  // 探测超时 5s 后重试
 };
 
 } // namespace rpc
