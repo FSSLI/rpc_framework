@@ -1,6 +1,17 @@
 cmake_minimum_required(VERSION 3.10)
 project(rpc_framework)
 
+# === 日志级别控制 ===
+
+option(RPC_SILENT "Disable all RPC log output (for benchmarks)" OFF)
+option(RPC_DEBUG  "Enable verbose debug log"                      OFF)
+
+if(RPC_SILENT)
+    add_definitions(-DRPC_SILENT)
+elseif(RPC_DEBUG)
+    add_definitions(-DRPC_DEBUG)
+endif()
+
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -69,6 +80,11 @@ set(RATE_LIMITER_SRCS
     src/rate_limiter/token_bucket.cc
 )
 
+set(INTERCEPTOR_SRCS
+    src/interceptor/interceptor.cc
+    src/interceptor/builtin_interceptors.cc
+)
+
 # Redis 令牌桶（可选，需要 hiredis）
 option(WITH_REDIS "Build with Redis token bucket" OFF)
 if(WITH_REDIS)
@@ -76,7 +92,7 @@ if(WITH_REDIS)
     list(APPEND RATE_LIMITER_SRCS src/rate_limiter/redis_token_bucket.cc)
 endif()
 
-add_library(network ${NETWORK_SRCS} ${CODEC_SRCS} ${PROTO_SRCS} ${CLIENT_SRCS} ${SERVER_SRCS} ${LOADBALANCE_SRCS} ${DISCOVERY_SRCS} ${POOL_SRCS} ${CIRCUIT_BREAKER_SRCS} ${RATE_LIMITER_SRCS})
+add_library(network ${NETWORK_SRCS} ${CODEC_SRCS} ${PROTO_SRCS} ${CLIENT_SRCS} ${SERVER_SRCS} ${LOADBALANCE_SRCS} ${DISCOVERY_SRCS} ${POOL_SRCS} ${CIRCUIT_BREAKER_SRCS} ${RATE_LIMITER_SRCS} ${INTERCEPTOR_SRCS})
 target_link_libraries(network protobuf pthread)
 
 if(WITH_ETCD)
@@ -130,6 +146,9 @@ target_link_libraries(test_consistent_hash_lb network)
 
 add_executable(test_trace_id tests/test_trace_id.cc)
 target_link_libraries(test_trace_id network)
+
+add_executable(test_interceptor tests/test_interceptor.cc)
+target_link_libraries(test_interceptor network)
 
 add_executable(test_benchmark tests/test_benchmark.cc)
 target_link_libraries(test_benchmark network)

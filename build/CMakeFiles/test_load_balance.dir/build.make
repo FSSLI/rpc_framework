@@ -93,14 +93,6 @@ test_load_balance_EXTERNAL_OBJECTS =
 test_load_balance: CMakeFiles/test_load_balance.dir/tests/test_load_balance.cc.o
 test_load_balance: CMakeFiles/test_load_balance.dir/build.make
 test_load_balance: libnetwork.a
-test_load_balance: /usr/local/lib/libetcd-cpp-api.so
-test_load_balance: /usr/lib/x86_64-linux-gnu/libcpprest.so.2.10
-test_load_balance: /usr/lib/x86_64-linux-gnu/libssl.so
-test_load_balance: /usr/lib/x86_64-linux-gnu/libcrypto.so
-test_load_balance: /usr/lib/x86_64-linux-gnu/libgpr.so
-test_load_balance: /usr/lib/x86_64-linux-gnu/libgrpc.so
-test_load_balance: /usr/lib/x86_64-linux-gnu/libgrpc++.so
-test_load_balance: /usr/lib/x86_64-linux-gnu/libprotobuf.so
 test_load_balance: CMakeFiles/test_load_balance.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/machao/projects/rpc_framework/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking CXX executable test_load_balance"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/test_load_balance.dir/link.txt --verbose=$(VERBOSE)

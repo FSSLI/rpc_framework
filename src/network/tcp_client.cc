@@ -107,7 +107,8 @@ void TcpClient::removeConnection(const TcpConnectionPtr& conn) {
 
     {
         std::lock_guard<std::mutex> lock(mutex_);
-        assert(connection_ == conn);
+        // 连接可能在 shutdown 期间已被新连接替换（auto-reconnect），忽略不匹配的回调
+        if (connection_ != conn) return;
         connection_.reset();
     }
 

@@ -93,14 +93,6 @@ test_trace_id_EXTERNAL_OBJECTS =
 test_trace_id: CMakeFiles/test_trace_id.dir/tests/test_trace_id.cc.o
 test_trace_id: CMakeFiles/test_trace_id.dir/build.make
 test_trace_id: libnetwork.a
-test_trace_id: /usr/local/lib/libetcd-cpp-api.so
-test_trace_id: /usr/lib/x86_64-linux-gnu/libcpprest.so.2.10
-test_trace_id: /usr/lib/x86_64-linux-gnu/libssl.so
-test_trace_id: /usr/lib/x86_64-linux-gnu/libcrypto.so
-test_trace_id: /usr/lib/x86_64-linux-gnu/libgpr.so
-test_trace_id: /usr/lib/x86_64-linux-gnu/libgrpc.so
-test_trace_id: /usr/lib/x86_64-linux-gnu/libgrpc++.so
-test_trace_id: /usr/lib/x86_64-linux-gnu/libprotobuf.so
 test_trace_id: CMakeFiles/test_trace_id.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/machao/projects/rpc_framework/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking CXX executable test_trace_id"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/test_trace_id.dir/link.txt --verbose=$(VERBOSE)

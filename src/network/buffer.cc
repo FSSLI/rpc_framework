@@ -98,7 +98,7 @@ ssize_t Buffer::readFd(int fd, int* savedErrno) {
 
         if (static_cast<size_t>(n) <= writable) {
             writerIndex_ += n;
-#ifdef RPC_DEBUG
+#ifndef RPC_SILENT
             std::cout << "writerIndex_=" << writerIndex_ << " readerIndex_=" << readerIndex_ << std::endl;
 #endif
         } else {

@@ -109,14 +109,6 @@ rpc_server: CMakeFiles/rpc_server.dir/examples/rpc/rpc_server_main.cc.o
 rpc_server: CMakeFiles/rpc_server.dir/examples/rpc/echo_service.cc.o
 rpc_server: CMakeFiles/rpc_server.dir/build.make
 rpc_server: libnetwork.a
-rpc_server: /usr/local/lib/libetcd-cpp-api.so
-rpc_server: /usr/lib/x86_64-linux-gnu/libcpprest.so.2.10
-rpc_server: /usr/lib/x86_64-linux-gnu/libssl.so
-rpc_server: /usr/lib/x86_64-linux-gnu/libcrypto.so
-rpc_server: /usr/lib/x86_64-linux-gnu/libgpr.so
-rpc_server: /usr/lib/x86_64-linux-gnu/libgrpc.so
-rpc_server: /usr/lib/x86_64-linux-gnu/libgrpc++.so
-rpc_server: /usr/lib/x86_64-linux-gnu/libprotobuf.so
 rpc_server: CMakeFiles/rpc_server.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/machao/projects/rpc_framework/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Linking CXX executable rpc_server"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/rpc_server.dir/link.txt --verbose=$(VERBOSE)

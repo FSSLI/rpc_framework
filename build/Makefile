@@ -312,6 +312,19 @@ test_trace_id/fast:
 .PHONY : test_trace_id/fast
 
 #=============================================================================
+# Target rules for targets named test_interceptor
+
+# Build rule for target.
+test_interceptor: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 test_interceptor
+.PHONY : test_interceptor
+
+# fast build rule for target.
+test_interceptor/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_interceptor.dir/build.make CMakeFiles/test_interceptor.dir/build
+.PHONY : test_interceptor/fast
+
+#=============================================================================
 # Target rules for targets named test_benchmark
 
 # Build rule for target.
@@ -323,32 +336,6 @@ test_benchmark: cmake_check_build_system
 test_benchmark/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_benchmark.dir/build.make CMakeFiles/test_benchmark.dir/build
 .PHONY : test_benchmark/fast
-
-#=============================================================================
-# Target rules for targets named test_etcd_registry
-
-# Build rule for target.
-test_etcd_registry: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 test_etcd_registry
-.PHONY : test_etcd_registry
-
-# fast build rule for target.
-test_etcd_registry/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_etcd_registry.dir/build.make CMakeFiles/test_etcd_registry.dir/build
-.PHONY : test_etcd_registry/fast
-
-#=============================================================================
-# Target rules for targets named test_redis_token_bucket
-
-# Build rule for target.
-test_redis_token_bucket: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 test_redis_token_bucket
-.PHONY : test_redis_token_bucket
-
-# fast build rule for target.
-test_redis_token_bucket/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_redis_token_bucket.dir/build.make CMakeFiles/test_redis_token_bucket.dir/build
-.PHONY : test_redis_token_bucket/fast
 
 examples/rpc/echo_service.o: examples/rpc/echo_service.cc.o
 .PHONY : examples/rpc/echo_service.o
@@ -542,30 +529,6 @@ src/codec/rpc_codec.cc.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/network.dir/build.make CMakeFiles/network.dir/src/codec/rpc_codec.cc.s
 .PHONY : src/codec/rpc_codec.cc.s
 
-src/discovery/etcd_registry.o: src/discovery/etcd_registry.cc.o
-.PHONY : src/discovery/etcd_registry.o
-
-# target to build an object file
-src/discovery/etcd_registry.cc.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/network.dir/build.make CMakeFiles/network.dir/src/discovery/etcd_registry.cc.o
-.PHONY : src/discovery/etcd_registry.cc.o
-
-src/discovery/etcd_registry.i: src/discovery/etcd_registry.cc.i
-.PHONY : src/discovery/etcd_registry.i
-
-# target to preprocess a source file
-src/discovery/etcd_registry.cc.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/network.dir/build.make CMakeFiles/network.dir/src/discovery/etcd_registry.cc.i
-.PHONY : src/discovery/etcd_registry.cc.i
-
-src/discovery/etcd_registry.s: src/discovery/etcd_registry.cc.s
-.PHONY : src/discovery/etcd_registry.s
-
-# target to generate assembly for a file
-src/discovery/etcd_registry.cc.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/network.dir/build.make CMakeFiles/network.dir/src/discovery/etcd_registry.cc.s
-.PHONY : src/discovery/etcd_registry.cc.s
-
 src/discovery/memory_registry.o: src/discovery/memory_registry.cc.o
 .PHONY : src/discovery/memory_registry.o
 
@@ -589,6 +552,54 @@ src/discovery/memory_registry.s: src/discovery/memory_registry.cc.s
 src/discovery/memory_registry.cc.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/network.dir/build.make CMakeFiles/network.dir/src/discovery/memory_registry.cc.s
 .PHONY : src/discovery/memory_registry.cc.s
+
+src/interceptor/builtin_interceptors.o: src/interceptor/builtin_interceptors.cc.o
+.PHONY : src/interceptor/builtin_interceptors.o
+
+# target to build an object file
+src/interceptor/builtin_interceptors.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/network.dir/build.make CMakeFiles/network.dir/src/interceptor/builtin_interceptors.cc.o
+.PHONY : src/interceptor/builtin_interceptors.cc.o
+
+src/interceptor/builtin_interceptors.i: src/interceptor/builtin_interceptors.cc.i
+.PHONY : src/interceptor/builtin_interceptors.i
+
+# target to preprocess a source file
+src/interceptor/builtin_interceptors.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/network.dir/build.make CMakeFiles/network.dir/src/interceptor/builtin_interceptors.cc.i
+.PHONY : src/interceptor/builtin_interceptors.cc.i
+
+src/interceptor/builtin_interceptors.s: src/interceptor/builtin_interceptors.cc.s
+.PHONY : src/interceptor/builtin_interceptors.s
+
+# target to generate assembly for a file
+src/interceptor/builtin_interceptors.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/network.dir/build.make CMakeFiles/network.dir/src/interceptor/builtin_interceptors.cc.s
+.PHONY : src/interceptor/builtin_interceptors.cc.s
+
+src/interceptor/interceptor.o: src/interceptor/interceptor.cc.o
+.PHONY : src/interceptor/interceptor.o
+
+# target to build an object file
+src/interceptor/interceptor.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/network.dir/build.make CMakeFiles/network.dir/src/interceptor/interceptor.cc.o
+.PHONY : src/interceptor/interceptor.cc.o
+
+src/interceptor/interceptor.i: src/interceptor/interceptor.cc.i
+.PHONY : src/interceptor/interceptor.i
+
+# target to preprocess a source file
+src/interceptor/interceptor.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/network.dir/build.make CMakeFiles/network.dir/src/interceptor/interceptor.cc.i
+.PHONY : src/interceptor/interceptor.cc.i
+
+src/interceptor/interceptor.s: src/interceptor/interceptor.cc.s
+.PHONY : src/interceptor/interceptor.s
+
+# target to generate assembly for a file
+src/interceptor/interceptor.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/network.dir/build.make CMakeFiles/network.dir/src/interceptor/interceptor.cc.s
+.PHONY : src/interceptor/interceptor.cc.s
 
 src/loadbalance/consistent_hash.o: src/loadbalance/consistent_hash.cc.o
 .PHONY : src/loadbalance/consistent_hash.o
@@ -926,30 +937,6 @@ src/protocol/rpc_service.pb.cc.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/network.dir/build.make CMakeFiles/network.dir/src/protocol/rpc_service.pb.cc.s
 .PHONY : src/protocol/rpc_service.pb.cc.s
 
-src/rate_limiter/redis_token_bucket.o: src/rate_limiter/redis_token_bucket.cc.o
-.PHONY : src/rate_limiter/redis_token_bucket.o
-
-# target to build an object file
-src/rate_limiter/redis_token_bucket.cc.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/network.dir/build.make CMakeFiles/network.dir/src/rate_limiter/redis_token_bucket.cc.o
-.PHONY : src/rate_limiter/redis_token_bucket.cc.o
-
-src/rate_limiter/redis_token_bucket.i: src/rate_limiter/redis_token_bucket.cc.i
-.PHONY : src/rate_limiter/redis_token_bucket.i
-
-# target to preprocess a source file
-src/rate_limiter/redis_token_bucket.cc.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/network.dir/build.make CMakeFiles/network.dir/src/rate_limiter/redis_token_bucket.cc.i
-.PHONY : src/rate_limiter/redis_token_bucket.cc.i
-
-src/rate_limiter/redis_token_bucket.s: src/rate_limiter/redis_token_bucket.cc.s
-.PHONY : src/rate_limiter/redis_token_bucket.s
-
-# target to generate assembly for a file
-src/rate_limiter/redis_token_bucket.cc.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/network.dir/build.make CMakeFiles/network.dir/src/rate_limiter/redis_token_bucket.cc.s
-.PHONY : src/rate_limiter/redis_token_bucket.cc.s
-
 src/rate_limiter/token_bucket.o: src/rate_limiter/token_bucket.cc.o
 .PHONY : src/rate_limiter/token_bucket.o
 
@@ -1166,30 +1153,6 @@ tests/test_consistent_hash_lb.cc.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_consistent_hash_lb.dir/build.make CMakeFiles/test_consistent_hash_lb.dir/tests/test_consistent_hash_lb.cc.s
 .PHONY : tests/test_consistent_hash_lb.cc.s
 
-tests/test_etcd_registry.o: tests/test_etcd_registry.cc.o
-.PHONY : tests/test_etcd_registry.o
-
-# target to build an object file
-tests/test_etcd_registry.cc.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_etcd_registry.dir/build.make CMakeFiles/test_etcd_registry.dir/tests/test_etcd_registry.cc.o
-.PHONY : tests/test_etcd_registry.cc.o
-
-tests/test_etcd_registry.i: tests/test_etcd_registry.cc.i
-.PHONY : tests/test_etcd_registry.i
-
-# target to preprocess a source file
-tests/test_etcd_registry.cc.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_etcd_registry.dir/build.make CMakeFiles/test_etcd_registry.dir/tests/test_etcd_registry.cc.i
-.PHONY : tests/test_etcd_registry.cc.i
-
-tests/test_etcd_registry.s: tests/test_etcd_registry.cc.s
-.PHONY : tests/test_etcd_registry.s
-
-# target to generate assembly for a file
-tests/test_etcd_registry.cc.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_etcd_registry.dir/build.make CMakeFiles/test_etcd_registry.dir/tests/test_etcd_registry.cc.s
-.PHONY : tests/test_etcd_registry.cc.s
-
 tests/test_integration.o: tests/test_integration.cc.o
 .PHONY : tests/test_integration.o
 
@@ -1213,6 +1176,30 @@ tests/test_integration.s: tests/test_integration.cc.s
 tests/test_integration.cc.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_integration.dir/build.make CMakeFiles/test_integration.dir/tests/test_integration.cc.s
 .PHONY : tests/test_integration.cc.s
+
+tests/test_interceptor.o: tests/test_interceptor.cc.o
+.PHONY : tests/test_interceptor.o
+
+# target to build an object file
+tests/test_interceptor.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_interceptor.dir/build.make CMakeFiles/test_interceptor.dir/tests/test_interceptor.cc.o
+.PHONY : tests/test_interceptor.cc.o
+
+tests/test_interceptor.i: tests/test_interceptor.cc.i
+.PHONY : tests/test_interceptor.i
+
+# target to preprocess a source file
+tests/test_interceptor.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_interceptor.dir/build.make CMakeFiles/test_interceptor.dir/tests/test_interceptor.cc.i
+.PHONY : tests/test_interceptor.cc.i
+
+tests/test_interceptor.s: tests/test_interceptor.cc.s
+.PHONY : tests/test_interceptor.s
+
+# target to generate assembly for a file
+tests/test_interceptor.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_interceptor.dir/build.make CMakeFiles/test_interceptor.dir/tests/test_interceptor.cc.s
+.PHONY : tests/test_interceptor.cc.s
 
 tests/test_load_balance.o: tests/test_load_balance.cc.o
 .PHONY : tests/test_load_balance.o
@@ -1261,30 +1248,6 @@ tests/test_memory_registry.s: tests/test_memory_registry.cc.s
 tests/test_memory_registry.cc.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_memory_registry.dir/build.make CMakeFiles/test_memory_registry.dir/tests/test_memory_registry.cc.s
 .PHONY : tests/test_memory_registry.cc.s
-
-tests/test_redis_token_bucket.o: tests/test_redis_token_bucket.cc.o
-.PHONY : tests/test_redis_token_bucket.o
-
-# target to build an object file
-tests/test_redis_token_bucket.cc.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_redis_token_bucket.dir/build.make CMakeFiles/test_redis_token_bucket.dir/tests/test_redis_token_bucket.cc.o
-.PHONY : tests/test_redis_token_bucket.cc.o
-
-tests/test_redis_token_bucket.i: tests/test_redis_token_bucket.cc.i
-.PHONY : tests/test_redis_token_bucket.i
-
-# target to preprocess a source file
-tests/test_redis_token_bucket.cc.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_redis_token_bucket.dir/build.make CMakeFiles/test_redis_token_bucket.dir/tests/test_redis_token_bucket.cc.i
-.PHONY : tests/test_redis_token_bucket.cc.i
-
-tests/test_redis_token_bucket.s: tests/test_redis_token_bucket.cc.s
-.PHONY : tests/test_redis_token_bucket.s
-
-# target to generate assembly for a file
-tests/test_redis_token_bucket.cc.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_redis_token_bucket.dir/build.make CMakeFiles/test_redis_token_bucket.dir/tests/test_redis_token_bucket.cc.s
-.PHONY : tests/test_redis_token_bucket.cc.s
 
 tests/test_service_discovery_e2e.o: tests/test_service_discovery_e2e.cc.o
 .PHONY : tests/test_service_discovery_e2e.o
@@ -1376,11 +1339,10 @@ help:
 	@echo "... test_connector"
 	@echo "... test_consistent_hash"
 	@echo "... test_consistent_hash_lb"
-	@echo "... test_etcd_registry"
 	@echo "... test_integration"
+	@echo "... test_interceptor"
 	@echo "... test_load_balance"
 	@echo "... test_memory_registry"
-	@echo "... test_redis_token_bucket"
 	@echo "... test_service_discovery_e2e"
 	@echo "... test_token_bucket"
 	@echo "... test_trace_id"
@@ -1408,12 +1370,15 @@ help:
 	@echo "... src/codec/rpc_codec.o"
 	@echo "... src/codec/rpc_codec.i"
 	@echo "... src/codec/rpc_codec.s"
-	@echo "... src/discovery/etcd_registry.o"
-	@echo "... src/discovery/etcd_registry.i"
-	@echo "... src/discovery/etcd_registry.s"
 	@echo "... src/discovery/memory_registry.o"
 	@echo "... src/discovery/memory_registry.i"
 	@echo "... src/discovery/memory_registry.s"
+	@echo "... src/interceptor/builtin_interceptors.o"
+	@echo "... src/interceptor/builtin_interceptors.i"
+	@echo "... src/interceptor/builtin_interceptors.s"
+	@echo "... src/interceptor/interceptor.o"
+	@echo "... src/interceptor/interceptor.i"
+	@echo "... src/interceptor/interceptor.s"
 	@echo "... src/loadbalance/consistent_hash.o"
 	@echo "... src/loadbalance/consistent_hash.i"
 	@echo "... src/loadbalance/consistent_hash.s"
@@ -1456,9 +1421,6 @@ help:
 	@echo "... src/protocol/rpc_service.pb.o"
 	@echo "... src/protocol/rpc_service.pb.i"
 	@echo "... src/protocol/rpc_service.pb.s"
-	@echo "... src/rate_limiter/redis_token_bucket.o"
-	@echo "... src/rate_limiter/redis_token_bucket.i"
-	@echo "... src/rate_limiter/redis_token_bucket.s"
 	@echo "... src/rate_limiter/token_bucket.o"
 	@echo "... src/rate_limiter/token_bucket.i"
 	@echo "... src/rate_limiter/token_bucket.s"
@@ -1486,21 +1448,18 @@ help:
 	@echo "... tests/test_consistent_hash_lb.o"
 	@echo "... tests/test_consistent_hash_lb.i"
 	@echo "... tests/test_consistent_hash_lb.s"
-	@echo "... tests/test_etcd_registry.o"
-	@echo "... tests/test_etcd_registry.i"
-	@echo "... tests/test_etcd_registry.s"
 	@echo "... tests/test_integration.o"
 	@echo "... tests/test_integration.i"
 	@echo "... tests/test_integration.s"
+	@echo "... tests/test_interceptor.o"
+	@echo "... tests/test_interceptor.i"
+	@echo "... tests/test_interceptor.s"
 	@echo "... tests/test_load_balance.o"
 	@echo "... tests/test_load_balance.i"
 	@echo "... tests/test_load_balance.s"
 	@echo "... tests/test_memory_registry.o"
 	@echo "... tests/test_memory_registry.i"
 	@echo "... tests/test_memory_registry.s"
-	@echo "... tests/test_redis_token_bucket.o"
-	@echo "... tests/test_redis_token_bucket.i"
-	@echo "... tests/test_redis_token_bucket.s"
 	@echo "... tests/test_service_discovery_e2e.o"
 	@echo "... tests/test_service_discovery_e2e.i"
 	@echo "... tests/test_service_discovery_e2e.s"

@@ -32,11 +32,13 @@ void RpcServer::start() {
 }
 
 void RpcServer::onConnection(const TcpConnectionPtr& conn) {
+#ifndef RPC_SILENT
     if (conn->connected()) {
         std::cout << "RpcServer new connection: " << conn->name() << std::endl;
     } else {
         std::cout << "RpcServer connection closed: " << conn->name() << std::endl;
     }
+#endif
 }
 
 void RpcServer::onMessage(const TcpConnectionPtr& conn, Buffer* buf, int64_t) {
@@ -64,7 +66,9 @@ void RpcServer::onMessage(const TcpConnectionPtr& conn, Buffer* buf, int64_t) {
         auto traceIt = decoded.rpc_request.metadata().find("trace-id");
         std::string traceId = (traceIt != decoded.rpc_request.metadata().end()) ? traceIt->second : "";
         if (!traceId.empty()) {
+            #ifndef RPC_SILENT
             std::cout << "[trace:" << traceId << "] " << decoded.service_name << "." << decoded.method_name << std::endl;
+            #endif
         }
 
         if (svcIt == services_.end()) {

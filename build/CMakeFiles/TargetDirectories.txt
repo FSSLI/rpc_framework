@@ -13,8 +13,7 @@
 /home/machao/projects/rpc_framework/build/CMakeFiles/test_integration.dir
 /home/machao/projects/rpc_framework/build/CMakeFiles/test_consistent_hash_lb.dir
 /home/machao/projects/rpc_framework/build/CMakeFiles/test_trace_id.dir
+/home/machao/projects/rpc_framework/build/CMakeFiles/test_interceptor.dir
 /home/machao/projects/rpc_framework/build/CMakeFiles/test_benchmark.dir
-/home/machao/projects/rpc_framework/build/CMakeFiles/test_etcd_registry.dir
-/home/machao/projects/rpc_framework/build/CMakeFiles/test_redis_token_bucket.dir
 /home/machao/projects/rpc_framework/build/CMakeFiles/edit_cache.dir
 /home/machao/projects/rpc_framework/build/CMakeFiles/rebuild_cache.dir

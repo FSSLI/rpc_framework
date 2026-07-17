@@ -22,8 +22,9 @@
 - [x] 熔断降级（CLOSED→OPEN→HALF_OPEN 三态，半开单探测）
 - [x] 限流（本地令牌桶 + Redis 分布式令牌桶 Lua 原子脚本）
 - [x] TraceID 透传（metadata 自动注入，服务端提取日志）
+- [x] 拦截器链（责任链模式，熔断/限流/日志/Trace 插件化）
 - [x] 8 轮代码审查修复 60+ 线程安全/内存/协议问题
-- [x] 压测（单机 43,000 QPS，P99 840 μs，1→8线程 3.7× 扩展）
+- [x] 压测（单机 48,765 QPS，p99 382 μs，1→8线程 4.09× 扩展）
 
 ## 项目结构
 ```text
@@ -62,6 +63,9 @@ rpc_framework/
 │   ├── rate_limiter/           # 限流
 │   │   ├── token_bucket.h/cc       # 本地令牌桶
 │   │   └── redis_token_bucket.h/cc # Redis 分布式（需 -DWITH_REDIS=ON）
+│   ├── interceptor/             # 拦截器链
+│   │   ├── interceptor.h/cc         # 责任链接口
+│   │   └── builtin_interceptors.h/cc # 熔断/限流/Trace/Log 内置拦截器
 │   └── discovery/              # 服务发现
 │       ├── service_registry.h       # 抽象接口
 │       ├── memory_registry.h/cc     # 内存实现
@@ -88,6 +92,7 @@ rpc_framework/
 │   ├── test_redis_token_bucket.cc  # Redis 分布式令牌桶
 │   ├── test_etcd_registry.cc       # etcd 注册/发现/Watch
 │   ├── test_trace_id.cc            # TraceID 透传
+│   ├── test_interceptor.cc         # 拦截器链
 │   ├── test_integration.cc         # 全模块串联
 │   └── test_benchmark.cc           # 压测
 └── build/                          # 编译输出
@@ -159,6 +164,24 @@ rpc_framework/
 └─────────────┘     └─────────────┘
 ```
 
+## 拦截器链
+
+```text
+asyncCall()
+  └─ chain_.execute(req)
+       ├─ CircuitBreakerInterceptor::preHandle   → 拒绝"circuit breaker open"
+       ├─ RateLimitInterceptor::preHandle         → 拒绝"rate limit exceeded"
+       ├─ TraceInterceptor::preHandle             → 注入 trace-id
+       ├─ LogInterceptor::preHandle               → 记录请求
+       ├─ doCall() → encode → send → recv → return
+       ├─ LogInterceptor::postHandle              → 记录响应
+       ├─ TraceInterceptor::postHandle
+       ├─ RateLimitInterceptor::postHandle
+       └─ CircuitBreakerInterceptor::postHandle
+```
+
+preHandle 顺序执行（A→B→C），任一返回 false 立即终止；postHandle 逆序执行（C→B→A）。
+
 ## 网络层架构
 
 ### 服务端：Acceptor 模式
@@ -224,6 +247,7 @@ TcpConnection (建立后)
 | 熔断器（CLOSED→OPEN→HALF_OPEN） | ✅ |
 | 限流（本地令牌桶 + Redis 双层） | ✅ |
 | TraceID 透传 | ✅ |
+| 拦截器链（责任链模式） | ✅ |
 | 压测（43K QPS / P99 840μs） | ✅ |
 
 ## 测试覆盖
@@ -242,6 +266,7 @@ TcpConnection (建立后)
 | `test_redis_token_bucket` | Redis 分布式限流 + 降级（需 `-DWITH_REDIS=ON`） |
 | `test_etcd_registry` | etcd 注册/发现/Watch（需 `-DWITH_ETCD=ON`） |
 | `test_trace_id` | TraceID 注入 + 提取 |
+| `test_interceptor` | 拦截器链顺序 + 阻塞 + RPC 集成 |
 | `test_integration` | 全模块串联（LB + 熔断 + 限流 + 故障恢复） |
 | `test_benchmark` | 压测（可指定请求数和线程数） |
 
@@ -286,7 +311,7 @@ cmake .. && make -j$(nproc)
 # 运行全部测试
 ./test_connector && ./test_connection_pool && ./test_load_balance && \
 ./test_consistent_hash_lb && ./test_circuit_breaker && ./test_token_bucket && \
-./test_trace_id && ./test_integration
+./test_trace_id && ./test_interceptor && ./test_integration
 
 # 压测（可指定请求数和线程数）
 ./test_benchmark 10000 4
@@ -300,15 +325,39 @@ docker run -d --name etcd-test -p 2379:2379 bitnami/etcd:3.5
 cmake .. -DWITH_ETCD=ON && make -j$(nproc) && ./test_etcd_registry
 ```
 
-## 性能
+## 性能基准
 
-| 指标 | 数据 |
-|------|------|
-| 单连接 QPS | 12,000 /s |
-| 连接池 QPS | 24,500 /s（2×） |
-| 8 线程 QPS | 43,000 /s（3.7× 扩展） |
-| P50 延迟 | 131 μs |
-| P99 延迟 | 840 μs |
+测试环境:WSL2 (Ubuntu 22.04) / 同机回环 / `-DRPC_SILENT=ON` 关闭日志干扰
+
+### Direct(单连接,锁竞争测上限)
+| 线程 | QPS     | p99 (μs) | 错误数 |
+|------|---------|----------|--------|
+| 4    | 26,307  | 487      | 0      |
+| 8    | 30,502  | 895      | 0      |
+| 8(50K req)| 36,612 | 705    | 0      |
+
+### Pool(连接池,4/8 连接,实际生产形态)
+| 线程 | 连接数 | QPS     | p99 (μs) | 错误数 |
+|------|--------|---------|----------|--------|
+| 4    | 4      | 30,681  | 538      | 0      |
+| 8    | 8      | **48,765**  | 382      | 0      |
+| 8(50K req)| 8 | 48,442  | 430      | 0      |
+
+### 并发扩展性(Pool,50000 req)
+| 线程 | QPS     | 相对 1 线程 |
+|------|---------|-------------|
+| 1    | 11,842  | 1.0×        |
+| 2    | 19,795  | 1.67×       |
+| 4    | 34,397  | 2.90×       |
+| 8    | **48,442**  | **4.09×**   |
+
+**p99 延迟**:全场景 160-895 μs,均 < 1ms
+
+### 性能优化关键点
+- **关闭日志输出**:`-DRPC_SILENT=ON` 是压测必选,默认 QPS 衰减 30-50%
+- **连接池 vs Direct**:1 conn / 8 thread 跑出 30K,8 conn / 8 thread 跑出 48K(+60%)
+- **错误率**:严格为 0%(网络回环 + 连接数 ≥ 线程数)
+- **重现方法**:`cmake .. -DRPC_SILENT=ON && make -j$(nproc) test_benchmark && ./test_benchmark 50000 8`
 
 ## 作者
 

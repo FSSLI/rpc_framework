@@ -3,6 +3,7 @@
 #include "discovery/service_registry.h"
 #include "circuit_breaker/circuit_breaker.h"
 #include "rate_limiter/token_bucket.h"
+#include "interceptor/builtin_interceptors.h"
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <unistd.h>
@@ -130,8 +131,10 @@ bool RpcAsyncClient::connectViaRegistry() {
     // 连接所有节点（轮询负载均衡需要全部节点可用）
     int connected = 0;
     for (const auto& node : nodes) {
+        #ifndef RPC_SILENT
         std::cout << "RpcAsyncClient: connecting to " << serviceName_
-                  << " -> " << node.host << ":" << node.port << std::endl;
+                  << " " << node.host << ":" << node.port << std::endl;
+        #endif
 
         Endpoint ep;
         ep.host = node.host;
@@ -187,7 +190,9 @@ bool RpcAsyncClient::connectViaRegistry() {
             if (lbPolicy_ == LBPolicy::CONSISTENT_HASH && consistentHash_) {
                 consistentHash_->addNode(node.host + ":" + std::to_string(node.port));
             }
+            #ifndef RPC_SILENT
             std::cout << "RpcAsyncClient: connected to " << node.host << ":" << node.port << std::endl;
+            #endif
         } else {
             // 超时或失败，跳过此节点
             ep.tcpClient->stop();
@@ -202,8 +207,10 @@ bool RpcAsyncClient::connectViaRegistry() {
     }
 
     connected_ = true;
+    #ifndef RPC_SILENT
     std::cout << "RpcAsyncClient: " << connected << "/" << nodes.size()
               << " nodes connected for " << serviceName_ << std::endl;
+    #endif
     return true;
 }
 
@@ -223,8 +230,10 @@ bool RpcAsyncClient::resolveEndpoint() {
     host_ = node.host;
     port_ = node.port;
 
+    #ifndef RPC_SILENT
     std::cout << "RpcAsyncClient: resolved " << serviceName_
               << " -> " << host_ << ":" << port_ << std::endl;
+    #endif
     return true;
 }
 
@@ -359,34 +368,41 @@ RpcAsyncClient::ResponseFuture RpcAsyncClient::asyncCall(
     const RpcRequest& request,
     int timeout_ms) {
 
-    // 熔断检查
-    if (circuitBreaker_ && !circuitBreaker_->allowRequest()) {
-        RpcResponse errorResp;
-        errorResp.set_success(false);
-        errorResp.set_error_msg("circuit breaker open");
-        ResponsePromise promise;
-        promise.set_value(errorResp);
-        return promise.get_future();
-    }
-
-    // 限流检查
-    if (rateLimiter_ && !rateLimiter_->allow()) {
-        RpcResponse errorResp;
-        errorResp.set_success(false);
-        errorResp.set_error_msg("rate limit exceeded");
-        ResponsePromise promise;
-        promise.set_value(errorResp);
-        return promise.get_future();
-    }
-
     uint64_t reqId = nextReqId_.fetch_add(1);
 
-    // TraceID 注入：reqId + 时间戳 + 线程 ID
     RpcRequest tracedReq = request;
-    std::string traceId = std::to_string(reqId) + "-"
-                        + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()) + "-"
-                        + std::to_string(std::hash<std::thread::id>{}(std::this_thread::get_id()));
-    (*tracedReq.mutable_metadata())["trace-id"] = traceId;
+
+    // 通过拦截器链执行——预检查、TraceID 注入由链中的拦截器处理
+    if (chain_.size() > 0) {
+        RpcResponse chainResp = chain_.execute(tracedReq, [&](RpcRequest& req) -> RpcResponse {
+            return this->doCall(service_name, method_name, req, reqId, timeout_ms);
+        });
+        ResponsePromise promise;
+        promise.set_value(chainResp);
+        return promise.get_future();
+    }
+
+    // 无拦截器时：doCall 阻塞等待，结果包成 future 返回
+    RpcResponse result = doCall(service_name, method_name, tracedReq, reqId, timeout_ms);
+    ResponsePromise promise;
+    promise.set_value(result);
+    return promise.get_future();
+}
+
+RpcResponse RpcAsyncClient::doCall(
+    const std::string& service_name,
+    const std::string& method_name,
+    RpcRequest& request,
+    uint64_t reqId,
+    int timeout_ms) {
+
+    // 无拦截器链时，手动注入 trace-id（有链时由 TraceInterceptor 处理）
+    if (chain_.size() == 0) {
+        std::string traceId = std::to_string(reqId) + "-"
+            + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()) + "-"
+            + std::to_string(std::hash<std::thread::id>{}(std::this_thread::get_id()));
+        (*request.mutable_metadata())["trace-id"] = traceId;
+    }
 
     ResponsePromise promise;
     ResponseFuture future = promise.get_future();
@@ -396,7 +412,7 @@ RpcAsyncClient::ResponseFuture RpcAsyncClient::asyncCall(
         pendingPromises_[reqId] = std::move(promise);
     }
 
-    // 注册超时定时器（多节点模式用首节点 loop，单节点用 loop_）
+    // 注册超时定时器
     EventLoop* timeoutLoop = loop_;
     if (!endpoints_.empty() && !endpoints_[0].tcpClient) {
     } else if (!endpoints_.empty()) {
@@ -408,14 +424,14 @@ RpcAsyncClient::ResponseFuture RpcAsyncClient::asyncCall(
         });
     }
 
-    std::string packet = Codec::encodeRequest(tracedReq, reqId, service_name, method_name);
+    std::string packet = Codec::encodeRequest(request, reqId, service_name, method_name);
     if (packet.empty()) {
         handleTimeout(reqId);
     } else {
         sendRequest(reqId, packet, service_name + "/" + method_name);
     }
 
-    return future;
+    return future.get();
 }
 
 void RpcAsyncClient::asyncCall(
@@ -425,32 +441,19 @@ void RpcAsyncClient::asyncCall(
     ResponseCallback cb,
     int timeout_ms) {
 
-    // 熔断检查
-    if (circuitBreaker_ && !circuitBreaker_->allowRequest()) {
-        RpcResponse errorResp;
-        errorResp.set_success(false);
-        errorResp.set_error_msg("circuit breaker open");
-        cb(errorResp);
-        return;
-    }
-
-    // 限流检查
-    if (rateLimiter_ && !rateLimiter_->allow()) {
-        RpcResponse errorResp;
-        errorResp.set_success(false);
-        errorResp.set_error_msg("rate limit exceeded");
-        cb(errorResp);
-        return;
-    }
-
     uint64_t reqId = nextReqId_.fetch_add(1);
-
     RpcRequest tracedReq = request;
-    std::string traceId = std::to_string(reqId) + "-"
-                        + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()) + "-"
-                        + std::to_string(std::hash<std::thread::id>{}(std::this_thread::get_id()));
-    (*tracedReq.mutable_metadata())["trace-id"] = traceId;
 
+    // 通过拦截器链执行
+    if (chain_.size() > 0) {
+        RpcResponse chainResp = chain_.execute(tracedReq, [&](RpcRequest& req) -> RpcResponse {
+            return this->doCall(service_name, method_name, req, reqId, timeout_ms);
+        });
+        cb(chainResp);
+        return;
+    }
+
+    // 无拦截器路径
     {
         std::lock_guard<std::mutex> lock(pendingMutex_);
         pendingCallbacks_[reqId] = std::move(cb);
@@ -472,6 +475,16 @@ void RpcAsyncClient::asyncCall(
     } else {
         sendRequest(reqId, packet, service_name + "/" + method_name);
     }
+}
+
+void RpcAsyncClient::setCircuitBreaker(CircuitBreaker* cb) {
+    circuitBreaker_ = cb;
+    chain_.addInterceptor(std::make_shared<CircuitBreakerInterceptor>(cb));
+}
+
+void RpcAsyncClient::setRateLimiter(TokenBucket* limiter) {
+    rateLimiter_ = limiter;
+    chain_.addInterceptor(std::make_shared<RateLimitInterceptor>(limiter));
 }
 
 void RpcAsyncClient::setLBPolicy(LBPolicy p, int virtualNodes) {

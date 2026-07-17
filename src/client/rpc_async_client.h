@@ -19,6 +19,7 @@
 #include "protocol/rpc_service.pb.h"
 #include "discovery/service_registry.h"
 #include "loadbalance/consistent_hash.h"
+#include "interceptor/interceptor.h"
 
 namespace rpc {
 
@@ -60,10 +61,14 @@ public:
     void startHeartbeat(double intervalSeconds = 30.0);
     void stopHeartbeat();
 
-    // 熔断器（可选）
-    void setCircuitBreaker(CircuitBreaker* cb) { circuitBreaker_ = cb; }
-    // 限流器（可选）
-    void setRateLimiter(TokenBucket* limiter) { rateLimiter_ = limiter; }
+    // 熔断器（可选，兼容旧接口）
+    void setCircuitBreaker(CircuitBreaker* cb);
+    // 限流器（可选，兼容旧接口）
+    void setRateLimiter(TokenBucket* limiter);
+    // 拦截器链（新接口：插入自定义拦截器）
+    void addInterceptor(std::shared_ptr<Interceptor> interceptor) {
+        chain_.addInterceptor(std::move(interceptor));
+    }
     // 负载均衡策略（默认轮询）
     void setLBPolicy(LBPolicy p, int virtualNodes = 150);
 
@@ -74,6 +79,8 @@ private:
 
     void sendRequest(uint64_t req_id, const std::string& packet, const std::string& hashKey = "");
     std::shared_ptr<TcpClient> getTcpClient(const std::string& hashKey = "");
+    RpcResponse doCall(const std::string& svc, const std::string& method,
+                       RpcRequest& req, uint64_t reqId, int timeout);
     void handleResponse(const DecodedPacket& packet);
     void handleTimeout(uint64_t req_id);  // FIX: 超时处理
 
@@ -119,7 +126,10 @@ private:
     uint64_t heartbeatTimerId_ = 0;
     EventLoop* heartbeatLoop_ = nullptr;  // 心跳注册的 loop（可能与 loop_ 不同）
 
-    // 熔断器 + 限流器（不拥有所有权，由调用方管理生命周期）
+    // 拦截器链（新架构）
+    InterceptorChain chain_;
+
+    // 熔断器 + 限流器（不拥有所有权，兼容旧接口）
     CircuitBreaker* circuitBreaker_ = nullptr;
     TokenBucket* rateLimiter_ = nullptr;
 };

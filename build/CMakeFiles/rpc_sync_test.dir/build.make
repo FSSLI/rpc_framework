@@ -93,14 +93,6 @@ rpc_sync_test_EXTERNAL_OBJECTS =
 rpc_sync_test: CMakeFiles/rpc_sync_test.dir/examples/rpc/rpc_sync_test.cc.o
 rpc_sync_test: CMakeFiles/rpc_sync_test.dir/build.make
 rpc_sync_test: libnetwork.a
-rpc_sync_test: /usr/local/lib/libetcd-cpp-api.so
-rpc_sync_test: /usr/lib/x86_64-linux-gnu/libcpprest.so.2.10
-rpc_sync_test: /usr/lib/x86_64-linux-gnu/libssl.so
-rpc_sync_test: /usr/lib/x86_64-linux-gnu/libcrypto.so
-rpc_sync_test: /usr/lib/x86_64-linux-gnu/libgpr.so
-rpc_sync_test: /usr/lib/x86_64-linux-gnu/libgrpc.so
-rpc_sync_test: /usr/lib/x86_64-linux-gnu/libgrpc++.so
-rpc_sync_test: /usr/lib/x86_64-linux-gnu/libprotobuf.so
 rpc_sync_test: CMakeFiles/rpc_sync_test.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/machao/projects/rpc_framework/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking CXX executable rpc_sync_test"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/rpc_sync_test.dir/link.txt --verbose=$(VERBOSE)
