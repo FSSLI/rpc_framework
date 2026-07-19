@@ -1,1 +1,0 @@
-/usr/bin/c++ CMakeFiles/test_benchmark.dir/tests/test_benchmark.cc.o -o test_benchmark  libnetwork.a -lprotobuf -lpthread 

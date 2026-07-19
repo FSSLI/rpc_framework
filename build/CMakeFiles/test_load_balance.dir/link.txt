@@ -1,1 +1,0 @@
-/usr/bin/c++ CMakeFiles/test_load_balance.dir/tests/test_load_balance.cc.o -o test_load_balance  libnetwork.a -lprotobuf -lpthread 

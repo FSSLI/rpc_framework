@@ -1,1 +1,0 @@
-/usr/bin/c++ CMakeFiles/test_service_discovery_e2e.dir/tests/test_service_discovery_e2e.cc.o -o test_service_discovery_e2e  libnetwork.a -lprotobuf -lpthread 

@@ -1,1 +1,0 @@
-/usr/bin/c++ CMakeFiles/rpc_async_test.dir/examples/rpc/rpc_async_test.cc.o -o rpc_async_test  libnetwork.a -lprotobuf -lpthread 

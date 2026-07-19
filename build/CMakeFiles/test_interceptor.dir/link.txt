@@ -1,1 +1,0 @@
-/usr/bin/c++ CMakeFiles/test_interceptor.dir/tests/test_interceptor.cc.o -o test_interceptor  libnetwork.a -lprotobuf -lpthread 

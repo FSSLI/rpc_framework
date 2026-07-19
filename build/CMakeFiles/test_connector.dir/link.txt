@@ -1,1 +1,0 @@
-/usr/bin/c++ CMakeFiles/test_connector.dir/tests/test_connector.cc.o -o test_connector  libnetwork.a -lprotobuf -lpthread 

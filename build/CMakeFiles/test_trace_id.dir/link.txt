@@ -1,1 +1,0 @@
-/usr/bin/c++ CMakeFiles/test_trace_id.dir/tests/test_trace_id.cc.o -o test_trace_id  libnetwork.a -lprotobuf -lpthread 

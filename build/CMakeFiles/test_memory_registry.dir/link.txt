@@ -1,1 +1,0 @@
-/usr/bin/c++ CMakeFiles/test_memory_registry.dir/tests/test_memory_registry.cc.o -o test_memory_registry  libnetwork.a -lprotobuf -lpthread 

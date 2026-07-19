@@ -1,1 +1,0 @@
-/usr/bin/c++ CMakeFiles/test_token_bucket.dir/tests/test_token_bucket.cc.o -o test_token_bucket  libnetwork.a -lprotobuf -lpthread 
