@@ -18,7 +18,7 @@
 - [x] 一致性哈希负载均衡（MurmurHash + 虚拟节点）
 - [x] 轮询负载均衡（多节点自动 failover）
 - [x] 服务注册发现（MemoryRegistry 内存 + EtcdRegistry 支持 etcd v3 lease/Watch）
-- [x] 连接池（固定大小 + 轮询 + 健康检查，吞吐量 2×）
+- [x] 连接池（固定大小 + 轮询 + 健康检查，吞吐 +60%（8线程 30,502→48,765 QPS））
 - [x] 熔断降级（CLOSED→OPEN→HALF_OPEN 三态，半开单探测）
 - [x] 限流（本地令牌桶 + Redis 分布式令牌桶 Lua 原子脚本）
 - [x] TraceID 透传（metadata 自动注入，服务端提取日志）
