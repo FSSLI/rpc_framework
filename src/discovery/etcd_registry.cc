@@ -84,14 +84,11 @@ std::string EtcdRegistry::servicePrefix(const std::string& serviceName) const {
 bool EtcdRegistry::registerService(const RegistryNode& node) {
     std::string key = nodeKey(node.serviceName, node.nodeId);
     std::string value = nodeToJson(node);
-    auto resp = client_->put(key, value).get();
+    auto resp = client_->put(key, value, leaseId_).get();
     if (!resp.is_ok()) return false;
 
-    // 绑定租约（TTL 自动过期）
-    auto bindResp = client_->leasekeepalive(leaseId_).get();
-    (void)bindResp;
 
-    std::cout << "EtcdRegistry: registered " << key << std::endl;
+    std::cout << "EtcdRegistry: registered " << key << " (lease=" << leaseId_ << ")" << std::endl;
 
     // 通知变更
     notifyChange(node.serviceName);
