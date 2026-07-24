@@ -22,4 +22,5 @@ Thumbs.db
 *.log
 *.sst
 CURRENT
-MANIFEST-*
+MANIFEST-*/test_codec
+build/
