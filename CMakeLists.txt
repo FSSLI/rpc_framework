@@ -48,6 +48,7 @@ set(SERVER_SRCS
 set(CLIENT_SRCS
     src/client/rpc_sync_client.cc
     src/client/rpc_async_client.cc
+    src/client/inline_sync_client.cc
 )
 
 set(LOADBALANCE_SRCS
@@ -154,6 +155,9 @@ add_executable(test_benchmark tests/test_benchmark.cc)
 target_link_libraries(test_benchmark network)
 
 # 流水线压测（在途请求数 >> 线程数）
+add_executable(bench_inline_sync tests/bench_inline_sync.cc)
+target_link_libraries(bench_inline_sync network)
+
 add_executable(bench_pipeline tests/bench_pipeline.cc)
 target_link_libraries(bench_pipeline network)
 

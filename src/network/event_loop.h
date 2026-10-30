@@ -39,6 +39,10 @@ public:
     EventLoop& operator=(const EventLoop&) = delete;
 
     void loop();
+    // 只处理一轮事件（epoll_wait + 定时器 + pending functors）。
+    // 供"调用线程自己驱动 IO"的同步调用使用：等待响应时在调用线程里反复调用，
+    // 避免把请求投递到别的 IO 线程再 futex 等待。
+    void loopOnce(int maxWaitMs = 10000);
     void quit();
 
     void updateChannel(Channel* channel);

@@ -10,6 +10,7 @@
 - [x] epoll/Reactor 网络模型（主 Reactor accept + 4 个从 Reactor，one loop per thread）
 - [x] 多 IO 线程（EventLoopThreadPool 轮询分发连接，从 Reactor 数可配）
 - [x] 同步 RPC 客户端（底层复用异步，future.wait_for 超时控制）
+- [x] 调用线程驱动 IO 的同步客户端（`InlineSyncClient`：无 eventfd/futex，每请求 6 次系统调用，吞吐 2.14×）
 - [x] 异步 RPC 客户端（Future/Promise + Callback 双模式）
 - [x] **非阻塞 Connector + 自动重连（指数退避）**
 - [x] **TcpClient 客户端底座（基于 Connector）**
@@ -386,6 +387,19 @@ cmake .. -DWITH_ETCD=ON && make -j$(nproc) && ./test_etcd_registry
 | CPU 占用 | 80,000 请求共 7.49s，16 核只用了约 1 核 | 不是 CPU 瓶颈，是延迟瓶颈 |
 
 优化方向：把同步调用改成"在调用线程里跑 loop"（省掉 2 次 eventfd 写 + 4 次 futex），并把 Future 做成真异步以支持流水线。
+
+### 优化验证：同步调用改为"调用线程驱动 IO"
+
+针对上面"14 次系统调用里有 6 次是线程间搬运"的结论，新增 `InlineSyncClient`（`src/client/inline_sync_client.*`）：
+`EventLoop` 构造在调用线程，发送直接 `write()`，等待响应时在本线程 `loopOnce()`，全程无 eventfd / futex / 每请求定时器。
+
+| 版本（8 线程 × 8 连接，5 万请求） | 系统调用/请求 | QPS | avg (µs) | p99 (µs) |
+|---|---|---|---|---|
+| 跨线程投递（`RpcAsyncClient` + `future.get()`） | 14.15 | 61,683 | 128 | 461 |
+| **调用线程驱动（`InlineSyncClient`）** | **6.06** | **131,996** | **57** | **180** |
+
+`futex` 从 4.03/请求降到 0.01，`write` 从 4.02 降到 2.01（只剩客户端与服务端各一次真实 socket 写）。
+代价：客户端有线程亲和、一连接一线程、串行调用（详见 [`docs/bench_results_wsl.md`](docs/bench_results_wsl.md) 第 11 节）。
 
 ### 性能优化关键点
 - **关闭日志输出**：`-DRPC_SILENT=ON` 是压测必选，默认构建下热路径 `cout` 会吃掉 30-50% 吞吐

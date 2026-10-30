@@ -56,41 +56,50 @@ void EventLoop::loop() {
     quit_.store(false);
 
     while (!quit_.load()) {
-        int timeoutMs = getNextTimerTimeoutMs();
-
-        int numEvents = ::epoll_wait(epollfd_, &*events_.begin(),
-                                      static_cast<int>(events_.size()),
-                                      timeoutMs);
-
-        if (numEvents > 0) {
-            for (int i = 0; i < numEvents; ++i) {
-                Channel* channel = static_cast<Channel*>(events_[i].data.ptr);
-                channel->set_revents(events_[i].events);
-                // Issue #2 fix: 异常不跳出事件循环，保护同线程其他连接
-                try {
-                    channel->handleEvent();
-                } catch (const std::exception& e) {
-                    std::cerr << "EventLoop channel exception: " << e.what() << std::endl;
-                } catch (...) {
-                    std::cerr << "EventLoop channel unknown exception" << std::endl;
-                }
-            }
-            if (static_cast<size_t>(numEvents) == events_.size()) {
-                events_.resize(events_.size() * 2);
-            }
-        } else if (numEvents == 0) {
-            // timeout or no events
-        } else {
-            if (errno != EINTR) {
-                // LOG_SYSERR
-            }
-        }
-
-        processTimers();
-        doPendingFunctors();
+        loopOnce(kEpollWaitTimeoutMs);
     }
 
     looping_ = false;
+}
+
+void EventLoop::loopOnce(int maxWaitMs) {
+    assertInLoopThread();
+
+    int timeoutMs = getNextTimerTimeoutMs();
+    if (maxWaitMs >= 0 && maxWaitMs < timeoutMs) {
+        timeoutMs = maxWaitMs;
+    }
+
+    int numEvents = ::epoll_wait(epollfd_, &*events_.begin(),
+                                  static_cast<int>(events_.size()),
+                                  timeoutMs);
+
+    if (numEvents > 0) {
+        for (int i = 0; i < numEvents; ++i) {
+            Channel* channel = static_cast<Channel*>(events_[i].data.ptr);
+            channel->set_revents(events_[i].events);
+            // Issue #2 fix: 异常不跳出事件循环，保护同线程其他连接
+            try {
+                channel->handleEvent();
+            } catch (const std::exception& e) {
+                std::cerr << "EventLoop channel exception: " << e.what() << std::endl;
+            } catch (...) {
+                std::cerr << "EventLoop channel unknown exception" << std::endl;
+            }
+        }
+        if (static_cast<size_t>(numEvents) == events_.size()) {
+            events_.resize(events_.size() * 2);
+        }
+    } else if (numEvents == 0) {
+        // timeout or no events
+    } else {
+        if (errno != EINTR) {
+            // LOG_SYSERR
+        }
+    }
+
+    processTimers();
+    doPendingFunctors();
 }
 
 int EventLoop::getNextTimerTimeoutMs() const {
