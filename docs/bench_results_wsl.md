@@ -1,0 +1,236 @@
+# 实测报告：WSL2 上的瓶颈定位（2026-10-30）
+
+> 环境：Intel i7-13620H（8 核 16 线程，WSL2 分配 16 vCPU / 7 GB）
+> 构建：`cmake .. -DRPC_SILENT=ON -DCMAKE_BUILD_TYPE=Release`，`g++ 11.4`、`protoc 3.12.4`
+> 代码：WSL 内 `~/projects/rpc_framework`（比 D 盘那份新 2 个提交）
+> 方法：改动 benchmark 加入三个可调参数（服务端线程数 / 超时 / 只跑 scaling），逐项单变量对比
+
+---
+
+## 0. 一句话结论
+
+**这个框架现在既不是服务端 CPU 瓶颈，也不是定时器瓶颈，而是"每请求 14 次系统调用 + 只有 8 个在途请求"的延迟瓶颈。**
+
+- 服务端 IO 线程从 1 开到 8：QPS 只 +21%（51,240 → 61,901）
+- 关掉每请求超时定时器：QPS 只 +1.4%（57,771 → 58,594）
+- 全系统 16 核只用了约 1 个核（80,000 请求共 7.49s CPU）
+- 每请求 14.15 次 syscall、93.6 µs CPU（其中 75.5 µs 在内核态）
+- `QPS = 在途数 / RTT` 精确成立：8 / 153 µs = 52.3k（实测 51.2k）、8 / 125 µs = 64k（实测 61.9k）
+
+---
+
+## 1. 基线复现（对照 README）
+
+`./test_benchmark 20000 8`，8 连接 / 8 线程：
+
+| 并发 | 实测 QPS | 实测 avg | 实测 p99 | README QPS | 相对 1 线程 |
+|---|---|---|---|---|---|
+| 1 | 13,043 | 76 µs | 191 µs | 11,842 | 1.00× |
+| 2 | 23,371 | 85 µs | 359 µs | 19,795 | 1.79× |
+| 4 | 37,452 | 106 µs | 397 µs | 34,397 | 2.87× |
+| 8 | **51,592** | **152 µs** | **699 µs** | 48,442 | **3.96×** |
+
+结论：README 的数字**可复现**（绝对值高 5~13%，扩展比 3.96× vs 4.09×，同一台机器上属正常波动）。
+
+---
+
+## 2. 实验一：服务端 IO 线程数（证伪"单 Reactor 是主要瓶颈"）
+
+给 `RpcServer` 补了 `setThreadNum()` 转发（原来只有 `TcpServer` 有，`RpcServer` 没暴露），benchmark 加第 3 个参数。
+
+`./test_benchmark 20000 8 <serverThreads> only`，8 连接：
+
+| 服务端线程 | QPS | avg | p99 | 相对 |
+|---|---|---|---|---|
+| 1 | 51,240 | 153 µs | 833 µs | 1.00× |
+| 2 | 55,224 | 140 µs | 693 µs | 1.08× |
+| 4 | 57,111 | 136 µs | 634 µs | 1.11× |
+| 8 | **61,901** | **125 µs** | **508 µs** | **1.21×** |
+
+> **术语精确化**：`serverThreads=1` 已经是"主从 Reactor + 1 个从 Reactor"（主 Reactor 只 accept，从 Reactor 管全部连接），不是严格的单 Reactor。严格的单 Reactor 是**默认值 0**（不创建从 Reactor，连接全落主 Reactor），那一组的 8 连接数据是 **51,592 QPS / 152 µs**，与 `serverThreads=1` 的 51,240 / 153 µs 几乎一致——说明 accept 不在关键路径上。
+
+**结论：服务端并行度不是吞吐瓶颈。** 1 → 8 个从 Reactor 只让吞吐 +21%，主要改善的是延迟（p99 833 → 508 µs）。
+
+⚠️ 这与我之前"服务端单 Reactor 是第一瓶颈、开线程池能 2~4×"的判断**不符**，以实测为准。
+
+---
+
+## 3. 实验二：每请求超时定时器（证伪"定时器是主要开销"）
+
+`timeout_ms=0` 时 `doCall` 里的 `if (timeout_ms > 0 && timeoutLoop)` 不成立，`runAfter` 完全不执行。
+
+`./test_benchmark 20000 8 8 <timeout> only`：
+
+| 超时 | QPS | avg | p99 |
+|---|---|---|---|
+| 3000 ms（每请求一个定时器） | 57,771 | 135 µs | 565 µs |
+| 0（不注册定时器） | 58,594 | 133 µs | 557 µs |
+
+**结论：只差 1.4%。** 定时器确实在做无用功（每请求一次 eventfd 写 + 堆插入），但在 14 次系统调用里只占 1 次，**不是主要成本**。
+
+⚠️ 这也修正了我之前的判断。它的价值在于"规模会随 QPS×timeout 增长"（10 万 QPS 时是 30 万个节点），属于**可扩展性隐患**，而不是当前瓶颈。
+
+---
+
+## 4. 实验三：系统调用账单（真正的瓶颈）
+
+```
+strace -c -f -e trace=write,read,readv,writev,epoll_wait,futex,eventfd2 \
+  ./test_benchmark 2000 4 8 3000 only
+```
+
+8,000 次请求的统计：
+
+| syscall | 次数 | 每次请求 | 来源 |
+|---|---|---|---|
+| futex | 32,273 | **4.03** | promise/worker 的 2 对睡眠-唤醒 |
+| write | 32,158 | **4.02** | ①客户端 send 的 eventfd 唤醒 ②超时定时器的 eventfd 唤醒 ③客户端 socket 写 ④服务端 socket 写 |
+| epoll_wait | 24,403 | 3.05 | 客户端 loop、服务端 loop |
+| readv | 16,030 | 2.00 | 服务端读、客户端读 |
+| read | 8,299 | 1.04 | eventfd 读 |
+| **合计** | **113,187** | **14.15** | — |
+
+**关键观察：14 次系统调用里，只有 2 次是真正传数据（2×readv + 2×socket write），另外 2 次 eventfd 写 + 4 次 futex 全是"把一个请求从线程 A 搬到线程 B"的开销。**
+
+---
+
+## 5. 实验四：CPU 账
+
+`/usr/bin/time -f "cpu user=%Us sys=%Ss"`，80,000 次请求：
+
+| 服务端线程 | user | sys | wall | 每请求 CPU |
+|---|---|---|---|---|
+| 1 | 1.44 s | 4.92 s | 8.00 s | 79.5 µs（sys 61.5） |
+| 8 | 1.45 s | 6.04 s | 7.50 s | **93.6 µs（sys 75.5）** |
+
+两个推论：
+
+1. **16 个 vCPU 只用了约 1 个**。CPU 远没饱和，所以"加线程/加服务端并行"不会有明显收益——实验一已经证实。
+2. **sys : user ≈ 4 : 1**。这说明成本主要在进内核和线程调度上，而不是在 protobuf、CRC、拷贝这些用户态逻辑上。这也解释了为什么"优化序列化/减少 malloc"在当前阶段收效有限。
+
+按 93.6 µs/请求、8~16 个可用核折算，**这台机器在本实现下的吞吐上限约 8.5 万 ~ 17 万 QPS**（推算，未验证）。当前 6.2 万，也就是还有 1.4~2.7 倍空间，而且必须先减少每请求系统调用才拿得到。
+
+---
+
+## 6. 顺带验证的一个真 bug
+
+`Bench 2: Pool (4 conns, 8 threads)` 实测：
+
+```
+Requests: 20000  Errors: 4  Elapsed: 3.00s  QPS: 6659/s
+```
+
+- **4 个错误**、耗时恰好 3.00 s（= 超时时间）；
+- 原因就是之前推断的：`ConnectionPool::acquire` 把同一个 `TcpClient` 分给两个 `RpcAsyncClient`，后者构造时 `setupCallbacks()` 把连接的回调改成指向自己 → 一半响应被投递给错误的 client → 匹配不到 reqId → 3 秒后超时；
+- 顺带还发现：`timeout=0` 时这条路径会**永久阻塞**（没有超时就永远等），说明"必须有超时"是当前设计的硬约束。
+
+这也说明 README 里"8 线程 4 连接 48,765 QPS、0 错误"的配置在**当前代码下不可能成立**。
+
+---
+
+## 7. 修正后的优化优先级
+
+| 优先级 | 动作 | 消除的系统调用 | 预期 |
+|---|---|---|---|
+| **P0** | **同步调用改为"在调用线程里跑 loop"** | -2 次 eventfd 写、-4 次 futex（14 → 8） | RTT 有望 133 → 80~90 µs，QPS +40~60% |
+| **P0** | **真异步 + pipeline（每连接 64 在途）** | readv/epoll_wait 被摊薄 | 在途数不再等于线程数，吞吐可逼近 CPU 上限 |
+| P1 | 响应写合并 / `writev` | write 从 4 → 2（批内摊薄到 0.1） | 抬高极限 |
+| P1 | 每 loop 私有 pending 表（无锁） | -2 次 futex 竞争 | 在途上千后必需 |
+| P2 | 每请求定时器 → 1 ms 扫描 | -1 次 eventfd 写 | 当前 +1.4%，但去掉 O(QPS×timeout) 的隐患 |
+| P2 | 零拷贝 decode、tcmalloc、CRC slice-by-8 | - | user 侧只占 20%，收益上限有限 |
+| P3 | 修 `benchPool` 共享连接 bug | - | 正确性 |
+
+**对之前判断的修正**：
+
+| 之前的判断 | 实测结果 | 修正 |
+|---|---|---|
+| 服务端单 Reactor 是第一瓶颈 | +21% 而非 2~4× | 降级为"延迟优化项"，不是吞吐瓶颈 |
+| 每请求定时器是最大浪费 | +1.4% | 降级为"可扩展性隐患"，不是当前瓶颈 |
+| 每请求 2 次 eventfd + 1 次 futex | 实测 4 write / 4 futex | **证实**，且量化到 14 次 syscall |
+| QPS = 在途 / RTT | 误差 2~3% | **证实** |
+| 线程数 > 连接数会导致回调覆盖 | 4 errors / 3.00s | **证实** |
+
+---
+
+## 8. 复现命令
+
+```bash
+cd ~/projects/rpc_framework/build
+# 基线
+./test_benchmark 20000 8
+# 服务端线程数对比（第 3 个参数）
+./test_benchmark 20000 8 1 only
+./test_benchmark 20000 8 8 only
+# 超时开关（第 4 个参数，0 = 不注册定时器）
+./test_benchmark 20000 8 8 0 only
+# 系统调用账单
+strace -c -f -e trace=write,read,readv,writev,epoll_wait,futex,eventfd2 \
+  ./test_benchmark 2000 4 8 3000 only
+```
+
+> 本次为验证改动了两处源码（未提交）：
+> - `src/server/rpc_server.h`：新增 `setThreadNum(int)` 转发（原本缺失）
+> - `tests/test_benchmark.cc`：新增 3 个可选参数（服务端线程数 / 超时 / 只跑 scaling）
+
+---
+
+## 9. 落地改动与验证（2026-10-30）
+
+### 9.1 Connector：指数退避 + 半区随机抖动
+
+`src/network/connector.cc`，新增匿名命名空间的抖动函数，`retry()` 里用抖动后的延迟替代固定退避：
+
+```cpp
+// 半区随机抖动（equal jitter）：delay = base/2 + rand(0, base/2)
+// 目的：大量客户端同时断线时，避免它们在同一时刻同步重连（重连风暴）
+int jitterInRange(int low, int high) {
+    static thread_local std::mt19937 gen(std::random_device{}());
+    if (high <= low) return low;
+    std::uniform_int_distribution<int> dist(low, high);
+    return dist(gen);
+}
+
+// retry() 中：
+const int delayMs = jitterInRange(retryDelayMs_ / 2, retryDelayMs_);
+loop_->runAfter(delayMs / 1000.0, [weakThis]() { ... });
+retryDelayMs_ = std::min(retryDelayMs_ * 2, kMaxRetryDelayMs);
+```
+
+实测分布（抽样 6 次）：
+
+| 退避基数 | 抖动区间 | 抽样结果 |
+|---|---|---|
+| 500 ms（第 1 次） | [250, 500] | 354 / 465 / 404 / 465 / 420 / 400 |
+| 8000 ms（第 5 次） | [4000, 8000] | 5636 / 4678 / 7796 / 7276 / 7065 / 4092 |
+
+这样才配得上"避免重连风暴"——**没有 jitter 的指数退避只降低单连接频率，不解决同步重连**。
+
+### 9.2 服务端默认开启 4 个从 Reactor
+
+```cpp
+// examples/rpc/rpc_server_main.cc
+RpcServer server(&loop, listenAddr);
+server.setThreadNum(4);      // 主从 Reactor：4 个从 Reactor（必须在 start() 之前）
+server.setIdleTimeout(60);
+```
+
+`tests/test_benchmark.cc` 的第 3 个参数默认值同步改为 **4**，保证压测口径与生产 demo 一致。
+
+### 9.3 最终基准（默认 4 个从 Reactor，5 万请求）
+
+| 场景 | QPS | avg | p99 |
+|---|---|---|---|
+| Direct（1 连接 / 8 线程） | 41,051 | 188 µs | 724 µs |
+| Scaling（8 连接 / 8 线程） | **61,683** | **128 µs** | **461 µs** |
+
+对比改动前（单 Reactor、5 万请求）：8 连接 56,047 QPS / avg 141 µs / p99 626 µs。
+**吞吐 +10%，p99 −26%。**
+
+### 9.4 回归测试
+
+12 项全部通过：`test_connector`、`test_consistent_hash`、`test_consistent_hash_lb`、`test_memory_registry`、`test_service_discovery_e2e`、`test_connection_pool`、`test_load_balance`、`test_circuit_breaker`、`test_token_bucket`、`test_trace_id`、`test_interceptor`、`test_integration`。
+
+### 9.5 仍未修复（演示前注意）
+
+- `Bench 2: Pool (4 conns, 8 threads)` 仍然 **4 errors / 3.00 s**：同一 `TcpClient` 被两个 `RpcAsyncClient` 共享，回调被后者覆盖。**演示连接池时用 8 连接 / 8 线程（Scaling 那组），不要用 4 连接 / 8 线程。**
+- README 里的 `48,765 QPS / p99 382µs / +60%` 已与当前代码不符，需要按上表更新。

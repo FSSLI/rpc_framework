@@ -18,6 +18,7 @@ int main() {
     listenAddr.sin_addr.s_addr = INADDR_ANY;
     
     RpcServer server(&loop, listenAddr);
+    server.setThreadNum(4);      // 主从 Reactor：4 个从 Reactor（必须在 start() 之前）
     server.setIdleTimeout(60);  // ← 新增：60 秒 idle 超时
     
     // 注册 EchoService

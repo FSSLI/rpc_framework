@@ -27,6 +27,9 @@ public:
     // 新增：设置连接 idle 超时（秒），透传给 TcpServer
     void setIdleTimeout(int seconds) { server_.setIdleTimeout(seconds); }
 
+    // 设置 IO 线程数（从 Reactor 数量），必须在 start() 之前调用
+    void setThreadNum(int n) { server_.setThreadNum(n); }
+
 private:
     // 连接回调：新连接建立/断开时触发
     void onConnection(const TcpConnectionPtr& conn);

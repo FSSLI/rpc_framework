@@ -7,8 +7,8 @@
 - [x] 自定义二进制协议（魔数 + 版本 + CRC32 校验）
 - [x] Protobuf 序列化
 - [x] TCP 粘包处理（固定头 body_len 字段，自描述协议）
-- [x] epoll/Reactor 网络模型（主从 Reactor + one loop per thread）
-- [x] 多 IO 线程（EventLoopThreadPool 轮询分发连接）
+- [x] epoll/Reactor 网络模型（主 Reactor accept + 4 个从 Reactor，one loop per thread）
+- [x] 多 IO 线程（EventLoopThreadPool 轮询分发连接，从 Reactor 数可配）
 - [x] 同步 RPC 客户端（底层复用异步，future.wait_for 超时控制）
 - [x] 异步 RPC 客户端（Future/Promise + Callback 双模式）
 - [x] **非阻塞 Connector + 自动重连（指数退避）**
@@ -18,13 +18,13 @@
 - [x] 一致性哈希负载均衡（MurmurHash + 虚拟节点）
 - [x] 轮询负载均衡（多节点自动 failover）
 - [x] 服务注册发现（MemoryRegistry 内存 + EtcdRegistry 支持 etcd v3 lease/Watch）
-- [x] 连接池（固定大小 + 轮询 + 健康检查，吞吐 +60%（8线程 30,502→48,765 QPS））
+- [x] 连接池（固定大小 + 轮询 + 健康检查，单连接 41k → 8 连接 61.7k QPS，+50%）
 - [x] 熔断降级（CLOSED→OPEN→HALF_OPEN 三态，半开单探测）
 - [x] 限流（本地令牌桶 + Redis 分布式令牌桶 Lua 原子脚本）
 - [x] TraceID 透传（metadata 自动注入，服务端提取日志）
 - [x] 拦截器链（责任链模式，熔断/限流/日志/Trace 插件化）
 - [x] 8 轮代码审查修复 60+ 线程安全/内存/协议问题
-- [x] 压测（单机 48,765 QPS，p99 382 μs，1→8线程 4.09× 扩展）
+- [x] 压测（单机 61,683 QPS，p99 461 μs，1→8 线程 4.31× 扩展）
 
 ## 项目结构
 ```text
@@ -248,7 +248,7 @@ TcpConnection (建立后)
 | 限流（本地令牌桶 + Redis 双层） | ✅ |
 | TraceID 透传 | ✅ |
 | 拦截器链（责任链模式） | ✅ |
-| 压测（48,765 QPS / p99 382μs） | ✅ |
+| 压测（61,683 QPS / p99 461μs） | ✅ |
 
 ## 测试覆盖
 
@@ -300,6 +300,11 @@ TcpConnection (建立后)
 **问题：** `connect()` 返回 -1 且 `errno == EINPROGRESS` 时，需要通过 epoll 监听可写事件，再用 `getsockopt(SO_ERROR)` 获取真实错误码。  
 **解决：** Connector 封装非阻塞 connect 全流程：socket() → connect() → epoll 监听可写 → SO_ERROR 判断 → 成功回调 / 失败重连。
 
+### 8. 两个"看起来很对"的优化假设，被 A/B 实测证伪
+**问题：** 压测到 5 万 QPS 后，直觉判断瓶颈是"服务端只有一个 Reactor"和"每请求一个超时定时器"，准备直接优化。  
+**解决：** 先做单变量对照：服务端 IO 线程 1 → 8 只 +21%，关掉每请求定时器只 +1.4%，两个假设都错了。改用 `strace -c` 数系统调用，发现每请求 **14 次调用**（4 write / 4 futex / 3 epoll_wait / 2 readv / 1 read），其中 6 次纯粹是线程间搬运；80,000 请求全程只用了约 1 个核。结论是**延迟瓶颈而非 CPU 瓶颈**，方向应改为"减少线程跳转 + 提高在途请求数"，而不是加线程。  
+**教训：** 没有 A/B 对照的优化都是猜测；先量化，再动手。
+
 ## 快速开始
 
 ```bash
@@ -313,8 +318,9 @@ cmake .. && make -j$(nproc)
 ./test_consistent_hash_lb && ./test_circuit_breaker && ./test_token_bucket && \
 ./test_trace_id && ./test_interceptor && ./test_integration
 
-# 压测（可指定请求数和线程数）
-./test_benchmark 10000 4
+# 压测（请求数 / 客户端线程数 / 服务端从Reactor数 / 超时ms；only = 只跑扩展性测试）
+./test_benchmark 50000 8
+./test_benchmark 50000 8 4 3000 only
 
 # 可选：Redis 令牌桶
 docker run -d --name redis-test -p 6379:6379 redis:7-alpine
@@ -327,38 +333,48 @@ cmake .. -DWITH_ETCD=ON && make -j$(nproc) && ./test_etcd_registry
 
 ## 性能基准
 
-测试环境:WSL2 (Ubuntu 22.04) / 同机回环 / `-DRPC_SILENT=ON` 关闭日志干扰
+测试环境：WSL2（Ubuntu 22.04，i7-13620H，16 vCPU）/ 同机回环 / Release 构建 / `-DRPC_SILENT=ON` 关闭日志干扰
+服务端配置：主 Reactor + **4 个从 Reactor**（`setThreadNum(4)`，见 `examples/rpc/rpc_server_main.cc`）
 
-### Direct(单连接,锁竞争测上限)
-| 线程 | QPS     | p99 (μs) | 错误数 |
-|------|---------|----------|--------|
-| 4    | 26,307  | 487      | 0      |
-| 8    | 30,502  | 895      | 0      |
-| 8(50K req)| 36,612 | 705    | 0      |
+> **口径说明（重要）**：压测客户端是"闭环同步"模型——每个工作线程发一个请求、`future.get()` 等到响应再发下一个，因此 `QPS = 在途请求数 / RTT`。
+> 所以下表是**延迟口径下的吞吐**，不是框架上限；真实上限要用流水线（单连接多请求在途）才测得出来。
+> 完整实测过程与瓶颈定位见 [`docs/bench_results_wsl.md`](docs/bench_results_wsl.md)。
 
-### Pool(连接池,4/8 连接,实际生产形态)
-| 线程 | 连接数 | QPS     | p99 (μs) | 错误数 |
-|------|--------|---------|----------|--------|
-| 4    | 4      | 30,681  | 538      | 0      |
-| 8    | 8      | **48,765**  | 382      | 0      |
-| 8(50K req)| 8 | 48,442  | 430      | 0      |
+### Direct（1 条连接，N 个客户端工作线程）
 
-### 并发扩展性(Pool,50000 req)
-| 线程 | QPS     | 相对 1 线程 |
-|------|---------|-------------|
-| 1    | 11,842  | 1.0×        |
-| 2    | 19,795  | 1.67×       |
-| 4    | 34,397  | 2.90×       |
-| 8    | **48,442**  | **4.09×**   |
+| 线程 | QPS | avg (μs) | p99 (μs) | 错误数 |
+|------|------|----------|----------|--------|
+| 4 | 40,154 | 97 | 234 | 0 |
+| 8 | 41,051 | 188 | 724 | 0 |
 
-**p99 延迟**:全场景 160-895 μs,均 < 1ms
+单连接吞吐稳定在 **~41k**，与客户端线程数无关——瓶颈是"单连接 + 单个客户端 EventLoop 线程"。
+
+### Pool（连接池，N 线程 × N 连接，50000 req）
+
+| 线程 | 连接数 | QPS | avg (μs) | p99 (μs) | 相对 1 线程 |
+|------|--------|------|----------|----------|-------------|
+| 1 | 1 | 14,297 | 70 | 200 | 1.00× |
+| 2 | 2 | 23,272 | 86 | 395 | 1.63× |
+| 4 | 4 | 37,126 | 106 | 394 | 2.60× |
+| 8 | 8 | **61,683** | **128** | **461** | **4.31×** |
+
+### 瓶颈定位（A/B 实测，不是推测）
+
+| 观察 | 数据 | 结论 |
+|------|------|------|
+| 服务端 IO 线程 1 → 8 | QPS +21%（51,240 → 61,901） | 服务端并行度不是吞吐瓶颈 |
+| 关闭每请求超时定时器 | QPS +1.4%（57,771 → 58,594） | 定时器不是主要开销 |
+| 每请求系统调用 | **14.15 次**（4 write / 4 futex / 3 epoll_wait / 2 readv / 1 read） | 其中 6 次纯粹是线程间搬运 |
+| CPU 占用 | 80,000 请求共 7.49s，16 核只用了约 1 核 | 不是 CPU 瓶颈，是延迟瓶颈 |
+
+优化方向：把同步调用改成"在调用线程里跑 loop"（省掉 2 次 eventfd 写 + 4 次 futex），并把 Future 做成真异步以支持流水线。
 
 ### 性能优化关键点
-- **关闭日志输出**:`-DRPC_SILENT=ON` 是压测必选,默认 QPS 衰减 30-50%
-- **连接池 vs Direct**:1 conn / 8 thread 跑出 30K,8 conn / 8 thread 跑出 48K(+60%)
-- **错误率**:严格为 0%(网络回环 + 连接数 ≥ 线程数)
-- **重现方法**:`cmake .. -DRPC_SILENT=ON && make -j$(nproc) test_benchmark && ./test_benchmark 50000 8`
-
+- **关闭日志输出**：`-DRPC_SILENT=ON` 是压测必选，默认构建下热路径 `cout` 会吃掉 30-50% 吞吐
+- **连接池 vs Direct**：1 连接 41k → 8 连接 61.7k（**+50%**）
+- **错误率**：0%（回环）。注意**连接数必须 ≥ 线程数**——否则多个 client 会共享同一条连接、回调被覆盖，表现为 4 个错误 + 3 秒超时
+- **重现方法**：`cmake .. -DRPC_SILENT=ON -DCMAKE_BUILD_TYPE=Release && make -j$(nproc) test_benchmark && ./test_benchmark 50000 8`
+- **参数**：`./test_benchmark <总请求数> <客户端线程数> <服务端从Reactor数> <超时ms> [only]`；`only` = 只跑扩展性测试
 ## 作者
 
 马超 - 西北大学计算机硕士

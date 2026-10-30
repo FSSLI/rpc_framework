@@ -7,8 +7,20 @@
 #include <unistd.h>
 #include <errno.h>
 #include <iostream>
+#include <random>
 
 namespace rpc {
+
+namespace {
+// 半区随机抖动（equal jitter）：delay = base/2 + rand(0, base/2)
+// 目的：大量客户端同时断线时，避免它们在同一时刻同步重连（重连风暴）
+int jitterInRange(int low, int high) {
+    static thread_local std::mt19937 gen(std::random_device{}());
+    if (high <= low) return low;
+    std::uniform_int_distribution<int> dist(low, high);
+    return dist(gen);
+}
+}  // namespace
 
 Connector::Connector(EventLoop* loop, const struct sockaddr_in& serverAddr)
     : loop_(loop),
@@ -187,13 +199,14 @@ void Connector::retry(int sockfd) {
     setState(State::kDisconnected);
 
     if (connect_) {
+        const int delayMs = jitterInRange(retryDelayMs_ / 2, retryDelayMs_);
 #ifndef RPC_SILENT
-        std::cout << "Connector::retry - Retry connecting in " << retryDelayMs_ << " ms" << std::endl;
+        std::cout << "Connector::retry - Retry connecting in " << delayMs << " ms" << std::endl;
 #endif
 
         // 使用 weak_ptr 防止 Connector 析构后定时器回调访问悬空指针
         std::weak_ptr<Connector> weakThis = shared_from_this();
-        loop_->runAfter(retryDelayMs_ / 1000.0, [weakThis]() {
+        loop_->runAfter(delayMs / 1000.0, [weakThis]() {
             auto ptr = weakThis.lock();
             if (!ptr) return;              // Connector 已析构
             // Issue #1 fix: 检查 connect_ 和 state，防止 stop() 后意外重连

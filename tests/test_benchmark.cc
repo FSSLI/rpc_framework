@@ -22,6 +22,9 @@
 
 using namespace rpc;
 
+// 超时时间可配：0 = 不注册超时定时器（用于隔离定时器开销）
+static int g_timeout_ms = 3000;
+
 // ============================================================================
 class BenchEchoService : public RpcService {
 public:
@@ -99,7 +102,7 @@ void benchDirect(int port, int total, int threads) {
             while (true) {
                 int i = counter.fetch_add(1);
                 if (i >= total) break;
-                double us = timedCall(client, "d" + std::to_string(i), 3000);
+                double us = timedCall(client, "d" + std::to_string(i), g_timeout_ms);
                 std::lock_guard<std::mutex> lk(mtx);
                 if (us < 0) stats.errors++; else stats.us.push_back(us);
             }
@@ -138,7 +141,7 @@ void benchPool(int port, int total, int threads, int poolSize) {
             while (true) {
                 int i = counter.fetch_add(1);
                 if (i >= total) break;
-                double us = timedCall(client, "p" + std::to_string(i), 3000);
+                double us = timedCall(client, "p" + std::to_string(i), g_timeout_ms);
                 std::lock_guard<std::mutex> lk(mtx);
                 if (us < 0) stats.errors++; else stats.us.push_back(us);
             }
@@ -184,7 +187,7 @@ void benchScaling(int port, int baseTotal) {
                 RpcAsyncClient cli(cp);
                 cli.connect();
                 for (int i = 0; i < n; ++i) {
-                    double us = timedCall(cli, "s", 3000);
+                    double us = timedCall(cli, "s", g_timeout_ms);
                     if (us > 0) { std::lock_guard<std::mutex> lk(mtx); samples.push_back(us); }
                 }
                 cli.disconnect();
@@ -214,6 +217,8 @@ int main(int argc, char* argv[]) {
     int port = 19990;
     int total = (argc > 1) ? std::stoi(argv[1]) : 10000;
     int threads = (argc > 2) ? std::stoi(argv[2]) : 4;
+    int serverThreads = (argc > 3) ? std::stoi(argv[3]) : 4;  // 默认 4，与 rpc_server_main 一致
+    g_timeout_ms = (argc > 4) ? std::stoi(argv[4]) : 3000;  // 0 = single Reactor
 
     std::cout << "╔══════════════════════════════════╗" << std::endl;
     std::cout << "║  RPC Benchmark  " << std::setw(4) << total << " req  x " << std::setw(2) << threads << " threads  ║" << std::endl;
@@ -228,6 +233,7 @@ int main(int argc, char* argv[]) {
         addr.sin_port = htons(port);
         addr.sin_addr.s_addr = INADDR_ANY;
         RpcServer server(&loop, addr);
+        if (serverThreads > 0) server.setThreadNum(serverThreads);  // 必须在 start() 之前
         server.registerService(std::make_shared<BenchEchoService>());
         server.start();
         loop.runEvery(0.5, [&]() { if (serverQuit.load()) loop.quit(); });
@@ -235,8 +241,11 @@ int main(int argc, char* argv[]) {
     });
     std::this_thread::sleep_for(std::chrono::milliseconds(200));
 
-    benchDirect(port, total, threads);
-    benchPool(port, total, threads, 4);
+    bool onlyScaling = (argc > 5);  // 传第 5 个参数则只跑 scaling（timeout=0 时 benchPool 会永久阻塞）
+    if (!onlyScaling) {
+        benchDirect(port, total, threads);
+        benchPool(port, total, threads, 4);
+    }
     benchScaling(port, total);
 
     serverQuit = true;
