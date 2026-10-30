@@ -34,6 +34,7 @@ TcpConnection::TcpConnection(EventLoop* loop,
     channel_->setErrorCallback(std::bind(&TcpConnection::handleError, this));
 
     socket_->setKeepAlive(true);
+    socket_->setTcpNoDelay(true);  // 关闭 Nagle：RPC 小包场景避免 40ms 级延迟尖刺
 }
 
 TcpConnection::~TcpConnection() {
@@ -72,6 +73,8 @@ void TcpConnection::connectEstablished() {
     loop_->assertInLoopThread();
     assert(state_ == kConnecting);
     setState(kConnected);
+    // 绑定 owner，保证 handleEvent 期间 TcpConnection 不会被析构
+    channel_->tie(shared_from_this());
     channel_->enableReading();
 #ifndef RPC_SILENT
     std::cout << "connectEstablished: " << name_ << " fd=" << channel_->fd() << std::endl;

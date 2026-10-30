@@ -105,15 +105,15 @@ void RpcAsyncClient::setupCallbacks() {
                            std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
     tcpClient_->setMessageCallback(msgCb);
 
-    auto writeCb = std::bind(&RpcAsyncClient::onWriteComplete, this, std::placeholders::_1);
-    tcpClient_->setWriteCompleteCallback(writeCb);
+    // 不注册 writeCompleteCallback：onWriteComplete 是空函数，
+    // 注册了只会让每次 send 多一次 std::bind + 入队。
+    (void)0;
 
     // 如果已有活跃连接，也直接设置回调（池模式下连接已建立）
     auto conn = tcpClient_->connection();
     if (conn) {
         conn->setConnectionCallback(connCb);
         conn->setMessageCallback(msgCb);
-        conn->setWriteCompleteCallback(writeCb);
     }
 }
 

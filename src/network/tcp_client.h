@@ -15,7 +15,7 @@ class EventLoop;
 class Connector;
 class TcpConnection;
 
-class TcpClient {
+class TcpClient : public std::enable_shared_from_this<TcpClient> {
 public:
     using ConnectionCallback = std::function<void(const std::shared_ptr<TcpConnection>&)>;
     using MessageCallback = std::function<void(const std::shared_ptr<TcpConnection>&, Buffer*, int64_t)>;

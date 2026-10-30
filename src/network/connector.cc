@@ -46,7 +46,11 @@ Connector::~Connector() {
 
 void Connector::start() {
     connect_ = true;
-    loop_->runInLoop(std::bind(&Connector::startInLoop, this));
+    // 用 weak_ptr 投递：Connector 可能在任务执行前就被析构
+    std::weak_ptr<Connector> weakThis = shared_from_this();
+    loop_->runInLoop([weakThis]() {
+        if (auto p = weakThis.lock()) p->startInLoop();
+    });
 }
 
 void Connector::restart() {
@@ -59,7 +63,10 @@ void Connector::restart() {
 
 void Connector::stop() {
     connect_ = false;
-    loop_->queueInLoop(std::bind(&Connector::stopInLoop, this));
+    std::weak_ptr<Connector> weakThis = shared_from_this();
+    loop_->queueInLoop([weakThis]() {
+        if (auto p = weakThis.lock()) p->stopInLoop();
+    });
 }
 
 // ============================================================================
@@ -226,7 +233,11 @@ int Connector::removeAndResetChannel() {
     channel_->disableAll();
     channel_->remove();
     int sockfd = channel_->fd();
-    channel_.reset();
+    // 不能在这里同步析构 Channel：本函数可能正处在 Channel::handleEvent() 的调用栈上
+    // （handleWrite / handleError 就是它的回调），同步析构会导致返回后继续访问已释放内存。
+    // 交给本轮 loop 末尾的 pending functor 持有，等 handleEvent 返回后再释放。
+    std::shared_ptr<Channel> doomed(std::move(channel_));
+    loop_->queueInLoop([doomed]() { (void)doomed; });
     return sockfd;
 }
 

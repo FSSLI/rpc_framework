@@ -3,6 +3,7 @@
 #define CHANNEL_H
 
 #include <functional>
+#include <memory>
 #include <sys/epoll.h>  // ← 加这行
 
 namespace rpc {
@@ -48,6 +49,10 @@ public:
     
     void remove();  // 从 epoll 移除
 
+    // 绑定 owner 的弱引用：handleEvent 期间把 owner 锁成 shared_ptr，
+    // 防止回调里销毁 owner（进而销毁本 Channel）后继续访问已释放内存。
+    void tie(const std::shared_ptr<void>& owner) { tie_ = owner; tieSet_ = true; }
+
 private:
     static const int kNoneEvent = 0;
     static const int kReadEvent = EPOLLIN | EPOLLPRI;
@@ -68,6 +73,9 @@ private:
     EventCallback writeCallback_;  //注册写回调函数
     EventCallback errorCallback_;  //注册错误回调函数
     EventCallback closeCallback_;  //注册关闭回调函数
+
+    std::weak_ptr<void> tie_;  // owner 弱引用（TcpConnection）
+    bool tieSet_ = false;      // 是否设置过 tie（未设置的 Channel 照常分发）
 
     void update();  // // 更新事件注册：调用 loop_->updateChannel(this)，由 EventLoop 统一操作 epoll_ctl 
 };

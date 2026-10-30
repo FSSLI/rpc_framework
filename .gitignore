@@ -1,7 +1,7 @@
 # Build
 /build/
-/cmake-build-*/
-*.o
+/build-*/
+/cmake-build-*/*.o
 *.a
 *.so
 *.exe
@@ -22,5 +22,4 @@ Thumbs.db
 *.log
 *.sst
 CURRENT
-MANIFEST-*/test_codec
-build/
+MANIFEST-*

@@ -92,7 +92,12 @@ void TcpClient::newConnection(int sockfd) {
     conn->setConnectionCallback(connectionCallback_);
     conn->setMessageCallback(messageCallback_);
     conn->setWriteCompleteCallback(writeCompleteCallback_);
-    conn->setCloseCallback(std::bind(&TcpClient::removeConnection, this, std::placeholders::_1));
+    // 用 weak_ptr 绑定：TcpClient 可能在主线程析构，而 IO 线程之后仍会处理该连接的关闭事件。
+    // 裸 this 会导致 use-after-free（ASan 实证）。
+    std::weak_ptr<TcpClient> weakSelf = weak_from_this();
+    conn->setCloseCallback([weakSelf](const TcpConnectionPtr& c) {
+        if (auto self = weakSelf.lock()) self->removeConnection(c);
+    });
 
     {
         std::lock_guard<std::mutex> lock(mutex_);

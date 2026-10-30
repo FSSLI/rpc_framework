@@ -442,3 +442,44 @@ Requests: 20000  Errors: 4  Elapsed: 3.00s  QPS: 6659/s
 | `test_connection_pool` 连续 10 次 | — | **10/10 通过** |
 
 > 遗留观察：在一次连续跑全量测试时，`test_connection_pool` 出现过 **1 次 segfault**（发生在测试 1 的池析构、连接器重连 `SO_ERROR=111` 之后）。单独重跑 10 次未复现，gdb 下也未复现。怀疑是原有的"池析构 + 自动重连"竞态，与本次改动路径无关，但**尚未定位**，记录待查。
+
+---
+
+## 13. 三层 use-after-free 的定位与修复（2026-10-30 晚）
+
+第 12.4 节留了个尾巴（偶发 segfault）。用 **AddressSanitizer** 构建后 **1/1 必现**，而且是三个独立的生命周期 bug，共同特征是：**在回调栈上销毁了正在被分发的对象**。
+
+### 13.1 三个 bug
+
+| # | 崩溃点 | 触发链 | 本质 |
+|---|---|---|---|
+| 1 | `Channel::handleEvent` 读 `revents_` | `handleRead` → `handleClose` → `TcpConnection`（连同 Channel）析构 → 返回后继续读成员 | owner 在分发过程中死亡 |
+| 2 | `Channel::handleEvent` 读 `readCallback_` | `errorCallback_` → `Connector::handleError` → `removeAndResetChannel` → Channel 析构 → 返回后继续 | Channel 在自己回调里被销毁 |
+| 3 | `TcpClient::removeConnection` 读 `connectionCallback_` | 主线程析构 `TcpClient` → IO 线程之后处理连接关闭 → `closeCallback_` 里裸 `this` 已失效 | 跨线程对象生命周期 |
+
+### 13.2 修复
+
+| 位置 | 改动 |
+|---|---|
+| `network/channel.h/.cc` | 新增 `tie(weak_ptr<owner>)`；`handleEvent()` 开头 `lock()` 成 `shared_ptr`，owner 在分发期间存活，析构推迟到函数返回后 |
+| `network/connector.cc` | `removeAndResetChannel()` 不再同步 `reset`，把 Channel 移交给本轮 loop 末尾的 pending functor 持有 |
+| `network/tcp_client.h/.cc` | 继承 `enable_shared_from_this`；`closeCallback_` 改为捕获 `weak_ptr<TcpClient>` |
+| `network/connector.cc` | `start()` / `stop()` 投递任务改用 `weak_ptr`，对象销毁后自动跳过 |
+
+### 13.3 验证
+
+| 项 | 结果 |
+|---|---|
+| ASan + `test_connection_pool` × 20 | **20/20 通过**（修复前 1/1 必现） |
+| 全量测试（13 项） | **13/13 通过** |
+| 闭环基准（8 连接 / 5 万请求） | 59,457 QPS / p99 465 µs（对比 61,683，正常波动） |
+| `bench_inline_sync`（8 线程 / 20 万） | 129,254 QPS / avg 61 µs（对比 131,996，−2%） |
+
+### 13.4 顺带修掉的两处浪费
+
+- `Socket::setTcpNoDelay` 之前**定义了从未调用** → Nagle 一直开着。已在 `TcpConnection` 构造里启用，避免小包场景 40 ms 级延迟尖刺；
+- `RpcAsyncClient::setupCallbacks` 注册了 `writeCompleteCallback`，但 `onWriteComplete()` 是空函数 → 每次 send 多一次 `std::bind` + 入队。已移除注册。
+
+### 13.5 教训
+
+`ASan` 是这类"偶发崩溃"的唯一高效手段：正常跑 15 次才崩 1 次的 bug，ASan 下 1 次就崩，并且直接给出分配/释放的完整调用栈。**"偶发"往往等于"必然，只是窗口很窄"。**

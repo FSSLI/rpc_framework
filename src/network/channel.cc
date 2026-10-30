@@ -26,6 +26,14 @@ Channel::~Channel() {
 }
 
 void Channel::handleEvent() {
+    // 关键：把 owner 锁成 shared_ptr，保证整个分发期间对象存活。
+    // 否则 handleRead -> handleClose 会在栈上把 TcpConnection（连同本 Channel）析构掉，
+    // 返回后继续读 revents_ 就是 use-after-free（ASan 实证）。
+    std::shared_ptr<void> guard;
+    if (tieSet_) {
+        guard = tie_.lock();
+        if (!guard) return;  // owner 已销毁，跳过本次分发
+    }
 #ifndef RPC_SILENT
     std::cout << "handleEvent revents=" << revents_ << std::endl;
 #endif

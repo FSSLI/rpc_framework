@@ -51,7 +51,8 @@ rpc_framework/
 │   │   └── rpc_codec.h/cc      # 统一协议：Fixed Header(18B) + Protobuf + CRC32
 │   ├── client/                 # RPC 客户端
 │   │   ├── rpc_sync_client.h/cc    # 同步阻塞调用 + 超时
-│   │   └── rpc_async_client.h/cc   # 异步 Future/Callback（Week 2 重构为基于 TcpClient）
+│   │   ├── rpc_async_client.h/cc   # 异步 Future/Callback（基于 TcpClient，连接池/多节点）
+│   │   └── inline_sync_client.h/cc # 同步调用：调用线程自己驱动 IO（无 eventfd/futex）
 │   ├── server/                 # RPC 服务端
 │   │   ├── rpc_service.h/cc    # 服务基类 + 方法注册
 │   │   └── rpc_server.h/cc     # 服务注册 + 请求分发
@@ -87,6 +88,7 @@ rpc_framework/
 │   ├── test_memory_registry.cc     # 内存注册中心
 │   ├── test_service_discovery_e2e.cc  # 服务发现端到端
 │   ├── test_connection_pool.cc     # 连接池
+│   ├── test_pool_ownership.cc      # TcpClient 所有权（共享连接必须显式失败）
 │   ├── test_load_balance.cc        # 轮询负载均衡+failover
 │   ├── test_circuit_breaker.cc     # 熔断器状态机
 │   ├── test_token_bucket.cc        # 本地令牌桶
@@ -95,7 +97,9 @@ rpc_framework/
 │   ├── test_trace_id.cc            # TraceID 透传
 │   ├── test_interceptor.cc         # 拦截器链
 │   ├── test_integration.cc         # 全模块串联
-│   └── test_benchmark.cc           # 压测
+│   ├── test_benchmark.cc           # 闭环压测（线程数 = 在途数）
+│   ├── bench_pipeline.cc           # 流水线压测（在途数 >> 线程数，测吞吐上限）
+│   └── bench_inline_sync.cc        # 调用线程驱动 IO 的同步压测
 └── build/                          # 编译输出
 ```
 
@@ -311,6 +315,19 @@ TcpConnection (建立后)
 **问题：** 线程数 > 连接数时 `acquire` 轮询返回同一个 `TcpClient`，两个 `RpcAsyncClient` 构造时互相覆盖 `TcpClient`/`TcpConnection` 的回调 → 响应被投递到错误的客户端 → `reqId` 匹配不到 → 一直等到超时。8 线程 / 4 连接实测 **4 个错误、耗时卡在 3.00 s**。  
 **解决：** 给 `TcpClient` 加所有权声明（CAS 抢占）：第二个客户端构造即失败、调用立即返回 `"TcpClient already owned by another RpcAsyncClient"`；`acquire` 跳过已占用连接，全部占用时返回 `nullptr`；补 `test_pool_ownership` 回归测试。修复后同场景 **0 错误、0.84 s、59,852 QPS**。
 
+### 10. 三层 use-after-free：回调栈上把对象销毁了
+**问题：** `test_connection_pool` 偶发 segfault（跑十几轮才出现一次）。用 ASan 一跑就现形，而且是**三个独立的生命周期 bug**，全都发生在"回调里销毁了正在被分发的对象"：
+1. `TcpConnection::handleClose` 在 `Channel::handleEvent` 的栈上析构了连接（连同 Channel），返回后继续读 `revents_`；
+2. `Connector::handleWrite/handleError` 在 `Channel::handleEvent` 的栈上 `reset()` 了自己的 Channel；
+3. `TcpClient` 在主线程析构后，IO 线程仍通过连接的 `closeCallback_`（裸 `this`）回调它；`Connector::start/stop` 同理。
+
+**解决：**
+1. `Channel` 增加 `tie(weak_ptr<owner>)`：`handleEvent` 开头 `lock()` 成 `shared_ptr`，让 owner 在整个分发期存活，析构自然推迟到函数返回后；
+2. `Connector::removeAndResetChannel` 不再同步析构，改为把 Channel 交给本轮 loop 末尾的 pending functor 持有；
+3. `closeCallback_` 与 `Connector::start/stop` 的投递全部改用 `weak_ptr`，对象没了就跳过。
+
+**验证：** ASan 下 `test_connection_pool` **20/20 通过**（修复前 1/1 必现），全量 13 项测试通过，闭环/inline 基准无回退。
+
 ## 快速开始
 
 ```bash
@@ -412,7 +429,7 @@ cmake .. -DWITH_ETCD=ON && make -j$(nproc) && ./test_etcd_registry
 - **错误率**：0%（回环）。注意**连接数必须 ≥ 线程数**——否则多个 client 会共享同一条连接、回调被覆盖，表现为 4 个错误 + 3 秒超时
 - **重现方法**：`cmake .. -DRPC_SILENT=ON -DCMAKE_BUILD_TYPE=Release && make -j$(nproc) test_benchmark && ./test_benchmark 50000 8`
 - **参数**：`./test_benchmark <总请求数> <客户端线程数> <服务端从Reactor数> <超时ms> [only]`；`only` = 只跑扩展性测试
-- **流水线**：`./bench_pipeline <连接数> <每连接在途数> <总请求数> <服务端从Reactor数>`，用回调 API 压真实上限（2M 请求下 3 次重复 110~117 万 QPS，CPU 约 9.6/16 核）
+- **流水线**：`./bench_pipeline <连接数> <每连接在途数> <总请求数> <服务端从Reactor数>`，用回调 API 压真实上限（**10M 请求长稳态 101 万 QPS**，24 连接峰值 138 万，CPU 约 11.6/16 核）
 
 ## 作者
 

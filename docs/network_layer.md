@@ -832,7 +832,7 @@ if (task.interval.count() > 0) {  // ← 加判断
 
 > **面试要点**：
 > 1. **Reactor 模式**：事件驱动，非阻塞 IO + epoll，回调处理
-> 2. **One Loop Per Thread**：每个连接一个线程，无锁，利用多核
+> 2. **One Loop Per Thread**：每个 **IO 线程**一个 EventLoop，新连接按轮询分发到从 Reactor（不是"每个连接一个线程"）
 > 3. **生命周期管理**：shared_ptr + enable_shared_from_this，lambda 捕获延长生命周期
 > 4. **跨线程安全**：runInLoop/queueInLoop + eventfd 唤醒，swap 减少锁竞争
 > 5. **Buffer 设计**：prepend 预留空间，readv 优化，makeSpace 策略
