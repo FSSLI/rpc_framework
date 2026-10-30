@@ -122,17 +122,19 @@ ConnectionPool::TcpClientPtr ConnectionPool::acquire(const std::string& host, ui
     }
 
     auto& ep = it->second;
-    // 轮询查找健康连接（最多尝试全部连接一次）
-    for (size_t attempt = 0; attempt < ep->clients.size(); ++attempt) {
-        size_t idx = ep->nextIndex.fetch_add(1, std::memory_order_relaxed) % ep->clients.size();
-        auto conn = ep->clients[idx]->connection();
-        if (conn && conn->connected()) {
-            return ep->clients[idx];
-        }
+    const size_t n = ep->clients.size();
+    TcpClientPtr fallback;
+    // 轮询查找"健康且未被其他客户端绑定"的连接
+    for (size_t attempt = 0; attempt < n; ++attempt) {
+        size_t idx = ep->nextIndex.fetch_add(1, std::memory_order_relaxed) % n;
+        auto& client = ep->clients[idx];
+        if (client->isClaimed()) continue;   // 已被别的 RpcAsyncClient 占用
+        auto conn = client->connection();
+        if (conn && conn->connected()) return client;
+        if (!fallback) fallback = client;    // 未占用但断开，作为兜底（它会自动重连）
     }
-    // 所有连接都不健康，返回轮询到的那个（让它自动重连）
-    size_t idx = ep->nextIndex.fetch_add(1, std::memory_order_relaxed) % ep->clients.size();
-    return ep->clients[idx];
+    // 全部被占用时返回 nullptr，而不是把已占用的连接交出去（那会互相覆盖回调）
+    return fallback;
 }
 
 int ConnectionPool::poolSize(const std::string& host, uint16_t port) const {

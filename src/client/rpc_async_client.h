@@ -110,6 +110,9 @@ private:
     EventLoop* loop_;  // 单节点模式使用；多节点模式置 nullptr
     std::unique_ptr<EventLoopThread> loopThread_;
     bool ownsLoopThread_ = true;  // 直接模式拥有线程，池/多节点模式不拥有
+    bool ownsClient_ = false;     // 是否成功声明了 TcpClient 的所有权
+    bool invalid_ = false;        // 共享 TcpClient 导致构造失败（调用会立即返回错误）
+    const char* invalidReason_ = "TcpClient already owned by another RpcAsyncClient";
     // Issue #8 fix: shared_ptr 支持 sendRequest 安全捕获副本，消除数据竞争
     std::shared_ptr<TcpClient> tcpClient_;  // 单节点/池模式使用
     std::atomic<bool> connected_;

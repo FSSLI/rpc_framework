@@ -35,6 +35,18 @@ public:
     // 控制断开后是否自动重连（默认 true，连接池场景设为 false）
     void setRetryOnDisconnect(bool on) { retryOnDisconnect_ = on; }
 
+    // 所有权声明：一个 TcpClient 同一时刻只能被一个上层客户端（RpcAsyncClient）绑定。
+    // 两者共享会互相覆盖 connection/message 回调，导致响应投递到错误的客户端。
+    bool tryClaim(const void* owner) {
+        const void* expected = nullptr;
+        return owner_.compare_exchange_strong(expected, owner);
+    }
+    void releaseClaim(const void* owner) {
+        const void* expected = owner;
+        owner_.compare_exchange_strong(expected, nullptr);
+    }
+    bool isClaimed() const { return owner_.load(std::memory_order_acquire) != nullptr; }
+
     // 获取底层 EventLoop 指针（连接池注入用）
     EventLoop* getLoop() const { return loop_; }
 
@@ -57,6 +69,7 @@ private:
     std::shared_ptr<TcpConnection> connection_;
     bool retryOnDisconnect_ = true;  // Issue #1 fix: 断开后是否自动重连
     std::atomic<bool> disconnecting_{false};  // Issue #2 fix: 防止 disconnect 后自动重连
+    std::atomic<const void*> owner_{nullptr};  // 当前绑定的上层客户端（nullptr = 未占用）
 };
 
 } // namespace rpc

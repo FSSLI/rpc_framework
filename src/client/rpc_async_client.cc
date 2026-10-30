@@ -38,6 +38,15 @@ RpcAsyncClient::RpcAsyncClient(std::shared_ptr<TcpClient> tcpClient)
       connected_(false),
       nextReqId_(1) {
     if (tcpClient_) {
+        // 一个 TcpClient 只能被一个 RpcAsyncClient 绑定，否则两者回调互相覆盖
+        if (!tcpClient_->tryClaim(this)) {
+            invalid_ = true;
+            ownsClient_ = false;
+            tcpClient_.reset();
+            loop_ = nullptr;
+            return;
+        }
+        ownsClient_ = true;
         setupCallbacks();
         // 检查连接是否已建立
         auto conn = tcpClient_->connection();
@@ -49,7 +58,9 @@ RpcAsyncClient::~RpcAsyncClient() {
     // Issue #4 fix: 先设析构标志，防止外部 loop 的 pending 定时器回调 UAF
     destroyed_ = true;
     stopHeartbeat();
+    auto claimed = ownsClient_ ? tcpClient_ : nullptr;  // disconnect() 会 reset，先留一份
     disconnect();
+    if (claimed) claimed->releaseClaim(this);
 
     // FIX: 清理所有 pending 请求，避免死等
     std::lock_guard<std::mutex> lock(pendingMutex_);
@@ -111,6 +122,7 @@ void RpcAsyncClient::setupCallbacks() {
 // ============================================================================
 
 bool RpcAsyncClient::connect() {
+    if (invalid_) return false;
     // 池模式：TcpClient 已由池预建，直接返回连接状态
     if (!ownsLoopThread_) {
         return connected_.load();
@@ -255,6 +267,7 @@ bool RpcAsyncClient::connectDirect() {
     }
 
     tcpClient_ = std::make_shared<TcpClient>(loop_, serverAddr);
+    ownsClient_ = tcpClient_->tryClaim(this);  // 自建客户端，必然成功
 
     // Issue #6 fix: 用 shared_ptr 管理 promise 和 atomic，避免栈变量被回调悬空引用
     auto promisePtr = std::make_shared<std::promise<bool>>();
@@ -337,18 +350,20 @@ void RpcAsyncClient::disconnect() {
 
     // 清理单节点 — 先清除回调防止 pool 模式下 TcpConnection 回调 UAF
     if (tcpClient_) {
-        tcpClient_->setConnectionCallback({});
-        tcpClient_->setMessageCallback({});
-        tcpClient_->setWriteCompleteCallback({});
-        // 同样清除已活跃连接上的回调（setupCallbacks 会同时设 TcpClient 和 TcpConnection）
-        auto conn = tcpClient_->connection();
-        if (conn) {
-            conn->setConnectionCallback({});
-            conn->setMessageCallback({});
-            conn->setWriteCompleteCallback({});
+        if (ownsClient_) {
+            tcpClient_->setConnectionCallback({});
+            tcpClient_->setMessageCallback({});
+            tcpClient_->setWriteCompleteCallback({});
+            // 同样清除已活跃连接上的回调（setupCallbacks 会同时设 TcpClient 和 TcpConnection）
+            auto conn = tcpClient_->connection();
+            if (conn) {
+                conn->setConnectionCallback({});
+                conn->setMessageCallback({});
+                conn->setWriteCompleteCallback({});
+            }
+            tcpClient_->disconnectPermanently();
         }
-        tcpClient_->disconnectPermanently();
-        tcpClient_.reset();
+        tcpClient_.reset();  // 只释放引用；所有权在析构函数里 releaseClaim
     }
     if (ownsLoopThread_ && loopThread_) {
         loopThread_->stop();
@@ -367,6 +382,15 @@ RpcAsyncClient::ResponseFuture RpcAsyncClient::asyncCall(
     const std::string& method_name,
     const RpcRequest& request,
     int timeout_ms) {
+
+    if (invalid_) {
+        RpcResponse err;
+        err.set_success(false);
+        err.set_error_msg(invalidReason_);
+        ResponsePromise promise;
+        promise.set_value(err);
+        return promise.get_future();
+    }
 
     uint64_t reqId = nextReqId_.fetch_add(1);
 
@@ -440,6 +464,14 @@ void RpcAsyncClient::asyncCall(
     const RpcRequest& request,
     ResponseCallback cb,
     int timeout_ms) {
+
+    if (invalid_) {
+        RpcResponse err;
+        err.set_success(false);
+        err.set_error_msg(invalidReason_);
+        if (cb) cb(err);
+        return;
+    }
 
     uint64_t reqId = nextReqId_.fetch_add(1);
     RpcRequest tracedReq = request;

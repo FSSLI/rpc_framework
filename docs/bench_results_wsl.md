@@ -90,7 +90,7 @@ strace -c -f -e trace=write,read,readv,writev,epoll_wait,futex,eventfd2 \
 | read | 8,299 | 1.04 | eventfd 读 |
 | **合计** | **113,187** | **14.15** | — |
 
-**关键观察：14 次系统调用里，只有 2 次是真正传数据（2×readv + 2×socket write），另外 2 次 eventfd 写 + 4 次 futex 全是"把一个请求从线程 A 搬到线程 B"的开销。**
+**关键观察：14 次系统调用里，只有 4 次是真正传数据（2×readv + 2×socket write），另外 7 次（2 次 eventfd 写 + 1 次 eventfd 读 + 4 次 futex）全是"把一个请求从线程 A 搬到线程 B"的开销。**
 
 ---
 
@@ -399,3 +399,46 @@ make -j16 bench_pipeline
 - 同配置吞吐 **2.14×**，p99 **−61%**；
 - 这正面验证了第 5 节的判断：**瓶颈是同步调用的线程跳转，不是服务端并行度**；
 - 也验证了"改测量方式（流水线）"与"改实现（调用线程驱动）"是两条独立的优化路径，二者可以叠加。
+
+---
+
+## 12. 修复：连接池把同一条连接交给两个客户端（2026-10-30）
+
+### 12.1 现象
+
+`Bench 2: Pool`（8 线程 / 4 连接）：
+
+```
+Requests: 20000  Errors: 4  Elapsed: 3.00s  QPS: 6659/s
+```
+
+- **4 个错误**，耗时恰好 **3.00 s**（= 超时时间）；
+- `timeout=0` 时该路径会**永久阻塞**（没有超时兜底）。
+
+### 12.2 根因
+
+1. `ConnectionPool::acquire` 轮询返回 `TcpClient`，**线程数 > 连接数时会把同一条连接交给两个客户端**；
+2. `RpcAsyncClient` 池模式构造时调用 `setupCallbacks()`，把 `TcpClient` 与 `TcpConnection` 的 3 个回调**覆盖**为指向自己；
+3. 于是后构造的客户端"偷走"了先构造者的响应：`reqId` 在 A 的 pending 表里查不到 → 一直等到 3 s 超时。
+
+### 12.3 修复
+
+| 位置 | 改动 |
+|---|---|
+| `network/tcp_client.h` | 新增所有权声明：`tryClaim()` / `releaseClaim()` / `isClaimed()`（CAS 抢占） |
+| `client/rpc_async_client` | 构造时 `tryClaim(this)`；失败则置 `invalid_`，`connect()` 返回 false，`asyncCall()` **立即**返回 `"TcpClient already owned by another RpcAsyncClient"`；析构时 `releaseClaim`；`disconnect()` 不再断开别人持有的连接 |
+| `pool/connection_pool.cc` | `acquire` 跳过已占用连接；全部被占用时返回 `nullptr`（而不是把已占用的交出去） |
+| `tests/test_pool_ownership.cc`（新增） | 6 条断言的回归测试 |
+| `tests/test_benchmark.cc` | `benchPool` 的连接数改为 ≥ 线程数 |
+
+设计取舍：**"一个 TcpClient 只能被一个上层客户端绑定"是硬约束**。与其让两个客户端共享 pending 表（复杂且语义模糊），不如让冲突**显式失败**——错误信息直接说明原因，不会静默串包。
+
+### 12.4 验证
+
+| 场景 | 修复前 | 修复后 |
+|---|---|---|
+| Pool 8 线程 × 8 连接，5 万请求 | 4 errors / 3.00 s / 16,658 QPS | **0 errors / 0.84 s / 59,852 QPS** |
+| 全量测试（13 项） | — | **13/13 通过** |
+| `test_connection_pool` 连续 10 次 | — | **10/10 通过** |
+
+> 遗留观察：在一次连续跑全量测试时，`test_connection_pool` 出现过 **1 次 segfault**（发生在测试 1 的池析构、连接器重连 `SO_ERROR=111` 之后）。单独重跑 10 次未复现，gdb 下也未复现。怀疑是原有的"池析构 + 自动重连"竞态，与本次改动路径无关，但**尚未定位**，记录待查。

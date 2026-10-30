@@ -269,6 +269,7 @@ TcpConnection (建立后)
 | `test_trace_id` | TraceID 注入 + 提取 |
 | `test_interceptor` | 拦截器链顺序 + 阻塞 + RPC 集成 |
 | `test_integration` | 全模块串联（LB + 熔断 + 限流 + 故障恢复） |
+| `test_pool_ownership` | TcpClient 所有权：共享连接必须显式失败，不能串包 |
 | `test_benchmark` | 压测（可指定请求数和线程数） |
 
 ## 踩坑记录
@@ -303,8 +304,12 @@ TcpConnection (建立后)
 
 ### 8. 两个"看起来很对"的优化假设，被 A/B 实测证伪
 **问题：** 压测到 5 万 QPS 后，直觉判断瓶颈是"服务端只有一个 Reactor"和"每请求一个超时定时器"，准备直接优化。  
-**解决：** 先做单变量对照：服务端 IO 线程 1 → 8 只 +21%，关掉每请求定时器只 +1.4%，两个假设都错了。改用 `strace -c` 数系统调用，发现每请求 **14 次调用**（4 write / 4 futex / 3 epoll_wait / 2 readv / 1 read），其中 6 次纯粹是线程间搬运；80,000 请求全程只用了约 1 个核。结论是**延迟瓶颈而非 CPU 瓶颈**，方向应改为"减少线程跳转 + 提高在途请求数"，而不是加线程。  
+**解决：** 先做单变量对照：服务端 IO 线程 1 → 8 只 +21%，关掉每请求定时器只 +1.4%，两个假设都错了。改用 `strace -c` 数系统调用，发现每请求 **14 次调用**（4 write / 4 futex / 3 epoll_wait / 2 readv / 1 read），其中 7 次纯粹是线程间搬运（4 futex + 2 次 eventfd 写 + 1 次 eventfd 读）；80,000 请求全程只用了约 1 个核。结论是**延迟瓶颈而非 CPU 瓶颈**，方向应改为"减少线程跳转 + 提高在途请求数"，而不是加线程。  
 **教训：** 没有 A/B 对照的优化都是猜测；先量化，再动手。
+
+### 9. 连接池把同一条连接交给两个客户端
+**问题：** 线程数 > 连接数时 `acquire` 轮询返回同一个 `TcpClient`，两个 `RpcAsyncClient` 构造时互相覆盖 `TcpClient`/`TcpConnection` 的回调 → 响应被投递到错误的客户端 → `reqId` 匹配不到 → 一直等到超时。8 线程 / 4 连接实测 **4 个错误、耗时卡在 3.00 s**。  
+**解决：** 给 `TcpClient` 加所有权声明（CAS 抢占）：第二个客户端构造即失败、调用立即返回 `"TcpClient already owned by another RpcAsyncClient"`；`acquire` 跳过已占用连接，全部占用时返回 `nullptr`；补 `test_pool_ownership` 回归测试。修复后同场景 **0 错误、0.84 s、59,852 QPS**。
 
 ## 快速开始
 
@@ -383,14 +388,14 @@ cmake .. -DWITH_ETCD=ON && make -j$(nproc) && ./test_etcd_registry
 |------|------|------|
 | 服务端 IO 线程 1 → 8 | QPS +21%（51,240 → 61,901） | 服务端并行度不是吞吐瓶颈 |
 | 关闭每请求超时定时器 | QPS +1.4%（57,771 → 58,594） | 定时器不是主要开销 |
-| 每请求系统调用 | **14.15 次**（4 write / 4 futex / 3 epoll_wait / 2 readv / 1 read） | 其中 6 次纯粹是线程间搬运 |
+| 每请求系统调用 | **14.15 次**（4 write / 4 futex / 3 epoll_wait / 2 readv / 1 read） | 其中 7 次是线程间搬运（4 futex + 2 eventfd 写 + 1 eventfd 读） |
 | CPU 占用 | 80,000 请求共 7.49s，16 核只用了约 1 核 | 不是 CPU 瓶颈，是延迟瓶颈 |
 
 优化方向：把同步调用改成"在调用线程里跑 loop"（省掉 2 次 eventfd 写 + 4 次 futex），并把 Future 做成真异步以支持流水线。
 
 ### 优化验证：同步调用改为"调用线程驱动 IO"
 
-针对上面"14 次系统调用里有 6 次是线程间搬运"的结论，新增 `InlineSyncClient`（`src/client/inline_sync_client.*`）：
+针对上面"14 次系统调用里有 7 次是线程间搬运"的结论，新增 `InlineSyncClient`（`src/client/inline_sync_client.*`）：
 `EventLoop` 构造在调用线程，发送直接 `write()`，等待响应时在本线程 `loopOnce()`，全程无 eventfd / futex / 每请求定时器。
 
 | 版本（8 线程 × 8 连接，5 万请求） | 系统调用/请求 | QPS | avg (µs) | p99 (µs) |

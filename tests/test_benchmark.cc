@@ -244,7 +244,7 @@ int main(int argc, char* argv[]) {
     bool onlyScaling = (argc > 5);  // 传第 5 个参数则只跑 scaling（timeout=0 时 benchPool 会永久阻塞）
     if (!onlyScaling) {
         benchDirect(port, total, threads);
-        benchPool(port, total, threads, 4);
+        benchPool(port, total, threads, threads);  // 连接数必须 >= 并发客户端数
     }
     benchScaling(port, total);
 
