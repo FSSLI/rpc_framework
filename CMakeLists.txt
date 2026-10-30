@@ -153,6 +153,10 @@ target_link_libraries(test_interceptor network)
 add_executable(test_benchmark tests/test_benchmark.cc)
 target_link_libraries(test_benchmark network)
 
+# 流水线压测（在途请求数 >> 线程数）
+add_executable(bench_pipeline tests/bench_pipeline.cc)
+target_link_libraries(bench_pipeline network)
+
 # etcd 测试（需 WITH_ETCD=ON + Docker 运行 etcd）
 if(WITH_ETCD)
     add_executable(test_etcd_registry tests/test_etcd_registry.cc)
