@@ -192,7 +192,9 @@ void Connector::handleError() {
     if (state_ == State::kConnecting) {
         int sockfd = removeAndResetChannel();
         int err = Socket::getSocketError(sockfd);
+#ifndef RPC_SILENT
         std::cerr << "Connector::handleError - SO_ERROR = " << err << std::endl;
+#endif
         retry(sockfd);
     }
 }

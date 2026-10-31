@@ -56,6 +56,12 @@ public:
     void* getContext() const { return context_; }
 
     // 新增：idle 超时检测
+    // 是否关闭 Nagle（TCP_NODELAY）。默认不关闭（保持内核默认的 Nagle 开启）。
+    // 实测：流水线压测中开启它会让吞吐下降约 30%——每个小写都变成一个 TCP 段，
+    // 包数与内核软中断开销翻倍；环回/高并发场景反而更慢。
+    // 真实广域网里对单请求延迟敏感的场景，可以显式开启。
+    void setTcpNoDelay(bool on);
+
     void setIdleTimeout(int seconds);
     void updateActiveTime();
     bool checkIdleTimeout();

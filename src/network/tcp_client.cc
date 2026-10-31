@@ -129,6 +129,7 @@ void TcpClient::newConnection(int sockfd) {
         connection_ = conn;
     }
 
+    conn->setTcpNoDelay(tcpNoDelay_);
     conn->connectEstablished();
 }
 

@@ -35,6 +35,9 @@ public:
     // 控制断开后是否自动重连（默认 true，连接池场景设为 false）
     void setRetryOnDisconnect(bool on) { retryOnDisconnect_ = on; }
 
+    // 是否关闭 Nagle（默认 false，保持内核默认）
+    void setTcpNoDelay(bool on) { tcpNoDelay_ = on; }
+
     // 所有权声明：一个 TcpClient 同一时刻只能被一个上层客户端（RpcAsyncClient）绑定。
     // 两者共享会互相覆盖 connection/message 回调，导致响应投递到错误的客户端。
     bool tryClaim(const void* owner) {
@@ -75,6 +78,7 @@ private:
     mutable std::mutex mutex_;
     std::shared_ptr<TcpConnection> connection_;
     bool retryOnDisconnect_ = true;  // Issue #1 fix: 断开后是否自动重连
+    bool tcpNoDelay_ = false;        // 默认保持内核 Nagle 开启
     std::atomic<bool> disconnecting_{false};  // Issue #2 fix: 防止 disconnect 后自动重连
     std::atomic<const void*> owner_{nullptr};  // 当前绑定的上层客户端（nullptr = 未占用）
 };

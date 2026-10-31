@@ -43,6 +43,21 @@ EventLoop::EventLoop()
 EventLoop::~EventLoop() {
     wakeupChannel_->disableAll();
     wakeupChannel_->remove();
+
+    // 重要：必须在 t_loopInThisThread 仍然有效时清空待执行任务与定时器。
+    // 这些 std::function 可能持有 TcpConnection / Connector 的 shared_ptr；
+    // 如果留到"成员析构阶段"才释放（那时 t_loopInThisThread 已被置为 nullptr），
+    // ~TcpConnection -> ~Channel -> removeChannel() 会因"不在 loop 线程"而 abort。
+    {
+        std::lock_guard<std::mutex> lock(pendingMutex_);
+        pendingFunctors_.clear();
+    }
+    {
+        std::lock_guard<std::mutex> lock(timerMutex_);
+        while (!timers_.empty()) timers_.pop();
+        timerFlags_.clear();
+    }
+
     ::close(wakeupFd_);
     ::close(epollfd_);
     t_loopInThisThread = nullptr;

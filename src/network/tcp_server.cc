@@ -91,6 +91,8 @@ void TcpServer::newConnection(int sockfd, const struct sockaddr_in& peerAddr) { 
     // 4. 创建 TcpConnection
     TcpConnectionPtr conn(new TcpConnection(ioLoop, connName, sockfd, localAddr, peerAddr));
 
+    conn->setTcpNoDelay(tcpNoDelay_);
+
     // 新增：设置 idle 超时
     if (idleTimeoutSeconds_ > 0) {
         conn->setIdleTimeout(idleTimeoutSeconds_);

@@ -34,11 +34,15 @@ TcpConnection::TcpConnection(EventLoop* loop,
     channel_->setErrorCallback(std::bind(&TcpConnection::handleError, this));
 
     socket_->setKeepAlive(true);
-    socket_->setTcpNoDelay(true);  // 关闭 Nagle：RPC 小包场景避免 40ms 级延迟尖刺
+
 }
 
 TcpConnection::~TcpConnection() {
     // LOG_DEBUG
+}
+
+void TcpConnection::setTcpNoDelay(bool on) {
+    socket_->setTcpNoDelay(on);
 }
 
 void TcpConnection::setIdleTimeout(int seconds) {

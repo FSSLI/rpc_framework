@@ -47,6 +47,9 @@ public:
     // 新增：设置连接 idle 超时（秒），0 表示不检测
     void setIdleTimeout(int seconds) { idleTimeoutSeconds_ = seconds; }  //全局 idle 超时
 
+    // 是否对新建连接关闭 Nagle（默认 false）。高并发/流水线场景建议保持 false。
+    void setTcpNoDelay(bool on) { tcpNoDelay_ = on; }
+
 private:
     void newConnection(int sockfd, const struct sockaddr_in& peerAddr);  //accept 回调
     void removeConnection(const TcpConnectionPtr& conn);  //跨线程安全移除
@@ -65,6 +68,7 @@ private:
     int nextConnId_;  //连接 ID 计数器，给每个连接生成唯一名称
     std::map<std::string, TcpConnectionPtr> connections_;  //连接管理表。 记录当前所有活跃连接
 
+    bool tcpNoDelay_ = false;   // 默认保持内核 Nagle 开启
     int idleTimeoutSeconds_ = 0;
     uint64_t idleTimerId_ = 0;  // Issue #1 fix: 记录 idle 定时器 ID 用于析构取消
 };
