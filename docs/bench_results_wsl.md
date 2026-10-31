@@ -226,6 +226,23 @@ server.setIdleTimeout(60);
 对比改动前（单 Reactor、5 万请求）：8 连接 56,047 QPS / avg 141 µs / p99 626 µs。
 **吞吐 +10%，p99 −26%。**
 
+> **⚠️ 两个容易混淆的数字（62k 附近）**
+>
+> | 数字 | 配置 | 请求量 | 出处 |
+> |---|---|---|---|
+> | **61,901** | 服务端 **8** 个从 Reactor | **2 万** | §2 的服务端线程 A/B |
+> | **61,683** | 服务端 **4** 个从 Reactor | **5 万** | 本节（与 `rpc_server_main.cc` 默认一致） |
+>
+> 两者接近是巧合。**同一请求量下的严格对比（5 万请求 × 各 3 次）**：
+>
+> | 从 Reactor | 三次 QPS | 均值 |
+> |---|---|---|
+> | 4 | 60,785 / 62,529 / 62,603 | **61,972** |
+> | 8 | 62,627 / 59,515 / 60,962 | **61,035** |
+>
+> **4 和 8 在统计上无差别**——这恰好证明闭环下服务端已不是瓶颈，真正的限制是"在途数 = 8"。
+> 运行间波动约 ±5%，对外报 **「约 6.2 万 QPS」** 比报精确值更稳。
+
 ### 9.4 回归测试
 
 12 项全部通过：`test_connector`、`test_consistent_hash`、`test_consistent_hash_lb`、`test_memory_registry`、`test_service_discovery_e2e`、`test_connection_pool`、`test_load_balance`、`test_circuit_breaker`、`test_token_bucket`、`test_trace_id`、`test_interceptor`、`test_integration`。

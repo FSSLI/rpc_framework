@@ -32,6 +32,10 @@ public:
     // 轮询获取一个 TcpClient，调用者不需释放
     TcpClientPtr acquire(const std::string& host, uint16_t port);
 
+    // 归还一条连接（可选）：清回调 + 主动探活，让下一次 acquire 拿到可用连接。
+    // 不调用也没关系——RpcAsyncClient 析构时会自动 releaseClaim。
+    void release(const TcpClientPtr& client);
+
     // 获取池中客户端数量
     int poolSize(const std::string& host, uint16_t port) const;
 

@@ -47,6 +47,7 @@ RpcAsyncClient::RpcAsyncClient(std::shared_ptr<TcpClient> tcpClient)
             return;
         }
         ownsClient_ = true;
+        borrowedTransport_ = true;   // 来自连接池：析构时把连接还给池，不关闭
         setupCallbacks();
         // 检查连接是否已建立
         auto conn = tcpClient_->connection();
@@ -351,17 +352,11 @@ void RpcAsyncClient::disconnect() {
     // 清理单节点 — 先清除回调防止 pool 模式下 TcpConnection 回调 UAF
     if (tcpClient_) {
         if (ownsClient_) {
-            tcpClient_->setConnectionCallback({});
-            tcpClient_->setMessageCallback({});
-            tcpClient_->setWriteCompleteCallback({});
-            // 同样清除已活跃连接上的回调（setupCallbacks 会同时设 TcpClient 和 TcpConnection）
-            auto conn = tcpClient_->connection();
-            if (conn) {
-                conn->setConnectionCallback({});
-                conn->setMessageCallback({});
-                conn->setWriteCompleteCallback({});
+            tcpClient_->clearCallbacks();
+            // 自建连接：彻底关闭；池借出的连接：保留给池复用
+            if (!borrowedTransport_) {
+                tcpClient_->disconnectPermanently();
             }
-            tcpClient_->disconnectPermanently();
         }
         tcpClient_.reset();  // 只释放引用；所有权在析构函数里 releaseClaim
     }

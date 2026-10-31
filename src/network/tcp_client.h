@@ -50,8 +50,15 @@ public:
     // 获取底层 EventLoop 指针（连接池注入用）
     EventLoop* getLoop() const { return loop_; }
 
-    // 永久断开：停止重连并关闭连接（连接池回收用）
+    // 永久断开：停止重连并关闭连接（自建连接销毁时用）
     void disconnectPermanently();
+
+    // 清空本 TcpClient 与其当前连接上的全部回调（连接复用前调用）
+    void clearCallbacks();
+
+    // 若当前未连接且不在连接中，触发一次重连（幂等、线程安全）；
+    // 已在连接中或已连接则什么都不做，避免重复 connect 覆盖 channel。
+    void ensureConnected();
 
     std::shared_ptr<TcpConnection> connection() const;
 

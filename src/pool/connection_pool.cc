@@ -134,7 +134,30 @@ ConnectionPool::TcpClientPtr ConnectionPool::acquire(const std::string& host, ui
         if (!fallback) fallback = client;    // 未占用但断开，作为兜底（它会自动重连）
     }
     // 全部被占用时返回 nullptr，而不是把已占用的连接交出去（那会互相覆盖回调）
+    if (fallback) fallback->ensureConnected();  // 兜底的断线连接：主动触发一次重连
     return fallback;
+}
+
+void ConnectionPool::release(const TcpClientPtr& client) {
+    if (!client) return;
+
+    std::lock_guard<std::mutex> lock(mutex_);
+    for (auto& pair : pools_) {
+        auto& ep = pair.second;
+        for (auto& c : ep->clients) {
+            if (c.get() != client.get()) continue;
+
+            if (client->isClaimed()) {
+                std::cerr << "ConnectionPool::release: 该连接仍被客户端占用，"
+                             "请先析构 RpcAsyncClient 再归还" << std::endl;
+                return;
+            }
+            client->clearCallbacks();
+            client->ensureConnected();
+            return;
+        }
+    }
+    std::cerr << "ConnectionPool::release: 该连接不属于任何池" << std::endl;
 }
 
 int ConnectionPool::poolSize(const std::string& host, uint16_t port) const {

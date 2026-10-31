@@ -74,6 +74,31 @@ void TcpClient::disconnectPermanently() {
     }
 }
 
+void TcpClient::clearCallbacks() {
+    setConnectionCallback({});
+    setMessageCallback({});
+    setWriteCompleteCallback({});
+    auto conn = connection();
+    if (conn) {
+        conn->setConnectionCallback({});
+        conn->setMessageCallback({});
+        conn->setWriteCompleteCallback({});
+    }
+}
+
+void TcpClient::ensureConnected() {
+    std::weak_ptr<TcpClient> weakSelf = weak_from_this();
+    loop_->runInLoop([weakSelf]() {
+        auto self = weakSelf.lock();
+        if (!self) return;
+
+        auto conn = self->connection();
+        if (conn && conn->connected()) return;          // 已经连着
+        if (self->connector_ && self->connector_->isConnecting()) return;  // 正在连，别重复
+        if (self->connector_) self->connector_->restart();
+    });
+}
+
 std::shared_ptr<TcpConnection> TcpClient::connection() const {
     std::lock_guard<std::mutex> lock(mutex_);
     return connection_;

@@ -29,6 +29,9 @@ public:
     void restart();    // 断开后重连
     void stop();       // 停止连接和重连
 
+    // 当前是否正在连接（供上层做幂等重连判断）
+    bool isConnecting() const { return state_.load() == State::kConnecting; }
+
     const struct sockaddr_in& serverAddress() const { return serverAddr_; }
 
 private:

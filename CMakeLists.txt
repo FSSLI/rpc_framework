@@ -127,6 +127,9 @@ target_link_libraries(test_memory_registry network)
 add_executable(test_service_discovery_e2e tests/test_service_discovery_e2e.cc)
 target_link_libraries(test_service_discovery_e2e network)
 
+add_executable(test_pool_reuse tests/test_pool_reuse.cc)
+target_link_libraries(test_pool_reuse network)
+
 add_executable(test_pool_ownership tests/test_pool_ownership.cc)
 target_link_libraries(test_pool_ownership network)
 
